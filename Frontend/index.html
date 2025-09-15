@@ -83,17 +83,60 @@
 
   </div>
 
-  <!-- Script para simular pedidos -->
+  <!-- Script para conectar con backend -->
   <script>
     const form = document.getElementById('pedidoForm');
     const listaPedidos = document.getElementById('listaPedidos');
+    const API_BASE = 'http://localhost:8080/api';
 
-    form.addEventListener('submit', function(e) {
+    // Cargar pedidos al iniciar la página
+    document.addEventListener('DOMContentLoaded', cargarPedidos);
+
+    async function cargarPedidos() {
+      try {
+        const response = await fetch(`${API_BASE}/pedidos`);
+        if (!response.ok) throw new Error('Error al cargar pedidos');
+        
+        const data = await response.json();
+        const pedidos = data.pedidos || [];
+        
+        if (pedidos.length === 0) {
+          listaPedidos.innerHTML = '<li class="text-gray-400 italic">Aún no hay pedidos ingresados.</li>';
+          return;
+        }
+        
+        listaPedidos.innerHTML = '';
+        pedidos.forEach(pedido => {
+          const li = document.createElement('li');
+          li.className = "p-3 border rounded bg-gray-50";
+          
+          li.innerHTML = `
+            <p><span class="font-semibold">ID:</span> ${pedido.id_pedido}</p>
+            <p><span class="font-semibold">Cliente:</span> ${pedido.nombre_cliente}</p>
+            <p><span class="font-semibold">Entrega:</span> ${pedido.fecha_entrega}</p>
+            <p><span class="font-semibold">Estado:</span> 
+               <span class="px-2 py-1 text-xs rounded ${pedido.estado === 'Pendiente' ? 'bg-yellow-200' : 'bg-green-200'}">
+                 ${pedido.estado}
+               </span>
+            </p>
+            ${pedido.email_cliente ? `<p><span class="font-semibold">Email:</span> ${pedido.email_cliente}</p>` : ""}
+          `;
+          
+          listaPedidos.appendChild(li);
+        });
+        
+      } catch (error) {
+        console.error('Error:', error);
+        listaPedidos.innerHTML = '<li class="text-red-500">Error al cargar pedidos. Verifica que el backend esté ejecutándose.</li>';
+      }
+    }
+
+    form.addEventListener('submit', async function(e) {
       e.preventDefault();
 
       // Obtener datos
       const producto = form.producto.value.trim();
-      const cantidad = form.cantidad.value.trim();
+      const cantidad = parseInt(form.cantidad.value);
       const cliente = form.cliente.value.trim();
       const fecha = form.fecha.value;
       const email = form.email.value.trim();
@@ -105,28 +148,43 @@
         return;
       }
 
-      // Crear item
-      const li = document.createElement('li');
-      li.className = "p-3 border rounded bg-gray-50";
+      try {
+        // Enviar al backend
+        const response = await fetch(`${API_BASE}/pedidos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            producto,
+            cantidad,
+            cliente,
+            fecha,
+            email: email || '',
+            etiquetas: etiquetas || ''
+          })
+        });
 
-      li.innerHTML = `
-        <p><span class="font-semibold">Producto:</span> ${producto}</p>
-        <p><span class="font-semibold">Cantidad:</span> ${cantidad}</p>
-        <p><span class="font-semibold">Cliente:</span> ${cliente}</p>
-        <p><span class="font-semibold">Entrega:</span> ${fecha}</p>
-        ${email ? `<p><span class="font-semibold">Email:</span> ${email}</p>` : ""}
-        ${etiquetas ? `<p><span class="font-semibold">Etiquetas:</span> ${etiquetas}</p>` : ""}
-      `;
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Error al crear pedido');
+        }
 
-      // Si es el primer pedido, limpiamos placeholder
-      if (listaPedidos.firstElementChild && listaPedidos.firstElementChild.classList.contains("italic")) {
-        listaPedidos.innerHTML = "";
+        const result = await response.json();
+        
+        // Mostrar mensaje de éxito
+        alert(`✅ ${result.message} (ID: ${result.pedido_id})`);
+        
+        // Resetear formulario
+        form.reset();
+        
+        // Recargar lista de pedidos
+        await cargarPedidos();
+        
+      } catch (error) {
+        console.error('Error:', error);
+        alert(`❌ Error: ${error.message}`);
       }
-
-      listaPedidos.appendChild(li);
-
-      // Resetear form
-      form.reset();
     });
   </script>
 

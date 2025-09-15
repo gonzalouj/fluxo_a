@@ -1,0 +1,64 @@
+# Binarios de Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+backend/main
+backend/fluxo-backend
+
+# Archivos de test de Go
+*.test
+*.out
+
+# Dependencias y cache de Go
+vendor/
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Directorios de dependencias de Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de configuración local
+.vscode/settings.json
+.idea/
+
+# Archivos temporales del sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archivos de backup
+*.bak
+*.tmp
+*~
+
+# Archivos de distribución
+dist/
+build/
+
+# Coverage reports
+coverage.txt
+*.cover
+
+# Directorios de IDEs
+.idea/
+*.swp
+*.swo
+
+# Archivos de Docker (si se usan en el futuro)
+docker-compose.override.yml
