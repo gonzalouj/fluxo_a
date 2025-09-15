@@ -21,7 +21,7 @@ func GetEnv(key, fallback string) string {
 
 // ConnectDB establece conexión con PostgreSQL
 func ConnectDB() (*sql.DB, error) {
-	dbURL := GetEnv("DATABASE_URL", "postgres://postgres:password@localhost:5432/fluxo?sslmode=disable")
+	dbURL := GetEnv("DATABASE_URL", "postgres://zongalo:1234@localhost:5432/INFO282?sslmode=disable")
 	
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
