@@ -1,29 +1,23 @@
 // pedidos.go
-// Handlers para gestión de pedidos
 package handlers
 
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 
-	"fluxo/backend/config"
 	"fluxo/backend/models"
-
 	"github.com/gin-gonic/gin"
 )
 
+// Mantenemos la variable global para la base de datos
 var db *sql.DB
 
-// InitDB inicializa la conexión global a la base de datos
-func InitDB() {
-	var err error
-	db, err = config.ConnectDB()
-	if err != nil {
-		log.Fatal("No se pudo conectar a la base de datos:", err)
-	}
+// ✅ CAMBIO: Reemplazamos InitDB por SetDB.
+// Esta función permite que 'main.go' nos "entregue" la conexión a la base de datos.
+func SetDB(database *sql.DB) {
+	db = database
 }
 
 // CrearPedido maneja POST /api/pedidos
@@ -48,7 +42,7 @@ func CrearPedido(c *gin.Context) {
 		INSERT INTO productos (nombre, precio_unitario) 
 		VALUES ($1, $2) 
 		ON CONFLICT (nombre) DO UPDATE SET nombre = EXCLUDED.nombre
-		RETURNING id_producto`, 
+		RETURNING id_producto`,
 		req.Producto, 10.0).Scan(&productoID) // Precio por defecto
 
 	if err != nil {
@@ -116,12 +110,13 @@ func ListarPedidos(c *gin.Context) {
 		Productos     []ProductoResumen `json:"productos"`
 	}
 
+	// ✅ --- CAMBIO CLAVE: Usamos to_char para formatear la fecha a 'YYYY-MM-DD' --- ✅
 	query := `
 		SELECT 
 		  p.id_pedido,
 		  p.nombre_cliente,
 		  p.email_cliente,
-		  p.fecha_entrega::text,
+		  to_char(p.fecha_entrega, 'YYYY-MM-DD') AS fecha_entrega,
 		  p.estado,
 		  p.fecha_creacion,
 		  COALESCE((

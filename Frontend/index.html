@@ -5,89 +5,231 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Pedidos</title>
   
-  <!-- Tailwind vía CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .status-pendiente { 
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    }
+    .status-listo { 
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+    .status-cancelado { 
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    .pedido-card {
+      transition: all 0.2s ease;
+    }
+    .pedido-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .search-input:focus {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Estilos para las notificaciones toast */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      transform: translateX(100%);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      margin-bottom: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .toast.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .toast.hide {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    .toast-success {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+      color: white;
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+    }
+
+    .toast-error {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+      color: white;
+      box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
+    }
+
+    .toast-info {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
+      color: white;
+      box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+    }
+
+    .toast-icon {
+      animation: iconBounce 0.6s ease-out;
+    }
+
+    @keyframes iconBounce {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 0 0 8px 8px;
+      animation: progressBar 4s linear forwards;
+    }
+
+    @keyframes progressBar {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+
+    /* Efectos sutiles para el formulario */
+    .form-success {
+      animation: formSuccess 0.6s ease-out;
+    }
+
+    @keyframes formSuccess {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.98); background-color: #f0fdf4; }
+      100% { transform: scale(1); background-color: white; }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+  <!-- Contenedor de notificaciones -->
+  <div id="toastContainer" class="toast-container"></div>
 
-  <div class="max-w-3xl mx-auto space-y-8">
+  <div id="menu-placeholder"></div>
+  <div id="header-placeholder"></div>
 
-    <!-- Encabezado -->
-    <header class="text-center">
-      <h1 class="text-3xl font-bold text-green-600">Gestión de Pedidos</h1>
-      <p class="text-gray-600">Ingreso manual y vista general</p>
-    </header>
-
-    <!-- Formulario -->
-    <section class="bg-white shadow rounded-lg p-6">
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <section id="formSection" class="bg-white shadow rounded-lg p-6">
       <h2 class="text-xl font-semibold mb-4">Ingresar Pedido</h2>
       <form id="pedidoForm" class="space-y-4">
-        
-        <!-- Producto -->
         <div>
           <label class="block mb-1 font-medium">Nombre del Producto *</label>
           <input type="text" name="producto" required 
                  class="w-full p-2 border rounded focus:ring focus:ring-blue-300" />
         </div>
-
-        <!-- Cantidad -->
         <div>
           <label class="block mb-1 font-medium">Cantidad *</label>
           <input type="number" name="cantidad" min="1" required
                  class="w-full p-2 border rounded focus:ring focus:ring-blue-300" />
         </div>
-
-        <!-- Cliente -->
         <div>
           <label class="block mb-1 font-medium">Nombre Cliente *</label>
           <input type="text" name="cliente" required
                  class="w-full p-2 border rounded focus:ring focus:ring-blue-300" />
         </div>
-
-        <!-- Fecha -->
         <div>
           <label class="block mb-1 font-medium">Fecha de Entrega *</label>
-          <input type="date" name="fecha" required
+          <input type="date" name="fecha" id="fechaEntrega" required
                  class="w-full p-2 border rounded focus:ring focus:ring-blue-300" />
         </div>
-
-        <!-- Email -->
         <div>
           <label class="block mb-1 font-medium">Correo Electrónico (opcional)</label>
           <input type="email" name="email"
                  class="w-full p-2 border rounded focus:ring focus:ring-blue-300" />
         </div>
-
-        <!-- Etiquetas -->
         <div>
           <label class="block mb-1 font-medium">Etiquetas</label>
           <input type="text" name="etiquetas" placeholder="Ej: urgente, madera"
                  class="w-full p-2 border rounded focus:ring focus:ring-blue-300" />
         </div>
-
-        <!-- Botón -->
-        <button type="submit" 
-                class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">
-          Guardar Pedido
+        <button type="submit" id="submitBtn"
+                class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2">
+          <span id="submitText">Guardar Pedido</span>
+          <div id="submitSpinner" class="hidden animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
         </button>
       </form>
     </section>
-
-    <!-- Vista General -->
-    <section class="bg-white shadow rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">Vista General de Pedidos</h2>
-      <ul id="listaPedidos" class="space-y-3 text-gray-700">
-        <li class="text-gray-400 italic">Aún no hay pedidos ingresados.</li>
-      </ul>
-    </section>
-
   </div>
 
-  <!-- Script para conectar con backend -->
   <script>
     const form = document.getElementById('pedidoForm');
     const listaPedidos = document.getElementById('listaPedidos');
     const API_BASE = 'http://localhost:8080/api';
+
+    // Sistema de notificaciones toast
+    function showToast(message, type = 'success', duration = 4000) {
+      const container = document.getElementById('toastContainer');
+      
+      // Crear el elemento toast
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type} px-6 py-4 rounded-lg shadow-lg max-w-sm relative overflow-hidden`;
+      
+      // Iconos para cada tipo
+      const icons = {
+        success: `
+          <svg class="w-6 h-6 toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        `,
+        error: `
+          <svg class="w-6 h-6 toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        `,
+        info: `
+          <svg class="w-6 h-6 toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        `
+      };
+      
+      toast.innerHTML = `
+        <div class="flex items-center gap-3">
+          <div class="flex-shrink-0">
+            ${icons[type]}
+          </div>
+          <div class="flex-1">
+            <p class="font-medium text-sm">${message}</p>
+          </div>
+          <button class="flex-shrink-0 ml-2 hover:opacity-70 transition-opacity" onclick="removeToast(this)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="progress-bar"></div>
+      `;
+      
+      container.appendChild(toast);
+      
+      // Mostrar el toast
+      setTimeout(() => toast.classList.add('show'), 100);
+      
+      // Auto-remover después de la duración especificada
+      setTimeout(() => {
+        removeToast(toast.querySelector('button'));
+      }, duration);
+    }
+
+    function removeToast(button) {
+      const toast = button.closest('.toast');
+      toast.classList.add('hide');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 400);
+    }
 
     // Cargar pedidos al iniciar la página
     document.addEventListener('DOMContentLoaded', cargarPedidos);
@@ -100,39 +242,48 @@
         const data = await response.json();
         const pedidos = data.pedidos || [];
         
-        if (pedidos.length === 0) {
-          listaPedidos.innerHTML = '<li class="text-gray-400 italic">Aún no hay pedidos ingresados.</li>';
-          return;
+        if (listaPedidos) {
+          if (pedidos.length === 0) {
+            listaPedidos.innerHTML = '<li class="text-gray-400 italic">Aún no hay pedidos ingresados.</li>';
+            return;
+          }
+          
+          listaPedidos.innerHTML = '';
+          pedidos.forEach(pedido => {
+            const li = document.createElement('li');
+            li.className = "p-3 border rounded bg-gray-50";
+            
+            li.innerHTML = `
+              <p><span class="font-semibold">ID:</span> ${pedido.id_pedido}</p>
+              <p><span class="font-semibold">Cliente:</span> ${pedido.nombre_cliente}</p>
+              <p><span class="font-semibold">Entrega:</span> ${pedido.fecha_entrega}</p>
+              <p><span class="font-semibold">Estado:</span> 
+                <span class="px-2 py-1 text-xs rounded ${pedido.estado === 'Pendiente' ? 'bg-yellow-200' : 'bg-green-200'}">
+                  ${pedido.estado}
+                </span>
+              </p>
+              ${pedido.email_cliente ? `<p><span class="font-semibold">Email:</span> ${pedido.email_cliente}</p>` : ""}
+            `;
+            
+            listaPedidos.appendChild(li);
+          });
         }
-        
-        listaPedidos.innerHTML = '';
-        pedidos.forEach(pedido => {
-          const li = document.createElement('li');
-          li.className = "p-3 border rounded bg-gray-50";
-          
-          li.innerHTML = `
-            <p><span class="font-semibold">ID:</span> ${pedido.id_pedido}</p>
-            <p><span class="font-semibold">Cliente:</span> ${pedido.nombre_cliente}</p>
-            <p><span class="font-semibold">Entrega:</span> ${pedido.fecha_entrega}</p>
-            <p><span class="font-semibold">Estado:</span> 
-               <span class="px-2 py-1 text-xs rounded ${pedido.estado === 'Pendiente' ? 'bg-yellow-200' : 'bg-green-200'}">
-                 ${pedido.estado}
-               </span>
-            </p>
-            ${pedido.email_cliente ? `<p><span class="font-semibold">Email:</span> ${pedido.email_cliente}</p>` : ""}
-          `;
-          
-          listaPedidos.appendChild(li);
-        });
         
       } catch (error) {
         console.error('Error:', error);
-        listaPedidos.innerHTML = '<li class="text-red-500">Error al cargar pedidos. Verifica que el backend esté ejecutándose.</li>';
+        if (listaPedidos) {
+          listaPedidos.innerHTML = '<li class="text-red-500">Error al cargar pedidos. Verifica que el backend esté ejecutándose.</li>';
+        }
       }
     }
 
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      const submitText = document.getElementById('submitText');
+      const submitSpinner = document.getElementById('submitSpinner');
+      const formSection = document.getElementById('formSection');
 
       // Obtener datos
       const producto = form.producto.value.trim();
@@ -144,9 +295,14 @@
 
       // Validación básica
       if (!producto || !cantidad || !cliente || !fecha) {
-        alert("Por favor complete todos los campos obligatorios.");
+        showToast("Por favor complete todos los campos obligatorios", 'error');
         return;
       }
+
+      // Mostrar estado de carga
+      submitBtn.disabled = true;
+      submitText.textContent = 'Guardando...';
+      submitSpinner.classList.remove('hidden');
 
       try {
         // Enviar al backend
@@ -172,22 +328,40 @@
 
         const result = await response.json();
         
-        // Mostrar mensaje de éxito
-        alert(`✅ ${result.message} (ID: ${result.pedido_id})`);
+        // Mostrar notificación de éxito
+        showToast(`Pedido creado exitosamente (ID: ${result.pedido_id})`, 'success', 5000);
+        
+        // Efecto sutil en el formulario
+        formSection.classList.add('form-success');
+        setTimeout(() => formSection.classList.remove('form-success'), 600);
         
         // Resetear formulario
         form.reset();
         
-        // Recargar lista de pedidos
-        await cargarPedidos();
+        // Recargar lista de pedidos si existe
+        if (typeof cargarPedidos === 'function') {
+          await cargarPedidos();
+        }
         
       } catch (error) {
         console.error('Error:', error);
-        alert(`❌ Error: ${error.message}`);
+        showToast(`Error: ${error.message}`, 'error', 6000);
+      } finally {
+        // Restaurar estado del botón
+        submitBtn.disabled = false;
+        submitText.textContent = 'Guardar Pedido';
+        submitSpinner.classList.add('hidden');
       }
+    });
+
+    // Configurar fecha mínima
+    document.addEventListener('DOMContentLoaded', function() {
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('fechaEntrega').setAttribute('min', hoy);
     });
   </script>
 
+  <script src="./header-inline.js"></script>
+  <script src="./menu-inline.js"></script>
 </body>
 </html>
-

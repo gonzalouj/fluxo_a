@@ -1,20 +1,36 @@
 // main.go
-// Punto de entrada del backend en Go
-// Inicializa el servidor, rutas y middlewares
 package main
 
 import (
 	"fluxo/backend/config"
+	"fluxo/backend/handlers"
 	"fluxo/backend/routes"
+	"log" // Importamos 'log' para manejar errores fatales
+
+	"github.com/gin-gonic/gin" // Importamos 'gin' para configurar el modo
 )
 
 func main() {
-	// Configurar puerto del servidor
-	port := config.GetEnv("PORT", "8080")
+	// ✅ PASO 1: 'main' crea la conexión a la base de datos directamente.
+	database, err := config.ConnectDB()
+	if err != nil {
+		// Si la conexión falla, la aplicación se detiene con un error claro.
+		log.Fatalf("Error fatal: no se pudo conectar a la base de datos: %v", err)
+	}
 
-	// Configurar router con Gin
+	// ✅ PASO 2: 'main' le entrega la conexión al paquete de handlers.
+	handlers.SetDB(database)
+
+	// Configurar el modo de Gin desde la variable de entorno.
+	gin.SetMode(config.GetEnv("GIN_MODE", "debug"))
+	
+	// Configurar el router con Gin.
 	router := routes.SetupRouter()
-
-	// Iniciar servidor
+	
+	// Obtener el puerto desde la variable de entorno.
+	port := config.GetEnv("PORT", "8080")
+	
+	// Iniciar servidor.
+	log.Printf("🚀 Servidor escuchando en el puerto %s", port)
 	router.Run(":" + port)
 }
