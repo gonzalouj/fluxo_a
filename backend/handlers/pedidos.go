@@ -101,24 +101,28 @@ func ListarPedidos(c *gin.Context) {
 	}
 
 	type PedidoConProductos struct {
-		ID            int               `json:"id_pedido"`
-		NombreCliente string            `json:"nombre_cliente"`
-		EmailCliente  *string           `json:"email_cliente,omitempty"`
-		FechaEntrega  string            `json:"fecha_entrega"`
-		Estado        string            `json:"estado"`
-		FechaCreacion sql.NullTime      `json:"-"`
-		Productos     []ProductoResumen `json:"productos"`
+		ID             int               `json:"id_pedido"`
+		NombreCliente  string            `json:"nombre_cliente"`
+		EmailCliente   *string           `json:"email_cliente,omitempty"`
+		TelefonoCliente *string          `json:"telefono_cliente,omitempty"` 
+		FechaEntrega   string            `json:"fecha_entrega"`
+		Estado         string            `json:"estado"`
+		FechaCreacion  sql.NullTime      `json:"fecha_creacion,omitempty"`
+		DetallesPedido *string           `json:"detalles_pedido,omitempty"` // Para las etiquetas
+		Productos      []ProductoResumen `json:"productos"`
+		Comentarios    json.RawMessage   `json:"comentarios"` // Para los comentarios
 	}
 
-	// ✅ --- CAMBIO CLAVE: Usamos to_char para formatear la fecha a 'YYYY-MM-DD' --- ✅
 	query := `
 		SELECT 
 		  p.id_pedido,
 		  p.nombre_cliente,
 		  p.email_cliente,
+		  p.telefono_cliente, -- <-- AÑADIDO
 		  to_char(p.fecha_entrega, 'YYYY-MM-DD') AS fecha_entrega,
 		  p.estado,
 		  p.fecha_creacion,
+		  p.detalles_pedido,
 		  COALESCE((
 		    SELECT json_agg(json_build_object(
 		      'producto', pr.nombre,
@@ -128,7 +132,17 @@ func ListarPedidos(c *gin.Context) {
 		    FROM pedido_productos pp
 		    JOIN productos pr ON pr.id_producto = pp.id_producto
 		    WHERE pp.id_pedido = p.id_pedido
-		  ), '[]') AS productos
+		  ), '[]') AS productos,
+		  COALESCE((
+            SELECT json_agg(json_build_object(
+                'usuario', u.nombre_completo,
+                'comentario', cm.comentario,
+                'fecha', to_char(cm.fecha_creacion, 'DD-MM-YYYY HH24:MI')
+            ))
+            FROM comentarios cm
+            JOIN usuarios u ON u.id_usuario = cm.id_usuario
+            WHERE cm.id_pedido = p.id_pedido
+          ), '[]') AS comentarios
 		FROM pedidos p
 		ORDER BY
 		  CASE p.estado
@@ -155,10 +169,13 @@ func ListarPedidos(c *gin.Context) {
 			&p.ID,
 			&p.NombreCliente,
 			&p.EmailCliente,
+			&p.TelefonoCliente,
 			&p.FechaEntrega,
 			&p.Estado,
 			&p.FechaCreacion,
+			&p.DetallesPedido, // <-- Nuevo
 			&productosRaw,
+			&p.Comentarios,   // <-- Nuevo
 		)
 		if err != nil {
 			continue
@@ -196,4 +213,71 @@ func ObtenerPedidoPorID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, p)
+}
+
+// ActualizarEstadoPedido maneja PATCH /api/pedidos/:id/estado
+func ActualizarEstadoPedido(c *gin.Context) {
+	// Obtener ID del pedido desde la URL
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
+		return
+	}
+
+	// Estructura para recibir el nuevo estado
+	var req struct {
+		Estado string `json:"estado" binding:"required"`
+	}
+
+	// Parsear el body de la petición
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Estado requerido"})
+		return
+	}
+
+	// Validar que el estado sea válido
+	estadosValidos := map[string]bool{
+		"Pendiente": true,
+		"Listo":     true,
+		"Cancelado": true,
+	}
+
+	if !estadosValidos[req.Estado] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Estado inválido. Use: Pendiente, Listo o Cancelado"})
+		return
+	}
+
+	// Verificar que el pedido existe y obtener su estado actual
+	var estadoActual string
+	err = db.QueryRow("SELECT estado FROM pedidos WHERE id_pedido = $1", id).Scan(&estadoActual)
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Pedido no encontrado"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al verificar pedido"})
+		return
+	}
+
+	// Validar transiciones de estado permitidas
+	// Solo se puede cambiar estado si está Pendiente
+	if estadoActual != "Pendiente" && req.Estado != estadoActual {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "No se puede cambiar el estado de un pedido que ya está " + estadoActual,
+		})
+		return
+	}
+
+	// Actualizar el estado en la base de datos
+	_, err = db.Exec("UPDATE pedidos SET estado = $1 WHERE id_pedido = $2", req.Estado, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al actualizar estado"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Estado actualizado exitosamente",
+		"pedido_id": id,
+		"nuevo_estado": req.Estado,
+	})
 }

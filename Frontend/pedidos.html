@@ -17,6 +17,7 @@
     }
     .pedido-card {
       transition: all 0.2s ease;
+      cursor: pointer;
     }
     .pedido-card:hover {
       transform: translateY(-2px);
@@ -25,6 +26,42 @@
     .search-input:focus {
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
+    .modal-backdrop {
+      animation: fadeIn 0.2s ease-out;
+    }
+    .modal-content {
+      animation: slideUp 0.3s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .status-badge-large {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    .action-button {
+      transition: all 0.2s ease;
+    }
+    .action-button:hover {
+      transform: scale(1.05);
+    }
+    .action-button:active {
+      transform: scale(0.98);
+    }
   </style>
 </head>
 
@@ -32,7 +69,7 @@
   <div id="menu-placeholder"></div>
   <div id="header-placeholder"></div>
 
-  <div class="max-w-7xl mx-auto px-4 py-6">
+  <main class="max-w-7xl mx-auto px-4 py-6">
     <div id="loading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
     </div>
@@ -47,109 +84,88 @@
       </div>
       <p class="text-gray-500 text-lg">No hay pedidos disponibles</p>
     </div>
+  </main>
+
+  <div id="modal-pedido" class="fixed inset-0 z-50 overflow-y-auto hidden">
+    <div class="modal-backdrop flex items-center justify-center min-h-screen px-4 py-6">
+      <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="cerrarModal()"></div>
+      <div class="modal-content relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-auto z-10">
+        <div class="relative rounded-t-2xl px-6 py-5 border-b border-gray-200">
+          <button onclick="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+          <div class="flex items-start space-x-4">
+            <div id="modal-status-indicator" class="w-5 h-5 rounded-full flex-shrink-0 mt-1.5"></div>
+            <div>
+              <h2 id="modal-titulo" class="text-2xl font-bold text-gray-900"></h2>
+              
+              <div class="flex items-center gap-5 mt-1">
+                
+                <p id="modal-fecha-creacion" class="text-sm text-gray-500"></p>
+                
+                <button onclick="abrirModalEdicion()" title="Editar Pedido" class="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-blue-600 transition-colors">
+                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
+                </button>
+
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-5 max-h-[60vh] overflow-y-auto">
+          <div class="mb-6">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700">Estado actual</span>
+              <span id="modal-estado-badge" class="px-4 py-2 rounded-full text-white font-semibold status-badge-large"></span>
+            </div>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4 mb-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>Información del Cliente</h3>
+            <div class="space-y-2">
+              <div class="flex justify-between"><span class="text-sm text-gray-600">Nombre:</span><span id="modal-cliente" class="text-sm font-medium text-gray-900"></span></div>
+              <div id="modal-email-container" class="flex justify-between"><span class="text-sm text-gray-600">Email:</span><span id="modal-email" class="text-sm font-medium text-gray-900"></span></div>
+              <div id="modal-telefono-container" class="flex justify-between"><span class="text-sm text-gray-600">Teléfono:</span><span id="modal-telefono" class="text-sm font-medium text-gray-900"></span></div>
+            </div>
+          </div>
+          <div class="bg-blue-50 rounded-xl p-4 mb-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>Fecha de Entrega</h3>
+            <p id="modal-fecha-entrega" class="text-lg font-semibold text-gray-900"></p>
+          </div>
+          <div class="bg-green-50 rounded-xl p-4 mb-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Productos del Pedido</h3>
+            <div id="modal-productos" class="space-y-2"></div>
+            <div class="mt-3 pt-3 border-t border-green-200"><div class="flex justify-between items-center"><span class="text-sm font-semibold text-gray-700">Total del Pedido:</span><span id="modal-total" class="text-lg font-bold text-gray-900"></span></div></div>
+          </div>
+          <div id="modal-detalles-container" class="bg-purple-50 rounded-xl p-4 mb-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>Comentarios y Etiquetas</h3>
+            <div id="modal-detalles" class="flex flex-wrap items-center gap-2"></div>
+          </div>
+          <div id="modal-comentarios-container" class="bg-yellow-50 rounded-xl p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V4a2 2 0 012-2h6a2 2 0 012 2v1z"></path></svg>Comentarios</h3>
+            <div id="modal-comentarios" class="space-y-3"></div>
+          </div>
+        </div>
+        <div id="modal-actions" class="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-200"></div>
+      </div>
+    </div>
   </div>
 
-  <script>
-    const API_BASE = 'http://localhost:8080/api';
+  <div id="modal-confirmacion" class="fixed inset-0 z-50 overflow-y-auto hidden">
+    <div class="flex items-center justify-center min-h-screen px-4 py-6">
+      <div class="fixed inset-0 bg-black bg-opacity-60 transition-opacity" onclick="cerrarConfirmacion()"></div>
+      <div class="relative bg-white rounded-2xl shadow-xl max-w-sm w-full mx-auto z-10 p-6 text-center">
+        <div id="confirmacion-icono" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <h3 id="confirmacion-titulo" class="text-xl font-bold text-gray-800 mb-2"></h3>
+        <p id="confirmacion-mensaje" class="text-sm text-gray-600 mb-6"></p>
+        <div class="flex justify-center gap-4">
+          <button onclick="cerrarConfirmacion()" class="w-full px-4 py-2.5 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors">Cancelar</button>
+          <button id="confirmacion-boton-accion" onclick="confirmarAccion()" class="w-full px-4 py-2.5 text-white rounded-lg font-medium transition-colors">Confirmar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    const listaEl = document.getElementById('lista-pedidos');
-    const loadingEl = document.getElementById('loading');
-    const emptyStateEl = document.getElementById('empty-state');
-
-    function getStatusClass(estado) {
-      const estados = { 'pendiente': 'status-pendiente', 'listo': 'status-listo', 'cancelado': 'status-cancelado' };
-      const normalized = (estado || '').toLowerCase();
-      return estados[normalized] || 'bg-gray-500';
-    }
-
-    function formatDate(fecha) {
-      if (!fecha) return 'Sin fecha';
-      try { return new Date(fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }); }
-      catch { return fecha; }
-    }
-
-    function capitalize(v) { return v ? v.charAt(0).toUpperCase() + v.slice(1) : ''; }
-    function formatCLPNoSep(value) {
-      if (value == null || value === '') return '$0';
-      const n = Number(value);
-      if (Number.isNaN(n)) return `$${value}`;
-      return `$${Math.round(n)}`;
-    }
-
-    function renderPedidoCard(pedido) {
-      const estado = pedido.estado || 'Pendiente';
-      const statusClass = getStatusClass(estado);
-      const fechaFormateada = formatDate(pedido.fecha_entrega);
-      const productosHtml = (pedido.productos && pedido.productos.length > 0)
-        ? `<div class="space-y-2">
-            <h3 class="text-sm font-medium text-gray-700 mb-2">Productos:</h3>
-            <div class="bg-gray-50 rounded-xl p-3">
-              ${pedido.productos.map(prod => {
-                const precio = typeof prod.precio_unitario === 'number' ? formatCLPNoSep(prod.precio_unitario) : formatCLPNoSep(prod.precio_unitario);
-                const cantidad = prod.cantidad || 0;
-                const nombre = prod.producto || 'Producto sin nombre';
-                return `
-                  <div class="flex justify-between items-center py-1">
-                    <span class="text-sm text-gray-800 flex-1">${nombre}</span>
-                    <span class="text-sm text-gray-600 ml-2">x${cantidad} • ${precio}</span>
-                  </div>`;
-              }).join('')}
-            </div>
-          </div>`
-        : `<div class="text-center py-4">
-            <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-            </svg>
-            <p class="text-gray-400 text-sm italic">Sin productos asociados</p>
-          </div>`;
-
-      const nombreCliente = (pedido.nombre_cliente || 'Cliente sin nombre').toUpperCase();
-
-      return `
-        <div class="pedido-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="flex items-center p-4 pb-3">
-            <div class="w-4 h-4 rounded-full ${statusClass} mr-3 flex-shrink-0"></div>
-            <div class="flex-1 min-w-0">
-              <h2 class="text-lg md:text-xl font-semibold text-gray-900 truncate">${nombreCliente}</h2>
-            </div>
-            <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 ml-2 flex-shrink-0">${capitalize(estado)}</span>
-          </div>
-          <div class="px-4 pb-4">
-            <div class="flex items-center text-sm text-gray-600 mb-3">
-              <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a4 4 0 118 0v4m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
-              </svg>
-              <span>Entrega: ${fechaFormateada}</span>
-            </div>
-            ${productosHtml}
-          </div>
-        </div>`;
-    }
-
-    async function cargarPedidos() {
-      try {
-        const res = await fetch(`${API_BASE}/pedidos`);
-        if (!res.ok) throw new Error('Error al cargar pedidos');
-        const data = await res.json();
-        const pedidos = data.pedidos || [];
-        loadingEl.classList.add('hidden');
-        if (pedidos.length === 0) { emptyStateEl.classList.remove('hidden'); listaEl.classList.add('hidden'); return; }
-        listaEl.innerHTML = pedidos.map(renderPedidoCard).join('');
-        listaEl.classList.remove('hidden');
-        emptyStateEl.classList.add('hidden');
-      } catch (e) {
-        loadingEl.classList.add('hidden');
-        listaEl.innerHTML = `<div class="text-center py-12"><div class="text-red-400 mb-4"><svg class=\"w-16 h-16 mx-auto\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" d=\"M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.19 2.5 1.732 2.5z\"></path></svg></div><p class=\"text-red-500 text-lg font-medium\">Error de conexión</p><p class=\"text-gray-500 text-sm mt-1\">No se pudo conectar con el servidor</p></div>`;
-        listaEl.classList.remove('hidden');
-        emptyStateEl.classList.add('hidden');
-        console.error(e);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', cargarPedidos);
-  </script>
+  <script src="./pedidos.js" defer></script>
   <script src="./header-inline.js"></script>
-  <script src="./pedidos.js"></script>
   <script src="./menu-inline.js"></script>
 </body>
 </html>

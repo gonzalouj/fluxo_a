@@ -18,7 +18,7 @@ func CORSMiddleware() gin.HandlerFunc {
 		// Esto asegura que solo tu frontend pueda conectarse en producción.
 		c.Header("Access-Control-Allow-Origin", allowedOrigin)
 		
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		c.Header("Access-Control-Allow-Credentials", "true") // Es buena práctica añadir esto
 

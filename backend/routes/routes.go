@@ -1,38 +1,61 @@
 // routes.go
-// Configura las rutas del servidor
 package routes
 
 import (
 	"fluxo/backend/handlers"
 	"fluxo/backend/middleware"
+	"os"
+	"path/filepath"
+	//"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-// SetupRouter inicializa el router y las rutas.
-// Su única responsabilidad ahora es definir los endpoints.
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
-
-	// ✅ CAMBIO: Eliminamos la línea "handlers.InitDB()" de aquí.
-	// La inicialización de la base de datos ahora la hace main.go, que es el lugar correcto.
 
 	// Aplicar middleware CORS
 	r.Use(middleware.CORSMiddleware())
 
-	// ✅ MEJORA: Organizamos las rutas bajo un grupo /api para mantener el código ordenado.
+	// --- RUTAS DE LA API ---
+	// Se definen primero para que tengan la máxima prioridad.
 	api := r.Group("/api")
 	{
 		api.GET("/hello", handlers.HelloHandler)
-
-		// Rutas de pedidos agrupadas
 		pedidos := api.Group("/pedidos")
 		{
 			pedidos.POST("", handlers.CrearPedido)
 			pedidos.GET("", handlers.ListarPedidos)
 			pedidos.GET("/:id", handlers.ObtenerPedidoPorID)
+			api.PATCH("/pedidos/:id/estado", handlers.ActualizarEstadoPedido)
 		}
 	}
+
+	// Usamos un manejador "NoRoute" para atrapar cualquier petición
+	// que no coincida con una ruta de la API.
+	r.NoRoute(func(c *gin.Context) {
+		// Obtenemos la ruta solicitada por el navegador
+		path := c.Request.URL.Path
+
+		// Si la ruta es la raíz "/", servimos index.html
+		if path == "/" {
+			c.File("../Frontend/index.html")
+			return
+		}
+
+		// Construimos la ruta completa al archivo en la carpeta Frontend
+		// filepath.Join es una forma segura de unir rutas de directorios
+		filePath := filepath.Join("../Frontend", path)
+
+		// Verificamos si el archivo solicitado existe
+		if _, err := os.Stat(filePath); err == nil {
+			// Si el archivo existe (ej: /pedidos.js, /index.html), lo servimos
+			c.File(filePath)
+		} else {
+			// Si el archivo no existe, servimos la página 404
+			c.File("../Frontend/404.html")
+		}
+	})
 
 	return r
 }

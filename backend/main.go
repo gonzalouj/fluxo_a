@@ -30,7 +30,7 @@ func main() {
 	// Obtener el puerto desde la variable de entorno.
 	port := config.GetEnv("PORT", "8080")
 	
-	// Iniciar servidor.
-	log.Printf("🚀 Servidor escuchando en el puerto %s", port)
+	log.Printf("🚀 Servidor corriendo en ----- > http://localhost:%s/", port)
+	
 	router.Run(":" + port)
 }
