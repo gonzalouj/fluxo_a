@@ -22,18 +22,28 @@ type Pedido struct {
 
 // PedidoRequest representa la estructura del formulario frontend
 type PedidoRequest struct {
-	Producto  string `json:"producto" binding:"required"`
-	Cantidad  int    `json:"cantidad" binding:"required,min=1"`
-	Cliente   string `json:"cliente" binding:"required"`
-	Fecha     string `json:"fecha" binding:"required"`
-	Email     string `json:"email"`
-	Etiquetas string `json:"etiquetas"`
+	Cliente    string             `json:"cliente" binding:"required"`
+	Fecha      string             `json:"fecha" binding:"required"`
+	Email      string             `json:"email"`
+	Telefono   string             `json:"telefono"`
+	Etiquetas  string             `json:"etiquetas"`
+	Comentarios string            `json:"comentarios"`
+	Productos  []ProductoEnPedido `json:"productos" binding:"required,min=1"`
 }
+
+// ProductoEnPedido representa un producto dentro de un pedido
+type ProductoEnPedido struct {
+	IDProducto int `json:"id_producto" binding:"required"`
+	Cantidad   int `json:"cantidad" binding:"required,min=1"`
+}
+
 
 // Producto representa un producto del catálogo
 type Producto struct {
 	ID             int     `json:"id_producto"`
+	Codigo         *string `json:"codigo,omitempty"`
 	Nombre         string  `json:"nombre"`
-	Descripcion    *string `json:"descripcion,omitempty"`
 	PrecioUnitario float64 `json:"precio_unitario"`
+	Stock          int     `json:"stock"`
+	FotoURL        *string `json:"foto_url,omitempty"`
 }

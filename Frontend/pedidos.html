@@ -1,171 +1,701 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pedidos</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .status-pendiente { 
-      background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    }
-    .status-listo { 
-      background: linear-gradient(135deg, #10b981, #059669);
-    }
-    .status-cancelado { 
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-    }
-    .pedido-card {
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-    .pedido-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-    .search-input:focus {
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    .modal-backdrop {
-      animation: fadeIn 0.2s ease-out;
-    }
-    .modal-content {
-      animation: slideUp 0.3s ease-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes slideUp {
-      from { 
-        opacity: 0;
-        transform: translateY(20px);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pedidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .status-pendiente {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
       }
-      to { 
-        opacity: 1;
-        transform: translateY(0);
+      .status-listo {
+        background: linear-gradient(135deg, #10b981, #059669);
       }
-    }
-    .status-badge-large {
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
-    }
-    .action-button {
-      transition: all 0.2s ease;
-    }
-    .action-button:hover {
-      transform: scale(1.05);
-    }
-    .action-button:active {
-      transform: scale(0.98);
-    }
-  </style>
-</head>
+      .status-cancelado {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+      }
+      .pedido-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+      .pedido-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+      .search-input:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+      .modal-backdrop {
+        animation: fadeIn 0.2s ease-out;
+      }
+      .modal-content {
+        animation: slideUp 0.3s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .status-badge-large {
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+      .action-button {
+        transition: all 0.2s ease;
+      }
+      .action-button:hover {
+        transform: scale(1.05);
+      }
+      .action-button:active {
+        transform: scale(0.98);
+      }
+    </style>
+  </head>
 
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-  <div id="menu-placeholder"></div>
-  <div id="header-placeholder"></div>
+  <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div id="menu-placeholder"></div>
+    <div id="header-placeholder"></div>
 
-  <main class="max-w-7xl mx-auto px-4 py-6">
-    <div id="loading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-    </div>
-
-    <div id="lista-pedidos" class="space-y-4 hidden"></div>
-
-    <div id="empty-state" class="hidden text-center py-12">
-      <div class="text-gray-400 mb-4">
-        <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
+    <main class="max-w-7xl mx-auto px-4 py-6">
+      <div id="loading" class="flex justify-center items-center py-12">
+        <div
+          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+        ></div>
       </div>
-      <p class="text-gray-500 text-lg">No hay pedidos disponibles</p>
-    </div>
-  </main>
 
-  <div id="modal-pedido" class="fixed inset-0 z-50 overflow-y-auto hidden">
-    <div class="modal-backdrop flex items-center justify-center min-h-screen px-4 py-6">
-      <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="cerrarModal()"></div>
-      <div class="modal-content relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-auto z-10">
-        <div class="relative rounded-t-2xl px-6 py-5 border-b border-gray-200">
-          <button onclick="cerrarModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-          <div class="flex items-start space-x-4">
-            <div id="modal-status-indicator" class="w-5 h-5 rounded-full flex-shrink-0 mt-1.5"></div>
-            <div>
-              <h2 id="modal-titulo" class="text-2xl font-bold text-gray-900"></h2>
-              
-              <div class="flex items-center gap-5 mt-1">
-                
-                <p id="modal-fecha-creacion" class="text-sm text-gray-500"></p>
-                
-                <button onclick="abrirModalEdicion()" title="Editar Pedido" class="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-blue-600 transition-colors">
-                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
-                </button>
+      <div id="lista-pedidos" class="space-y-4 hidden"></div>
 
+      <div id="empty-state" class="hidden text-center py-12">
+        <div class="text-gray-400 mb-4">
+          <svg
+            class="w-16 h-16 mx-auto"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            ></path>
+          </svg>
+        </div>
+        <p class="text-gray-500 text-lg">No hay pedidos disponibles</p>
+      </div>
+    </main>
+
+    <div id="modal-detalle" class="fixed inset-0 z-50 overflow-y-auto hidden">
+      <div
+        class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onclick="cerrarModal()"
+      ></div>
+      <div
+        class="fixed inset-0 flex items-center justify-center p-4"
+        style="
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        "
+      >
+        <div
+          class="modal-content relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full z-10"
+        >
+          <div
+            class="relative rounded-t-2xl px-6 py-5 border-b border-gray-200"
+          >
+            <button
+              onclick="cerrarModal()"
+              class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+            <div class="flex items-start space-x-4">
+              <div
+                id="modal-status-indicator"
+                class="w-5 h-5 rounded-full flex-shrink-0 mt-1.5"
+              ></div>
+              <div>
+                <h2
+                  id="modal-titulo"
+                  class="text-2xl font-bold text-gray-900"
+                ></h2>
+
+                <div class="flex items-center gap-5 mt-1">
+                  <p
+                    id="modal-fecha-creacion"
+                    class="text-sm text-gray-500"
+                  ></p>
+
+                  <button
+                    id="edit-pedido-btn"
+                    onclick="abrirModalEdicion()"
+                    title="Editar Pedido"
+                    class="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                  >
+                    <svg
+                      class="w-6 h-6"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"
+                      ></path>
+                      <path
+                        fill-rule="evenodd"
+                        d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="px-6 py-5 max-h-[60vh] overflow-y-auto">
-          <div class="mb-6">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-medium text-gray-700">Estado actual</span>
-              <span id="modal-estado-badge" class="px-4 py-2 rounded-full text-white font-semibold status-badge-large"></span>
+          <div class="px-6 py-5 max-h-[60vh] overflow-y-auto">
+            <div class="mb-6">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700"
+                  >Estado actual</span
+                >
+                <span
+                  id="modal-estado-badge"
+                  class="px-4 py-2 rounded-full text-white font-semibold status-badge-large"
+                ></span>
+              </div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4 mb-4">
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  ></path></svg
+                >Información del Cliente
+              </h3>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600">Nombre:</span
+                  ><span
+                    id="modal-cliente"
+                    class="text-sm font-medium text-gray-900"
+                  ></span>
+                </div>
+                <div id="modal-email-container" class="flex justify-between">
+                  <span class="text-sm text-gray-600">Email:</span
+                  ><span
+                    id="modal-email"
+                    class="text-sm font-medium text-gray-900"
+                  ></span>
+                </div>
+                <div id="modal-telefono-container" class="flex justify-between">
+                  <span class="text-sm text-gray-600">Teléfono:</span
+                  ><span
+                    id="modal-telefono"
+                    class="text-sm font-medium text-gray-900"
+                  ></span>
+                </div>
+              </div>
+            </div>
+            <div class="bg-blue-50 rounded-xl p-4 mb-4">
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path></svg
+                >Fecha de Entrega
+              </h3>
+              <p
+                id="modal-fecha-entrega"
+                class="text-lg font-semibold text-gray-900"
+              ></p>
+            </div>
+            <div class="bg-green-50 rounded-xl p-4 mb-4">
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  ></path></svg
+                >Productos del Pedido
+              </h3>
+              <div id="modal-productos" class="space-y-2"></div>
+              <div class="mt-3 pt-3 border-t border-green-200">
+                <div class="flex justify-between items-center">
+                  <span class="text-sm font-semibold text-gray-700"
+                    >Total del Pedido:</span
+                  ><span
+                    id="modal-total"
+                    class="text-lg font-bold text-gray-900"
+                  ></span>
+                </div>
+              </div>
+            </div>
+            <div
+              id="modal-etiquetas-container"
+              class="bg-purple-50 rounded-xl p-4 mb-4"
+            >
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                  ></path></svg
+                >Etiquetas
+              </h3>
+              <div
+                id="modal-etiquetas"
+                class="flex flex-wrap items-center gap-2"
+              ></div>
+            </div>
+            <div
+              id="modal-comentarios-container"
+              class="bg-yellow-50 rounded-xl p-4"
+            >
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V4a2 2 0 012-2h6a2 2 0 012 2v1z"
+                  ></path></svg
+                >Comentarios
+              </h3>
+              <div id="modal-comentarios" class="space-y-3"></div>
+              <div id="modal-comentarios-list" class="space-y-3"></div>
+              <form id="add-comment-form" class="mt-4">
+                <textarea
+                  id="nuevo-comentario-texto"
+                  class="w-full p-2 border border-gray-300 rounded-md"
+                  rows="2"
+                  placeholder="Añadir un comentario..."
+                  required
+                ></textarea>
+                <button
+                  type="submit"
+                  class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Añadir Comentario
+                </button>
+              </form>
             </div>
           </div>
-          <div class="bg-gray-50 rounded-xl p-4 mb-4">
-            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>Información del Cliente</h3>
-            <div class="space-y-2">
-              <div class="flex justify-between"><span class="text-sm text-gray-600">Nombre:</span><span id="modal-cliente" class="text-sm font-medium text-gray-900"></span></div>
-              <div id="modal-email-container" class="flex justify-between"><span class="text-sm text-gray-600">Email:</span><span id="modal-email" class="text-sm font-medium text-gray-900"></span></div>
-              <div id="modal-telefono-container" class="flex justify-between"><span class="text-sm text-gray-600">Teléfono:</span><span id="modal-telefono" class="text-sm font-medium text-gray-900"></span></div>
+          <div
+            id="modal-actions"
+            class="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-200"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-edicion" class="fixed inset-0 z-50 overflow-y-auto hidden">
+      <div
+        class="modal-backdrop flex items-center justify-center min-h-screen px-4 py-6"
+      >
+        <div
+          class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+          onclick="cancelarEdicion()"
+        ></div>
+        <div
+          class="modal-content relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-auto z-10"
+        >
+          <div
+            class="relative rounded-t-2xl px-6 py-5 border-b border-gray-200"
+          >
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900">Editar Pedido</h2>
+              <p class="text-sm text-gray-600 mt-1">
+                Modifica la información del pedido y sus productos
+              </p>
             </div>
+            <button
+              onclick="cancelarEdicion()"
+              class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
           </div>
-          <div class="bg-blue-50 rounded-xl p-4 mb-4">
-            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>Fecha de Entrega</h3>
-            <p id="modal-fecha-entrega" class="text-lg font-semibold text-gray-900"></p>
+          <div class="px-6 py-5 max-h-[70vh] overflow-y-auto">
+            <form id="form-edicion" class="space-y-6">
+              <!-- Información del Cliente -->
+              <div class="bg-gray-50 rounded-xl p-4">
+                <h3
+                  class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+                >
+                  <svg
+                    class="w-5 h-5 mr-2 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    ></path>
+                  </svg>
+                  Información del Cliente
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      for="edit-cliente"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Nombre del Cliente *
+                    </label>
+                    <input
+                      type="text"
+                      name="cliente"
+                      id="edit-cliente"
+                      required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="Ingrese el nombre del cliente"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      for="edit-fecha-entrega"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Fecha de Entrega *
+                    </label>
+                    <input
+                      type="date"
+                      name="fecha"
+                      id="edit-fecha-entrega"
+                      required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      for="edit-email"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      id="edit-email"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="cliente@ejemplo.com"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      for="edit-telefono"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Teléfono
+                    </label>
+                    <input
+                      type="text"
+                      name="telefono"
+                      id="edit-telefono"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      placeholder="56912345678"
+                    />
+                    <p
+                      id="edicion-telefono-warning"
+                      class="text-red-500 text-xs mt-1 hidden"
+                    >
+                      Solo se admiten números.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Productos del Pedido -->
+              <div class="bg-green-50 rounded-xl p-4">
+                <h3
+                  class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+                >
+                  <svg
+                    class="w-5 h-5 mr-2 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    ></path>
+                  </svg>
+                  Productos del Pedido
+                </h3>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-3">
+                    <input
+                      type="text"
+                      id="edicion-product-search"
+                      placeholder="Buscar producto por nombre o código..."
+                      class="flex-grow px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      id="edicion-toggle-product-list-btn"
+                      class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      <svg
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 9l-7 7-7-7"
+                        ></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div
+                    id="edicion-search-results"
+                    class="hidden w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-60 overflow-y-auto shadow-lg"
+                    style="position: static"
+                  ></div>
+                  <div id="edicion-selected-products" class="space-y-2"></div>
+                  <div
+                    id="edicion-no-products-message"
+                    class="text-gray-500 text-sm text-center py-4 hidden"
+                  >
+                    <svg
+                      class="w-8 h-8 mx-auto mb-2 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                      ></path>
+                    </svg>
+                    No hay productos seleccionados
+                  </div>
+                </div>
+              </div>
+
+              <!-- Etiquetas -->
+              <div class="bg-purple-50 rounded-xl p-4">
+                <h3
+                  class="text-lg font-semibold text-gray-800 mb-4 flex items-center"
+                >
+                  <svg
+                    class="w-5 h-5 mr-2 text-purple-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                    ></path>
+                  </svg>
+                  Etiquetas
+                </h3>
+                <div>
+                  <label
+                    for="edit-etiquetas"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Etiquetas (separadas por coma)
+                  </label>
+                  <input
+                    type="text"
+                    name="etiquetas"
+                    id="edit-etiquetas"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    placeholder="urgente, regalo, especial"
+                  />
+                </div>
+              </div>
+            </form>
           </div>
-          <div class="bg-green-50 rounded-xl p-4 mb-4">
-            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Productos del Pedido</h3>
-            <div id="modal-productos" class="space-y-2"></div>
-            <div class="mt-3 pt-3 border-t border-green-200"><div class="flex justify-between items-center"><span class="text-sm font-semibold text-gray-700">Total del Pedido:</span><span id="modal-total" class="text-lg font-bold text-gray-900"></span></div></div>
-          </div>
-          <div id="modal-detalles-container" class="bg-purple-50 rounded-xl p-4 mb-4">
-            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>Comentarios y Etiquetas</h3>
-            <div id="modal-detalles" class="flex flex-wrap items-center gap-2"></div>
-          </div>
-          <div id="modal-comentarios-container" class="bg-yellow-50 rounded-xl p-4">
-            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V4a2 2 0 012-2h6a2 2 0 012 2v1z"></path></svg>Comentarios</h3>
-            <div id="modal-comentarios" class="space-y-3"></div>
+          <div
+            class="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-200 flex justify-end gap-3"
+          >
+            <button
+              type="button"
+              onclick="cancelarEdicion()"
+              class="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors border border-gray-300"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onclick="guardarCambiosPedido()"
+              class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <div
+                id="edicion-submit-spinner"
+                class="animate-spin rounded-full h-4 w-4 border-b-2 border-white hidden"
+              ></div>
+              <span id="edicion-submit-text">Guardar Cambios</span>
+            </button>
           </div>
         </div>
-        <div id="modal-actions" class="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-200"></div>
       </div>
     </div>
-  </div>
 
-  <div id="modal-confirmacion" class="fixed inset-0 z-50 overflow-y-auto hidden">
-    <div class="flex items-center justify-center min-h-screen px-4 py-6">
-      <div class="fixed inset-0 bg-black bg-opacity-60 transition-opacity" onclick="cerrarConfirmacion()"></div>
-      <div class="relative bg-white rounded-2xl shadow-xl max-w-sm w-full mx-auto z-10 p-6 text-center">
-        <div id="confirmacion-icono" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
-        <h3 id="confirmacion-titulo" class="text-xl font-bold text-gray-800 mb-2"></h3>
-        <p id="confirmacion-mensaje" class="text-sm text-gray-600 mb-6"></p>
-        <div class="flex justify-center gap-4">
-          <button onclick="cerrarConfirmacion()" class="w-full px-4 py-2.5 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors">Cancelar</button>
-          <button id="confirmacion-boton-accion" onclick="confirmarAccion()" class="w-full px-4 py-2.5 text-white rounded-lg font-medium transition-colors">Confirmar</button>
+    <div
+      id="modal-confirmacion"
+      class="fixed inset-0 z-50 overflow-y-auto hidden"
+    >
+      <div class="flex items-center justify-center min-h-screen px-4 py-6">
+        <div
+          class="fixed inset-0 bg-black bg-opacity-60 transition-opacity"
+          onclick="cerrarConfirmacion()"
+        ></div>
+        <div
+          class="relative bg-white rounded-2xl shadow-xl max-w-sm w-full mx-auto z-10 p-6 text-center"
+        >
+          <div
+            id="confirmacion-icono"
+            class="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4"
+          >
+            <svg
+              class="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+          <h3
+            id="confirmacion-titulo"
+            class="text-xl font-bold text-gray-800 mb-2"
+          ></h3>
+          <p id="confirmacion-mensaje" class="text-sm text-gray-600 mb-6"></p>
+          <div class="flex justify-center gap-4">
+            <button
+              onclick="cerrarConfirmacion()"
+              class="w-full px-4 py-2.5 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              id="confirmacion-boton-accion"
+              onclick="confirmarAccion()"
+              class="w-full px-4 py-2.5 text-white rounded-lg font-medium transition-colors"
+            >
+              Confirmar
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <script src="./pedidos.js" defer></script>
-  <script src="./header-inline.js"></script>
-  <script src="./menu-inline.js"></script>
-</body>
+    <script src="./pedidos.js" defer></script>
+    <script src="./header-inline.js"></script>
+    <script src="./menu-inline.js"></script>
+  </body>
 </html>
