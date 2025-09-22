@@ -60,5 +60,5 @@ coverage.txt
 *.swp
 *.swo
 
-# Archivos de Docker (si se usan en el futuro)
+# Archivos de Docker
 docker-compose.override.yml

@@ -2,7 +2,6 @@
 CREATE TYPE rol_usuario AS ENUM ('Admin', 'Trabajador');
 CREATE TYPE estado_pedido AS ENUM ('Pendiente', 'Listo', 'Cancelado');
 
-
 -- ========= CREACIÓN DE TABLAS =========
 
 -- 1. Tabla de Usuarios
