@@ -1060,6 +1060,9 @@ document.addEventListener("DOMContentLoaded", () => {
   modalEl.addEventListener("click", (e) => {
     if (e.target.closest("#edit-pedido-btn")) {
       abrirModalEdicion();
+    } else if (e.target === modalEl) {
+      // Si se hace clic directamente en el fondo del modal (no en el contenido), cerrar el modal
+      cerrarModal();
     }
   });
 
