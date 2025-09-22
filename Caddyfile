@@ -1,0 +1,13 @@
+:3000 {
+	# Servir archivos estáticos desde el directorio Frontend
+	root * /home/fari/fluxo/fluxo/Frontend
+	file_server
+	
+	# Proxy reverso: redirigir todas las peticiones /api/* al backend Go
+	reverse_proxy /api/* localhost:8080
+	
+	# Logs para debugging (opcional)
+	log {
+		output file /tmp/caddy.log
+	}
+}
