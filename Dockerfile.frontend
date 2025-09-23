@@ -1,0 +1,14 @@
+# Dockerfile para el frontend con servidor HTTP simple
+FROM python:3-alpine
+
+# Copiar archivos del frontend
+COPY Frontend/ /app
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Exponer puerto
+EXPOSE 80
+
+# Ejecutar servidor HTTP simple
+CMD ["python", "-m", "http.server", "80"]
