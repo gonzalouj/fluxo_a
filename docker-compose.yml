@@ -45,6 +45,7 @@ services:
     container_name: fluxo-frontend
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - backend
     networks:

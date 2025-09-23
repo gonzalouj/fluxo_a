@@ -1,13 +1,14 @@
-# Dockerfile para el frontend con Caddy
+# Dockerfile para el frontend con Caddy (SSL automático)
 FROM caddy:2-alpine
 
 # Copiar archivos del frontend
 COPY Frontend/ /srv
 
-# Copiar configuración de Caddy para Docker
+# Copiar configuración de Caddy
 COPY Caddyfile.docker /etc/caddy/Caddyfile
 
-# Exponer puerto
+# Exponer puertos HTTP y HTTPS
 EXPOSE 80
+EXPOSE 443
 
 # Caddy se ejecuta automáticamente
