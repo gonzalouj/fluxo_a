@@ -1,0 +1,28 @@
+# Git
+.git
+.gitignore
+
+# Archivos de documentación
+README.md
+*.md
+
+# Archivos temporales
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# Archivos de desarrollo
+.vscode/
+.idea/
+
+# Archivos SQL que no se necesitan en el build
+alter_productos.sql
+schema.sql
+schema_nuevo.sql
+
+# Binarios compilados localmente
+backend/fluxo-backend
+
+# Archivos de Caddy locales
+caddy.tar.gz

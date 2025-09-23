@@ -32,19 +32,19 @@ services:
     depends_on:
       - postgres
     ports:
-      - "4006:8080"
+      - "8080:8080"
     networks:
       - fluxo-network
     restart: unless-stopped
 
-  # Frontend
+  # Frontend con Caddy
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     container_name: fluxo-frontend
     ports:
-      - "3006:80"
+      - "80:80"
     depends_on:
       - backend
     networks:

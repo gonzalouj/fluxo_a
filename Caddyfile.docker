@@ -1,0 +1,14 @@
+:80 {
+	# Servir archivos estáticos desde el directorio /srv
+	root * /srv
+	file_server
+	
+	# Proxy reverso: redirigir todas las peticiones /api/* al backend
+	# En Docker usamos el nombre del servicio backend
+	reverse_proxy /api/* backend:8080
+	
+	# Logs para debugging
+	log {
+		output stdout
+	}
+}
