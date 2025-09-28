@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
     ports:
-      - "5433:5432"
+      - "5006:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./schema_unificado.sql:/docker-entrypoint-initdb.d/01-schema.sql
@@ -32,7 +32,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - "8080:8080"
+      - "4006:8080"
     networks:
       - fluxo-network
     restart: unless-stopped
@@ -44,8 +44,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: fluxo-frontend
     ports:
-      - "80:80"
-      - "443:443"
+      - "3006:80"
     depends_on:
       - backend
     networks:
