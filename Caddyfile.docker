@@ -1,4 +1,4 @@
-http://24.199.105.87:80 {
+fluxo.inf.uach.cl {
 	# Servir archivos estáticos desde el directorio /srv
 	root * /srv
 	file_server
