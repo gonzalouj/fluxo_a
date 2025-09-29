@@ -61,4 +61,4 @@ coverage.txt
 *.swo
 
 # Archivos de Docker
-docker-compose.override.yml
+docker-compose.override.ymlgrupo6/

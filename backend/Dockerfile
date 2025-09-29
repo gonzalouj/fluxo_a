@@ -34,7 +34,7 @@ COPY --from=builder /app/fluxo-backend .
 COPY --from=builder /app/.env* ./
 
 # Exponer puerto
-EXPOSE 8080
+EXPOSE 4006
 
 # Comando para ejecutar
 CMD ["./fluxo-backend"]
