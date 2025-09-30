@@ -1,297 +1,214 @@
-# Fluxo
+# Fluxo – Manual DevOps
 
-Sistema de gestión de pedidos desarrollado con frontend HTML/JavaScript y backend Go con base de datos PostgreSQL.
+Este documento describe cómo construir, desplegar y operar el sistema Fluxo en entornos de producción y desarrollo.
 
-## ✨ Características
+## 1. Visión General
 
-- 📝 **Formulario de pedidos** con validación
-- 📊 **Lista de pedidos** en tiempo real
-- 🗄️ **Base de datos PostgreSQL**
-- 🔄 **API REST** con Go/Gin
-- 🌐 **CORS** configurado para desarrollo
-- ⚡ **Interfaz responsive** con Tailwind CSS
+Fluxo es una aplicación de gestión de pedidos compuesta por:
+- Frontend estático (HTML/CSS/JS) servido por un servidor HTTP simple (Python) dentro de un contenedor.
+- Backend en Go (framework Gin) que expone una API REST.
+- Base de datos PostgreSQL.
+- Orquestación con Docker Compose.
 
-## Estructura del Proyecto
+El entorno de la universidad expone solo el frontend a internet y enruta las peticiones `/api/*` al backend mediante el proxy inverso del servidor (Caddy externo al stack). La base de datos no se expone públicamente.
+
+## 2. Arquitectura y Puertos
 
 ```
-fluxo/
-├── Frontend/
-│   └── index.html       # Interfaz web completa
-├── backend/
-│   ├── main.go          # Servidor principal
-│   ├── go.mod           # Dependencias (Gin, PostgreSQL)
-│   ├── handlers/        # Controladores de API
-│   │   ├── hello.go     # Endpoint de prueba
-│   │   └── pedidos.go   # Gestión de pedidos
-│   ├── models/          # Modelos de datos
-│   │   └── user.go      # Estructuras Pedido, Usuario, etc.
-│   ├── routes/          # Configuración de rutas
-│   ├── middleware/      # CORS y otros middlewares
-│   ├── config/          # Conexión a base de datos
-│   └── .env.example     # Variables de entorno
-├── .gitignore          # Archivos excluidos
-└── README.md           # Este archivo
+Internet -> Proxy Universidad (Caddy) -> Host Docker
+																		 |
+																		 +-> Frontend (externo 3006 -> contenedor 3006)
+																		 +-> Backend  (externo 4006 -> contenedor 8080)
+																		 +-> PostgreSQL (externo 5006 -> contenedor 5432)
 ```
 
-## Tecnologías
+Tabla de puertos:
 
-### Frontend
-- **HTML/CSS/JavaScript**: Interfaz de usuario
-- **Tailwind CSS**: Estilos modernos (vía CDN)
-- **Fetch API**: Comunicación con backend
+| Servicio   | Puerto externo | Puerto contenedor | Descripción                                 |
+|------------|-----------------|-------------------|---------------------------------------------|
+| Frontend   | 3006            | 3006              | Servidor HTTP simple (solo frontend)        |
+| Backend    | 4006            | 8080              | API REST Go/Gin (acceso interno / por proxy) |
+| PostgreSQL | 5006            | 5432              | Base de datos (acceso restringido)          |
 
-### Backend
-- **Go 1.20+**: Lenguaje de programación
-- **Gin**: Framework web
-- **PostgreSQL**: Base de datos relacional
-- **lib/pq**: Driver de PostgreSQL para Go
+## 3. Requisitos Generales
 
-### Base de Datos
-- **PostgreSQL**: Sistema de gestión de base de datos
-- **5 tablas**: usuarios, productos, pedidos, pedido_productos, comentarios
-- **Tipos ENUM**: roles de usuario, estados de pedido
-- **Integridad referencial**: Foreign keys y constraints
+Software recomendado (versiones de referencia):
+- Docker y Docker Compose
+- Git
+- Go 1.20+ (para desarrollo del backend)
+- Python 3.x (opcional para servir el frontend en local)
+- PostgreSQL 15.x (local o en contenedor)
 
-## 🚀 Instalación y Configuración
+Notas:
+- En producción se recomienda usar exclusivamente Docker Compose para estandarizar el entorno.
+- En desarrollo, puedes optar por servicios locales o también contenedores.
 
-### Prerrequisitos
+## 4. Despliegue con Docker
+
+1) Obtener el código en el servidor (una de las opciones):
 
 ```bash
-# Instalar Go (en Arch Linux)
-sudo pacman -S go
-
-# Instalar PostgreSQL
-sudo pacman -S postgresql
-sudo systemctl enable --now postgresql
+git clone -b production <URL_DEL_REPO>
+cd fluxo
 ```
 
-### 1. Configurar Base de Datos
+2) Construir e iniciar servicios:
 
 ```bash
-# Crear usuario y base de datos
-sudo -u postgres createdb fluxo
-
-# Crear las tablas (ejecutar el schema SQL)
-sudo -u postgres psql -d fluxo -f schema.sql
+docker-compose up -d --build
 ```
 
-### 2. Backend
+3) Verificar estado y logs:
 
 ```bash
-cd backend
-
-# Descargar dependencias
-go mod tidy
-
-# Configurar variables de entorno (opcional)
-cp .env.example .env
-
-# Ejecutar servidor
-go run main.go
+docker-compose ps
+docker-compose logs -f --tail=100
 ```
 
-Servidor disponible en `http://localhost:8080`
-
-### 3. Frontend
+4) Verificación funcional básica:
 
 ```bash
-# Opción 1: Abrir directamente
-xdg-open Frontend/index.html
-
-# Opción 2: Servidor local (recomendado)
-cd Frontend
-python -m http.server 3000
-# Ir a http://localhost:3000
+curl http://localhost:3006
+curl http://localhost:4006/api/hello
 ```
 
-## 🔌 API Endpoints
+Actualizaciones de versión:
 
-### Endpoints Disponibles
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| `GET` | `/api/hello` | Prueba de conexión |
-| `POST` | `/api/pedidos` | Crear nuevo pedido |
-| `GET` | `/api/pedidos` | Listar todos los pedidos |
-| `GET` | `/api/pedidos/:id` | Obtener pedido específico |
-
-### Crear Pedido
-
-**POST** `/api/pedidos`
-
-```json
-{
-  "producto": "Mesa de madera",
-  "cantidad": 2,
-  "cliente": "Juan Pérez",
-  "fecha": "2025-12-25",
-  "email": "juan@email.com",
-  "etiquetas": "urgente, madera"
-}
+```bash
+git pull origin production
+docker-compose up -d --build
 ```
 
-**Response:**
-```json
-{
-  "message": "Pedido creado exitosamente",
-  "pedido_id": 1
-}
-```
+## 5. Variables de Entorno
 
-### Listar Pedidos
-
-**GET** `/api/pedidos`
-
-```json
-{
-  "pedidos": [
-    {
-      "id_pedido": 1,
-      "nombre_cliente": "Juan Pérez",
-      "email_cliente": "juan@email.com",
-      "fecha_entrega": "2025-12-25T00:00:00Z",
-      "estado": "Pendiente",
-      "fecha_creacion": "2025-09-15T02:56:49.335596-03:00"
-    }
-  ]
-}
-```
-
-## 🗄️ Esquema de Base de Datos
-
-### Tablas Principales
-
-- **usuarios**: Gestión de usuarios del sistema
-- **productos**: Catálogo de productos
-- **pedidos**: Información general de pedidos
-- **pedido_productos**: Relación muchos-a-muchos
-- **comentarios**: Comentarios por pedido
-
-### Estados de Pedido
-- `Pendiente` (por defecto)
-- `Listo`
-- `Cancelado`
-
-## 🛠️ Desarrollo
-
-### Agregar nuevos handlers
-
-1. Crear handler en `backend/handlers/nuevo_handler.go`:
-```go
-func NuevoHandler(c *gin.Context) {
-    // Lógica del endpoint
-    c.JSON(200, gin.H{"message": "Nuevo endpoint"})
-}
-```
-
-2. Registrar en `backend/routes/routes.go`:
-```go
-r.GET("/api/nuevo", handlers.NuevoHandler)
-```
-
-### Agregar nuevos modelos
-
-1. Definir en `backend/models/`:
-```go
-type NuevoModelo struct {
-    ID   int    `json:"id"`
-    Name string `json:"name"`
-}
-```
-
-### Variables de Entorno
-
-Crear archivo `.env` en el directorio `backend/`:
+El backend usa variables de entorno inyectadas por Docker Compose. Parámetros típicos:
 
 ```env
-# Puerto del servidor
+# backend
 PORT=8080
-
-# Base de datos PostgreSQL
-DATABASE_URL=postgres://postgres:password@localhost:5432/fluxo?sslmode=disable
-
-# Entorno
-ENV=development
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=fluxo
+DB_USER=postgres
+DB_PASSWORD=postgres123
 ```
 
-## 🔧 Comandos Útiles
+Consideraciones:
+- No commitear secretos reales. Usar archivos `.env` privados o sistemas de secretos del orquestador.
+- Alinear los puertos del compose con el proxy frontal del entorno (Caddy u otro).
 
-### Backend
+## 6. Operación y Mantenimiento
+
+Comandos de operación comunes:
 
 ```bash
-# Compilar para producción
-go build -o fluxo-backend main.go
+# Ver servicios
+docker-compose ps
 
-# Ejecutar binario
-./fluxo-backend
+# Logs en tiempo real
+docker-compose logs -f --tail=100
 
-# Detener servidor
-pkill -f "go run main.go"
-# o Ctrl+C si está en primer plano
+# Reinicios puntuales
+docker-compose restart frontend
+docker-compose restart backend
 
-# Ver logs de base de datos
-sudo -u postgres psql -d fluxo -c "SELECT * FROM pedidos;"
+# Parar / levantar
+docker-compose down
+docker-compose up -d --build
+
+# Limpieza (cuidado)
+docker system prune -f
 ```
 
-### Base de Datos
+Base de datos (vía contenedor):
 
 ```bash
-# Conectar a PostgreSQL
-sudo -u postgres psql -d fluxo
+# Ingresar a psql
+docker-compose exec postgres psql -U postgres -d fluxo
 
-# Ver tablas
-\dt
+# Backup
+docker-compose exec postgres pg_dump -U postgres fluxo > backup.sql
 
-# Ver pedidos
-SELECT * FROM pedidos;
-
-# Ver productos
-SELECT * FROM productos;
+# Restore
+docker-compose exec -T postgres psql -U postgres fluxo < backup.sql
 ```
 
-## 🚀 Despliegue
+## 7. Desarrollo Local
 
-### Compilar para producción
+Backend:
 
 ```bash
 cd backend
-go build -ldflags="-s -w" -o fluxo-backend main.go
+go mod tidy
+cp .env.example .env
+go run main.go
+# Servirá en http://localhost:8080
 ```
 
-### Cross-compilation
+Frontend:
 
 ```bash
-# Para Linux
-GOOS=linux GOARCH=amd64 go build -o fluxo-linux main.go
-
-# Para Windows
-GOOS=windows GOARCH=amd64 go build -o fluxo-windows.exe main.go
+cd Frontend
+python -m http.server 3000
+# Abrir http://localhost:3000
 ```
 
-## 📊 Testing
-
-### Probar endpoints
+Con Docker (entorno completo local):
 
 ```bash
-# Endpoint de prueba
+docker-compose up --build
+```
+
+## 8. API (Resumen)
+
+Endpoints principales:
+
+| Método | Endpoint         | Descripción        |
+|--------|------------------|--------------------|
+| GET    | /api/hello       | Prueba de conexión |
+| POST   | /api/pedidos     | Crear pedido       |
+| GET    | /api/pedidos     | Listar pedidos     |
+| GET    | /api/pedidos/:id | Obtener por id     |
+
+Ejemplos:
+
+```bash
 curl http://localhost:8080/api/hello
 
-# Crear pedido
 curl -X POST http://localhost:8080/api/pedidos \
-  -H "Content-Type: application/json" \
-  -d '{"producto":"Mesa","cantidad":1,"cliente":"Juan","fecha":"2025-12-25"}'
-
-# Listar pedidos
-curl http://localhost:8080/api/pedidos
+	-H "Content-Type: application/json" \
+	-d '{"producto":"Mesa","cantidad":1,"cliente":"Juan","fecha":"2025-12-25"}'
 ```
 
-## 📋 Próximas Funcionalidades
+## 9. Esquema de Datos
 
-- [ ] Autenticación JWT
-- [ ] Dashboard administrativo
-- [ ] Notificaciones por wsp
-- [ ] Exportar pedidos a PDF/Excel
-- [ ] Estados de pedido más detallados
-- [ ] Tests unitarios
-- [ ] Docker containers
-- [ ] CI/CD pipeline
+Tablas: usuarios, productos, pedidos, pedido_productos, comentarios.
+
+Estados de pedido: Pendiente, Listo, Cancelado.
+
+## 10. CI/CD (Guía Breve)
+
+Flujo recomendado:
+1. Commit y push a la rama de despliegue (p. ej., `production`).
+2. En el servidor: `git pull origin production`.
+3. Reconstruir e iniciar: `docker-compose up -d --build`.
+4. Verificar logs y endpoints.
+
+## 11. Seguridad y Buenas Prácticas
+
+- Exponer solo el frontend a internet; backend y BD restringidos.
+- Delegar el proxy `/api/*` al frontal del entorno (Caddy/Nginx).
+- Mantener secretos fuera del repositorio (Variables de entorno/API keys).
+- Versionar cambios de infraestructura (compose, Dockerfiles).
+- Automatizar backups de BD.
+
+## 12. Resolución de Problemas
+
+Síntomas frecuentes y revisión sugerida:
+
+- Frontend carga pero API falla: confirmar que el proxy de la institución enruta `/api/*` al puerto 4006 del host y que el compose mapea 4006->8080.
+- Error de conexión a BD: revisar `DB_HOST` (debe ser `postgres` dentro de la red de Docker) y credenciales.
+- Puertos ocupados: verificar colisiones con `netstat`/`ss`, ajustar mapeos en `docker-compose.yml`.
+- Cambios no aplican tras despliegue: ejecutar con `--build` y revisar cachés.
+
+---
