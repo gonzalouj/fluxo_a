@@ -1,5 +1,7 @@
 # Fluxo – Manual DevOps
 
+Version: v0.5
+
 Este documento describe cómo construir, desplegar y operar el sistema Fluxo en entornos de producción y desarrollo.
 
 ## 1. Visión General
