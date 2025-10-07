@@ -84,11 +84,11 @@ function formatShortDate(fecha) {
 function capitalize(v) {
   return v ? v.charAt(0).toUpperCase() + v.slice(1).toLowerCase() : "";
 }
+
+// Función para formatear precios (mantener para compatibilidad interna)
 function formatCLP(value) {
-  if (value == null || value === "") return "$0";
-  const n = Number(value);
-  if (Number.isNaN(n)) return `$${value}`;
-  return `$${Math.round(n).toLocaleString("es-CL")}`;
+  // Retorna cadena vacía para ocultar precios al usuario
+  return "";
 }
 
 // --- LÓGICA DEL MODAL DE DETALLES ---
@@ -147,27 +147,19 @@ function abrirModal(pedidoId) {
   );
 
   const productosEl = document.getElementById("modal-productos");
-  let total = 0;
   if (pedido.productos && pedido.productos.length > 0) {
     productosEl.innerHTML = pedido.productos
       .map((prod) => {
-        const subtotal = (prod.cantidad || 0) * (prod.precio_unitario || 0);
-        total += subtotal;
         return `<div class="flex justify-between items-center bg-white rounded-lg p-3"><div><span class="text-sm font-medium text-gray-900">${
           prod.producto || "Producto sin nombre"
         }</span><div class="text-xs text-gray-500 mt-1">${
           prod.cantidad || 0
-        } unidad${prod.cantidad !== 1 ? "es" : ""} × ${formatCLP(
-          prod.precio_unitario
-        )}</div></div><span class="text-sm font-semibold text-gray-900">${formatCLP(
-          subtotal
-        )}</span></div>`;
+        } unidad${prod.cantidad !== 1 ? "es" : ""}</div></div></div>`;
       })
       .join("");
   } else {
     productosEl.innerHTML = `<div class="text-center py-4 text-gray-500"><p class="text-sm italic">Sin productos asociados</p></div>`;
   }
-  document.getElementById("modal-total").textContent = formatCLP(total);
 
   // Renderizar Etiquetas
   const etiquetasContainer = document.getElementById(
@@ -580,7 +572,7 @@ function renderizarComentarios(container, comentarios) {
                 })" class="text-gray-400 hover:text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
               </div>
             </div>
-            <p class="text-sm text-gray-700 whitespace-pre-wrap">${
+            <p class="text-sm text-gray-700 whitespace-pre-wrap break-words">${
               c.comentario || "Sin comentario."
             }</p>
           </div>`
@@ -645,27 +637,19 @@ function poblarYAbrirModal(pedidoId) {
   );
 
   const productosEl = document.getElementById("modal-productos");
-  let total = 0;
   if (pedido.productos && pedido.productos.length > 0) {
     productosEl.innerHTML = pedido.productos
       .map((prod) => {
-        const subtotal = (prod.cantidad || 0) * (prod.precio_unitario || 0);
-        total += subtotal;
         return `<div class="flex justify-between items-center bg-white rounded-lg p-3"><div><span class="text-sm font-medium text-gray-900">${
           prod.producto || "Producto sin nombre"
         }</span><div class="text-xs text-gray-500 mt-1">${
           prod.cantidad || 0
-        } unidad${prod.cantidad !== 1 ? "es" : ""} × ${formatCLP(
-          prod.precio_unitario
-        )}</div></div><span class="text-sm font-semibold text-gray-900">${formatCLP(
-          subtotal
-        )}</span></div>`;
+        } unidad${prod.cantidad !== 1 ? "es" : ""}</div></div></div>`;
       })
       .join("");
   } else {
     productosEl.innerHTML = `<div class="text-center py-4 text-gray-500"><p class="text-sm italic">Sin productos asociados</p></div>`;
   }
-  document.getElementById("modal-total").textContent = formatCLP(total);
 
   // Renderizar Etiquetas
   const etiquetasContainer = document.getElementById(
@@ -756,6 +740,9 @@ async function agregarNuevoComentario(e) {
       "modal-comentarios-list"
     );
     renderizarComentarios(comentariosContainer, pedidoActual.comentarios);
+
+    // ✅ NUEVO: Actualizar también la vista general para mostrar los nuevos comentarios
+    renderizarPedidos();
   } catch (e) {
     console.error("Error:", e);
     mostrarNotificacion(`Error: ${e.message}`, "error");
@@ -981,6 +968,7 @@ function renderPedidoCard(pedido) {
   const estado = pedido.estado || "Pendiente";
   const statusClass = getStatusClass(estado);
   const fechaFormateada = formatShortDate(pedido.fecha_entrega);
+
   const productosHtml =
     pedido.productos && pedido.productos.length > 0
       ? `<div class="space-y-2"><h3 class="text-sm font-medium text-gray-700 mb-2">Productos:</h3><div class="bg-gray-50 rounded-xl p-3">${pedido.productos
@@ -990,10 +978,72 @@ function renderPedidoCard(pedido) {
                 prod.producto || "Producto sin nombre"
               }</span><span class="text-sm text-gray-600 ml-2">x${
                 prod.cantidad || 0
-              } • ${formatCLP(prod.precio_unitario)}</span></div>`
+              }</span></div>`
           )
           .join("")}</div></div>`
       : `<div class="text-center py-4"><svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg><p class="text-gray-400 text-sm italic">Sin productos asociados</p></div>`;
+
+  // Renderizar etiquetas (máximo 3 para vista compacta)
+  let etiquetasHtml = "";
+  const etiquetasStr = pedido.detalles_pedido || "";
+  if (etiquetasStr) {
+    const etiquetas = etiquetasStr
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .slice(0, 3); // Máximo 3 etiquetas
+
+    if (etiquetas.length > 0) {
+      const etiquetasDisplay = etiquetas
+        .map(
+          (tag) =>
+            `<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">${tag}</span>`
+        )
+        .join(" ");
+
+      const masEtiquetas =
+        pedido.detalles_pedido.split(",").filter(Boolean).length > 3
+          ? ` <span class="text-xs text-gray-500">+${
+              pedido.detalles_pedido.split(",").filter(Boolean).length - 3
+            }</span>`
+          : "";
+
+      etiquetasHtml = `<div class="mb-3"><h4 class="text-xs font-medium text-gray-600 mb-1">Etiquetas:</h4><div class="flex flex-wrap gap-1">${etiquetasDisplay}${masEtiquetas}</div></div>`;
+    }
+  }
+
+  // Renderizar comentarios recientes (máximo 3)
+  let comentarioHtml = "";
+  if (pedido.comentarios && pedido.comentarios.length > 0) {
+    // Tomar los últimos 3 comentarios
+    const comentariosRecientes = pedido.comentarios.slice(-3);
+
+    const comentariosDisplay = comentariosRecientes
+      .map((comentario) => {
+        const comentarioTexto = comentario.comentario || "";
+        const comentarioCorto =
+          comentarioTexto.length > 60
+            ? comentarioTexto.substring(0, 60) + "..."
+            : comentarioTexto;
+
+        return `<div class="bg-blue-50 rounded-lg p-2 mb-1"><p class="text-xs text-gray-700 break-words">${comentarioCorto}</p><p class="text-xs text-gray-500 mt-1">Por: ${
+          comentario.usuario || "Usuario"
+        }</p></div>`;
+      })
+      .join("");
+
+    const masComentarios =
+      pedido.comentarios.length > 3
+        ? ` <span class="text-xs text-gray-500">+${
+            pedido.comentarios.length - 3
+          } comentarios más</span>`
+        : "";
+
+    if (comentariosRecientes.length > 0) {
+      comentarioHtml = `<div class="mb-3"><h4 class="text-xs font-medium text-gray-600 mb-1">Últimos comentarios:${masComentarios}</h4><div>${comentariosDisplay}</div></div>`;
+    }
+  }
+
   const nombreCliente = (
     pedido.nombre_cliente || "Cliente sin nombre"
   ).toUpperCase();
@@ -1008,7 +1058,7 @@ function renderPedidoCard(pedido) {
     pedido.id_pedido
   })'><div class="flex items-center p-4 pb-3"><div class="w-4 h-4 rounded-full ${statusClass} mr-3 flex-shrink-0"></div><div class="flex-1 min-w-0"><h2 class="text-lg md:text-xl font-semibold text-gray-900 truncate">${nombreCliente}</h2></div><span class="text-xs px-2 py-1 rounded-full ${statusBadgeClasses} ml-2 flex-shrink-0">${capitalize(
     estado
-  )}</span></div><div class="px-4 pb-4"><div class="flex items-center justify-between text-sm text-gray-600 mb-3"><div class="flex items-center"><svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span>Entrega: ${fechaFormateada}</span></div><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>${productosHtml}</div></div>`;
+  )}</span></div><div class="px-4 pb-4"><div class="flex items-center justify-between text-sm text-gray-600 mb-3"><div class="flex items-center"><svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span>Entrega: ${fechaFormateada}</span></div><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>${productosHtml}${etiquetasHtml}${comentarioHtml}</div></div>`;
 }
 
 function renderizarPedidos() {
