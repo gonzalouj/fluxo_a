@@ -5,6 +5,8 @@ const API_BASE = "/api";
 let pedidosData = [];
 let pedidoActual = null;
 let accionAConfirmar = null;
+let calendar = null;
+let vistaActual = "lista"; // "lista" o "calendario"
 
 // ✅ CONFIGURACIÓN DE ESTADOS CON COLORES
 const estadosConfig = {
@@ -45,6 +47,7 @@ const emptyStateEl = document.getElementById("empty-state");
 const modalEl = document.getElementById("modal-detalle");
 const modalConfirmacionEl = document.getElementById("modal-confirmacion");
 const modalEdicionEl = document.getElementById("modal-edicion"); // Nuevo modal
+const calendarContainerEl = document.getElementById("calendar-container");
 
 // Estado para el modal de edición
 let allProducts = [];
@@ -1381,13 +1384,29 @@ function renderPedidoCard(pedido) {
 }
 
 function renderizarPedidos() {
-  if (pedidosData.length === 0) {
+  // Filtrar solo pedidos activos (Pendiente y Listo)
+  // Los pedidos Entregados y Cancelados se muestran en la sección de Historial
+  const pedidosActivos = pedidosData.filter(
+    (p) => p.estado === "Pendiente" || p.estado === "Listo"
+  );
+
+  if (pedidosActivos.length === 0) {
     emptyStateEl.classList.remove("hidden");
     listaEl.classList.add("hidden");
+    calendarContainerEl.classList.add("hidden");
     return;
   }
-  listaEl.innerHTML = pedidosData.map(renderPedidoCard).join("");
-  listaEl.classList.remove("hidden");
+
+  // Renderizar según la vista actual
+  if (vistaActual === "lista") {
+    listaEl.innerHTML = pedidosActivos.map(renderPedidoCard).join("");
+    listaEl.classList.remove("hidden");
+    calendarContainerEl.classList.add("hidden");
+  } else {
+    renderizarCalendario();
+    listaEl.classList.add("hidden");
+    calendarContainerEl.classList.remove("hidden");
+  }
   emptyStateEl.classList.add("hidden");
 }
 
@@ -1408,6 +1427,261 @@ async function cargarPedidos() {
   }
 }
 
+// --- LÓGICA DEL CALENDARIO ---
+function getColorPorEstado(estado) {
+  const config = estadosConfig[estado] || estadosConfig["Pendiente"];
+  // Convertir colores de Tailwind a colores hex para FullCalendar
+  const colorMap = {
+    "bg-yellow-500": "#eab308",
+    "bg-blue-600": "#2563eb",
+    "bg-green-600": "#16a34a",
+    "bg-red-600": "#dc2626",
+    "bg-gray-500": "#6b7280",
+  };
+  return colorMap[config.bg] || "#6b7280";
+}
+
+function renderizarCalendario() {
+  // Si el calendario ya existe, solo actualizamos los eventos
+  if (calendar) {
+    actualizarEventosCalendario();
+    return;
+  }
+
+  // Crear el calendario por primera vez
+  calendar = new FullCalendar.Calendar(calendarContainerEl, {
+    initialView: "dayGridMonth",
+    locale: "es",
+    firstDay: 1, // Lunes como primer día
+    headerToolbar: {
+      left: "prev,next today",
+      center: "title",
+      right: "", // Sin botones a la derecha ya que solo hay una vista
+    },
+    buttonText: {
+      today: "Hoy",
+    },
+    events: convertirPedidosAEventos(),
+
+    // ⭐ Limitar eventos visibles por día
+    dayMaxEvents: 3, // Mostrar máximo 3 eventos por día
+    moreLinkText: function (num) {
+      // Texto corto en móvil, completo en desktop
+      if (window.innerWidth < 768) {
+        return `+${num}`;
+      }
+      return `+${num} más`;
+    },
+    moreLinkClick: function (info) {
+      // Al hacer click en "+X más", mostrar modal con todos los pedidos del día
+      mostrarPedidosDelDia(info.date, info.allSegs);
+      return "none"; // No mostrar el popover nativo, solo nuestro modal
+    },
+
+    eventClick: function (info) {
+      const pedidoId = parseInt(info.event.id);
+      abrirModal(pedidoId);
+    },
+    eventContent: function (arg) {
+      const pedido = pedidosData.find(
+        (p) => p.id_pedido === parseInt(arg.event.id)
+      );
+      if (!pedido) return { html: arg.event.title };
+
+      const estadoIcon = estadosConfig[pedido.estado]?.icon || "•";
+      return {
+        html: `<div class="fc-event-main-frame">
+          <div class="fc-event-title-container">
+            <div class="fc-event-title fc-sticky text-xs font-medium truncate">
+              ${estadoIcon} ${arg.event.title}
+            </div>
+          </div>
+        </div>`,
+      };
+    },
+    height: "auto",
+    eventDisplay: "block",
+    displayEventTime: false,
+    fixedWeekCount: false, // No fijar 6 semanas si el mes tiene menos
+  });
+
+  calendar.render();
+}
+
+function convertirPedidosAEventos() {
+  // Filtrar solo pedidos activos (Pendiente y Listo) para el calendario
+  // Los pedidos Entregados y Cancelados se muestran en la sección de Historial
+  const pedidosActivos = pedidosData.filter(
+    (p) => p.estado === "Pendiente" || p.estado === "Listo"
+  );
+
+  return pedidosActivos.map((pedido) => ({
+    id: pedido.id_pedido.toString(),
+    title: pedido.nombre_cliente || "Sin nombre",
+    start: pedido.fecha_entrega,
+    backgroundColor: getColorPorEstado(pedido.estado || "Pendiente"),
+    borderColor: getColorPorEstado(pedido.estado || "Pendiente"),
+    extendedProps: {
+      estado: pedido.estado,
+      productos: pedido.productos?.length || 0,
+    },
+  }));
+}
+
+function actualizarEventosCalendario() {
+  if (!calendar) return;
+  calendar.removeAllEvents();
+  calendar.addEventSource(convertirPedidosAEventos());
+}
+
+// Mostrar todos los pedidos de un día específico en un modal
+function mostrarPedidosDelDia(fecha, segmentos) {
+  // Obtener IDs de los pedidos del día
+  const pedidosDelDia = segmentos
+    .map((seg) => {
+      const pedidoId = parseInt(seg.event.id);
+      return pedidosData.find((p) => p.id_pedido === pedidoId);
+    })
+    .filter((p) => p);
+
+  if (pedidosDelDia.length === 0) return;
+
+  // Formatear la fecha - Ajustar para zona horaria local
+  // FullCalendar devuelve la fecha en UTC, necesitamos ajustarla
+  const fechaLocal = new Date(
+    fecha.getTime() + fecha.getTimezoneOffset() * 60000
+  );
+  const fechaFormateada = fechaLocal.toLocaleDateString("es-ES", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  // Crear el modal
+  const modal = document.createElement("div");
+  modal.className = "fixed inset-0 z-[60] overflow-y-auto";
+  modal.id = "modal-pedidos-dia";
+
+  // Función para cerrar el modal y restaurar el scroll
+  const cerrarModalPedidosDia = () => {
+    modal.remove();
+    document.body.style.overflow = "";
+  };
+
+  modal.innerHTML = `
+    <div class="modal-backdrop flex items-center justify-center min-h-screen px-4 py-6">
+      <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="document.getElementById('modal-pedidos-dia').dispatchEvent(new Event('cerrar'))"></div>
+      <div class="modal-content relative bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-auto z-10 max-h-[85vh] overflow-hidden flex flex-col">
+        <!-- Header fijo -->
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex justify-between items-center">
+          <div>
+            <h3 class="text-xl font-bold text-gray-900 capitalize">
+              ${fechaFormateada}
+            </h3>
+            <p class="text-sm text-gray-600 mt-1">${
+              pedidosDelDia.length
+            } pedido(s) agendado(s)</p>
+          </div>
+          <button onclick="document.getElementById('modal-pedidos-dia').dispatchEvent(new Event('cerrar'))" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Lista de pedidos con scroll -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-3">
+          ${pedidosDelDia
+            .map((pedido) => {
+              const config =
+                estadosConfig[pedido.estado] || estadosConfig["Pendiente"];
+              const statusBadgeClasses = getStatusBadgeClasses(pedido.estado);
+
+              return `
+              <div class="pedido-card bg-white border-2 border-gray-200 rounded-xl p-4 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer"
+                   onclick="document.getElementById('modal-pedidos-dia').dispatchEvent(new Event('cerrar')); abrirModal(${
+                     pedido.id_pedido
+                   });">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <div class="w-4 h-4 rounded-full flex-shrink-0 ${
+                      config.bg
+                    }"></div>
+                    <div class="flex-1 min-w-0">
+                      <h3 class="font-semibold text-gray-900 text-lg truncate">
+                        ${pedido.nombre_cliente || "Sin nombre"}
+                      </h3>
+                      <p class="text-sm text-gray-600 mt-1">
+                        ${pedido.productos?.length || 0} producto(s)
+                        ${
+                          pedido.detalles_pedido
+                            ? "• " +
+                              pedido.detalles_pedido
+                                .split(",")
+                                .slice(0, 2)
+                                .join(", ")
+                            : ""
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <span class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex-shrink-0 ${statusBadgeClasses}">
+                    ${config.icon} ${capitalize(pedido.estado)}
+                  </span>
+                </div>
+              </div>
+            `;
+            })
+            .join("")}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  document.body.style.overflow = "hidden";
+
+  // Event listener para cerrar el modal y restaurar scroll
+  modal.addEventListener("cerrar", cerrarModalPedidosDia);
+
+  // Cerrar con ESC
+  const handleEsc = (e) => {
+    if (e.key === "Escape") {
+      cerrarModalPedidosDia();
+      document.removeEventListener("keydown", handleEsc);
+    }
+  };
+  document.addEventListener("keydown", handleEsc);
+}
+
+function cambiarVista(vista) {
+  vistaActual = vista;
+
+  // Actualizar botones
+  const btnLista = document.getElementById("view-list-btn");
+  const btnCalendario = document.getElementById("view-calendar-btn");
+
+  if (vista === "lista") {
+    btnLista.classList.add("active");
+    btnCalendario.classList.remove("active");
+  } else {
+    btnLista.classList.remove("active");
+    btnCalendario.classList.add("active");
+  }
+
+  // Renderizar vista
+  renderizarPedidos();
+
+  // Si cambiamos a calendario y ya existe, forzar actualización de tamaño
+  // Esto soluciona el problema de renderizado cuando el contenedor estaba oculto
+  if (vista === "calendario" && calendar) {
+    setTimeout(() => {
+      calendar.updateSize();
+    }, 0);
+  }
+}
+
 // --- EVENT LISTENERS GLOBALES ---
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
@@ -1423,6 +1697,17 @@ document.addEventListener("keydown", (e) => {
 
 document.addEventListener("DOMContentLoaded", () => {
   cargarPedidos();
+
+  // Event listeners para los botones de vista
+  document.getElementById("view-list-btn")?.addEventListener("click", () => {
+    cambiarVista("lista");
+  });
+
+  document
+    .getElementById("view-calendar-btn")
+    ?.addEventListener("click", () => {
+      cambiarVista("calendario");
+    });
 
   // Usar delegación de eventos para el botón de editar.
   // Esto es más robusto y soluciona el problema.
@@ -1442,6 +1727,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   inicializarListenersEdicion();
   inicializarModalProducto();
+
+  // Listener para actualizar el calendario al cambiar tamaño de ventana
+  // Esto actualiza el texto "+X más" según el tamaño de pantalla
+  let resizeTimeout;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (calendar && vistaActual === "calendario") {
+        calendar.refetchEvents(); // Refresca los eventos para actualizar el texto
+      }
+    }, 250); // Debounce de 250ms
+  });
 });
 
 // ========= INICIO: LÓGICA DEL MODAL DE PRODUCTOS =========
