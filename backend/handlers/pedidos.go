@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"fluxo/backend/models"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -64,7 +65,7 @@ func CrearPedido(c *gin.Context) {
 	for _, prod := range req.Productos {
 		_, err := tx.Exec(`
 			INSERT INTO pedido_productos (id_pedido, id_producto, cantidad, precio_unitario_congelado) 
-			SELECT $1, $2, $3, p.precio_unitario 
+			SELECT $1, $2, $3, COALESCE(p.precio_unitario, 0.00) 
 			FROM productos p 
 			WHERE p.id_producto = $2`,
 			pedidoID, prod.IDProducto, prod.Cantidad)
@@ -165,11 +166,12 @@ func ListarPedidos(c *gin.Context) {
 		  CASE p.estado
 		    WHEN 'Pendiente' THEN 1
 		    WHEN 'Listo' THEN 2
-		    WHEN 'Cancelado' THEN 3
-		    ELSE 4
+		    WHEN 'Entregado' THEN 3
+		    WHEN 'Cancelado' THEN 4
+		    ELSE 5
 		  END,
 		  CASE WHEN p.estado = 'Pendiente' THEN p.fecha_entrega END ASC,
-		  CASE WHEN p.estado IN ('Listo','Cancelado') THEN p.fecha_creacion END DESC`
+		  CASE WHEN p.estado IN ('Listo','Entregado','Cancelado') THEN p.fecha_creacion END DESC`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -292,7 +294,7 @@ func ActualizarPedido(c *gin.Context) {
 	for _, prod := range req.Productos {
 		_, err := tx.Exec(`
             INSERT INTO pedido_productos (id_pedido, id_producto, cantidad, precio_unitario_congelado)
-            SELECT $1, $2, $3, p.precio_unitario
+            SELECT $1, $2, $3, COALESCE(p.precio_unitario, 0.00)
             FROM productos p
             WHERE p.id_producto = $2`,
 			id, prod.IDProducto, prod.Cantidad)
@@ -375,13 +377,14 @@ func ActualizarEstadoPedido(c *gin.Context) {
 
 	// Validar que el estado sea válido
 	estadosValidos := map[string]bool{
-		"Pendiente": true,
-		"Listo":     true,
-		"Cancelado": true,
+		"Pendiente":  true,
+		"Listo":      true,
+		"Entregado":  true,
+		"Cancelado":  true,
 	}
 
 	if !estadosValidos[req.Estado] {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Estado inválido. Use: Pendiente, Listo o Cancelado"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Estado inválido. Use: Pendiente, Listo, Entregado o Cancelado"})
 		return
 	}
 
@@ -398,10 +401,16 @@ func ActualizarEstadoPedido(c *gin.Context) {
 	}
 
 	// Validar transiciones de estado permitidas
-	// Solo se puede cambiar estado si está Pendiente
-	if estadoActual != "Pendiente" && req.Estado != estadoActual {
+	transicionesValidas := map[string]map[string]bool{
+		"Pendiente":  {"Listo": true, "Cancelado": true},
+		"Listo":      {"Entregado": true, "Cancelado": true},
+		"Entregado":  {}, // Estado final, no se puede cambiar
+		"Cancelado":  {}, // Estado final, no se puede cambiar
+	}
+
+	if !transicionesValidas[estadoActual][req.Estado] {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "No se puede cambiar el estado de un pedido que ya está " + estadoActual,
+			"error": "Transición de estado no permitida: " + estadoActual + " → " + req.Estado,
 		})
 		return
 	}

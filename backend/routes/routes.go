@@ -6,6 +6,7 @@ import (
 	"fluxo/backend/middleware"
 	"os"
 	"path/filepath"
+
 	//"strings"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,11 @@ func SetupRouter() *gin.Engine {
 	{
 		api.GET("/hello", handlers.HelloHandler)
 		api.GET("/productos", handlers.ListarProductos)
+		api.GET("/productos/con-temporales", handlers.ListarProductosConTemporales)
+		api.POST("/productos", handlers.CrearProducto)
+		api.PATCH("/productos/:id", handlers.ActualizarProducto)
+		api.GET("/categorias", handlers.ListarCategorias)
+		api.POST("/categorias", handlers.CrearCategoria)
 
 		pedidos := api.Group("/pedidos")
 		{

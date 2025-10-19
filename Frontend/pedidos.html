@@ -71,6 +71,56 @@
       .action-button:active {
         transform: scale(0.98);
       }
+
+      /* Estilos para el modal de productos */
+      :root {
+        --primary-blue: #1e40af;
+        --primary-blue-light: #3b82f6;
+        --success-green: #059669;
+        --success-green-light: #10b981;
+        --gray-50: #f8fafc;
+        --gray-100: #f1f5f9;
+        --gray-200: #e2e8f0;
+        --gray-300: #cbd5e1;
+        --gray-600: #475569;
+        --gray-700: #334155;
+        --gray-800: #1e293b;
+        --gray-900: #0f172a;
+      }
+
+      /* Inputs profesionales */
+      .professional-input {
+        background: white;
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+      }
+
+      .professional-input:focus {
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.05);
+        outline: none;
+      }
+
+      /* Botón principal empresarial verde */
+      .btn-enterprise {
+        background: var(--success-green);
+        transition: all 0.2s ease;
+      }
+
+      .btn-enterprise:hover {
+        background: #047857;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+      }
+
+      /* Botón secundario */
+      .btn-secondary {
+        background: var(--gray-600);
+        transition: all 0.2s ease;
+      }
+
+      .btn-secondary:hover {
+        background: var(--gray-700);
+      }
     </style>
   </head>
 
@@ -512,17 +562,17 @@
                   Productos del Pedido
                 </h3>
                 <div class="space-y-3">
-                  <div class="flex items-center gap-3">
+                  <div class="flex flex-wrap items-center gap-2">
                     <input
                       type="text"
                       id="edicion-product-search"
                       placeholder="Buscar producto por nombre o código..."
-                      class="flex-grow px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      class="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                     />
                     <button
                       type="button"
                       id="edicion-toggle-product-list-btn"
-                      class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shrink-0"
                     >
                       <svg
                         class="w-5 h-5"
@@ -537,6 +587,27 @@
                           d="M19 9l-7 7-7-7"
                         ></path>
                       </svg>
+                    </button>
+                    <button
+                      type="button"
+                      id="edicion-add-product-btn"
+                      class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shrink-0"
+                      title="Agregar nuevo producto al catálogo"
+                    >
+                      <svg
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 4v16m8-8H4"
+                        ></path>
+                      </svg>
+                      <span class="hidden sm:inline">Nuevo</span>
                     </button>
                   </div>
                   <div
@@ -680,6 +751,590 @@
             >
               Confirmar
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para agregar producto -->
+    <div
+      id="product-modal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto"
+    >
+      <div
+        id="product-modal-overlay"
+        class="flex items-center justify-center min-h-screen p-4 sm:p-6 md:p-8"
+      >
+        <div
+          class="bg-white rounded-xl shadow-2xl w-full max-w-2xl my-4 relative"
+          style="max-height: calc(100vh - 4rem)"
+        >
+          <!-- Header fijo -->
+          <div
+            class="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 sm:py-5 flex justify-between items-center rounded-t-xl z-10"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center"
+              >
+                <svg
+                  class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">
+                  Agregar Producto
+                </h2>
+                <p class="text-xs sm:text-sm text-gray-600 mt-0.5">
+                  Completa la información del nuevo producto
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="close-modal"
+              class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-all"
+            >
+              <svg
+                class="w-5 h-5 sm:w-6 sm:h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Contenido scrolleable -->
+          <div class="overflow-y-auto" style="max-height: calc(100vh - 12rem)">
+            <form id="product-form" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <!-- Información Básica -->
+              <div class="space-y-3 sm:space-y-4">
+                <h3
+                  class="text-base sm:text-lg font-semibold text-gray-700 border-b border-gray-200 pb-2 flex items-center gap-2"
+                >
+                  <svg
+                    class="w-5 h-5 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                  Información Básica
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Código</label
+                    >
+                    <input
+                      type="text"
+                      id="prod-codigo"
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="Ej: SS2"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1"
+                      >Nombre *</label
+                    >
+                    <input
+                      type="text"
+                      id="prod-nombre"
+                      required
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="Ej: Silla Simple"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-600 mb-1"
+                    >Descripción</label
+                  >
+                  <textarea
+                    id="prod-descripcion"
+                    rows="2"
+                    class="w-full px-3 py-2 professional-input rounded-lg resize-none text-sm"
+                    placeholder="Descripción del producto..."
+                  ></textarea>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="block text-sm font-medium text-gray-600"
+                        >Categoría</label
+                      >
+                      <button
+                        type="button"
+                        id="toggle-nueva-categoria"
+                        class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                        title="Agregar nueva categoría"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                          ></path>
+                        </svg>
+                        Nueva
+                      </button>
+                    </div>
+                    <select
+                      id="prod-categoria"
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                    >
+                      <option value="">Sin categoría</option>
+                      <!-- Categorías se cargarán dinámicamente -->
+                    </select>
+
+                    <!-- Input para nueva categoría (oculto por defecto) -->
+                    <div
+                      id="nueva-categoria-container"
+                      class="hidden mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200"
+                    >
+                      <label
+                        class="block text-sm font-medium text-gray-700 mb-1"
+                      >
+                        Nueva Categoría
+                      </label>
+                      <div class="flex gap-2">
+                        <input
+                          type="text"
+                          id="nueva-categoria-input"
+                          placeholder="Ej: Bancos"
+                          class="flex-1 px-3 py-2 professional-input rounded-lg text-sm"
+                        />
+                        <button
+                          type="button"
+                          id="guardar-categoria"
+                          class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                          title="Guardar categoría"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          type="button"
+                          id="cancelar-categoria"
+                          class="px-3 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 text-sm font-medium"
+                          title="Cancelar"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1"
+                      >Material</label
+                    >
+                    <input
+                      type="text"
+                      id="prod-material"
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="Ej: Plástico 100% reciclado"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dimensiones -->
+              <div class="space-y-3 sm:space-y-4">
+                <h3
+                  class="text-base sm:text-lg font-semibold text-gray-700 border-b border-gray-200 pb-2 flex items-center gap-2"
+                >
+                  <svg
+                    class="w-5 h-5 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                    />
+                  </svg>
+                  Dimensiones (cm)
+                </h3>
+                <div
+                  class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+                >
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Largo</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="prod-largo"
+                      class="w-full px-2 sm:px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Ancho</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="prod-ancho"
+                      class="w-full px-2 sm:px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Alto</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="prod-alto"
+                      class="w-full px-2 sm:px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Diámetro</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="prod-diametro"
+                      class="w-full px-2 sm:px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Fondo</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="prod-fondo"
+                      class="w-full px-2 sm:px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Alt. Asiento</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="prod-altura-asiento"
+                      class="w-full px-2 sm:px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Alt. Cubierta</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="prod-altura-cubierta"
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1"
+                      >Peso (kg)</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="prod-peso"
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Precio y Stock -->
+              <div class="space-y-3 sm:space-y-4">
+                <h3
+                  class="text-base sm:text-lg font-semibold text-gray-700 border-b border-gray-200 pb-2 flex items-center gap-2"
+                >
+                  <svg
+                    class="w-5 h-5 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Precio y Stock
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Precio Unitario</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="prod-precio"
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Moneda</label
+                    >
+                    <select
+                      id="prod-moneda"
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                    >
+                      <option value="CLP">CLP</option>
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Stock</label
+                    >
+                    <input
+                      type="number"
+                      id="prod-stock"
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label
+                      class="block text-xs sm:text-sm font-medium text-gray-600 mb-1"
+                      >Unidad de Venta</label
+                    >
+                    <input
+                      type="text"
+                      id="prod-unidad"
+                      class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                      placeholder="Ej: unidad"
+                      value="unidad"
+                    />
+                  </div>
+                  <div class="space-y-2 flex flex-col justify-center">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        id="prod-incluye-iva"
+                        checked
+                        class="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                      />
+                      <span class="text-xs sm:text-sm font-medium text-gray-600"
+                        >Incluye IVA</span
+                      >
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        id="prod-requiere-presupuesto"
+                        class="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                      />
+                      <span class="text-xs sm:text-sm font-medium text-gray-600"
+                        >Requiere Presupuesto</span
+                      >
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Información Adicional -->
+              <div class="space-y-3 sm:space-y-4">
+                <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">
+                  Información Adicional
+                </h3>
+                <div>
+                  <label class="block text-sm font-medium text-gray-600 mb-1"
+                    >Notas Especiales</label
+                  >
+                  <textarea
+                    id="prod-notas"
+                    rows="2"
+                    class="w-full px-3 py-2 professional-input rounded-lg resize-none text-sm"
+                    placeholder="Notas adicionales del producto..."
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- Tipo de Agregado -->
+              <div
+                class="space-y-3 bg-gray-50 p-4 sm:p-5 rounded-lg border border-gray-200"
+              >
+                <h3
+                  class="text-base sm:text-lg font-semibold text-gray-700 flex items-center gap-2"
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    ></path>
+                  </svg>
+                  Tipo de Agregado
+                </h3>
+                <div class="space-y-3">
+                  <label
+                    class="flex items-start gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition-all group"
+                  >
+                    <input
+                      type="radio"
+                      name="tipo-agregado"
+                      value="permanente"
+                      checked
+                      class="mt-1 text-gray-600 focus:ring-gray-500"
+                    />
+                    <div class="flex-1">
+                      <div
+                        class="font-semibold text-gray-800 flex items-center gap-2 text-sm sm:text-base"
+                      >
+                        <span class="text-lg">📦</span>
+                        Permanente (Agregar al Catálogo)
+                      </div>
+                      <div class="text-xs sm:text-sm text-gray-600 mt-1">
+                        El producto se agregará al catálogo y estará disponible
+                        para futuros pedidos
+                      </div>
+                    </div>
+                  </label>
+                  <label
+                    class="flex items-start gap-3 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-gray-300 cursor-pointer transition-all group"
+                  >
+                    <input
+                      type="radio"
+                      name="tipo-agregado"
+                      value="temporal"
+                      class="mt-1 text-gray-600 focus:ring-gray-500"
+                    />
+                    <div class="flex-1">
+                      <div
+                        class="font-semibold text-gray-800 flex items-center gap-2 text-sm sm:text-base"
+                      >
+                        <span class="text-lg">⏱️</span>
+                        Temporal (Solo este pedido)
+                      </div>
+                      <div class="text-xs sm:text-sm text-gray-600 mt-1">
+                        El producto solo se usará en este pedido. Se eliminará
+                        automáticamente si el pedido es eliminado.
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Botones fijos en el footer -->
+          <div
+            class="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 sm:py-4 rounded-b-xl shadow-lg"
+          >
+            <div class="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+              <button
+                type="button"
+                id="cancel-product"
+                class="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 btn-secondary text-white rounded-lg font-semibold hover:bg-gray-700 transition-all flex items-center justify-center gap-2"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                id="save-product"
+                form="product-form"
+                class="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 btn-enterprise text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                <span>Agregar Producto</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

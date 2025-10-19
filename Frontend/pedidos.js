@@ -6,6 +6,38 @@ let pedidosData = [];
 let pedidoActual = null;
 let accionAConfirmar = null;
 
+// ✅ CONFIGURACIÓN DE ESTADOS CON COLORES
+const estadosConfig = {
+  Pendiente: {
+    bg: "bg-yellow-500",
+    bgLight: "bg-yellow-100",
+    text: "text-yellow-800",
+    icon: "⏳",
+    label: "Pendiente",
+  },
+  Listo: {
+    bg: "bg-blue-600",
+    bgLight: "bg-blue-100",
+    text: "text-blue-800",
+    icon: "✓",
+    label: "Listo",
+  },
+  Entregado: {
+    bg: "bg-green-600",
+    bgLight: "bg-green-100",
+    text: "text-green-800",
+    icon: "✓✓",
+    label: "Entregado",
+  },
+  Cancelado: {
+    bg: "bg-red-600",
+    bgLight: "bg-red-100",
+    text: "text-red-800",
+    icon: "✕",
+    label: "Cancelado",
+  },
+};
+
 // --- REFERENCIAS AL DOM ---
 const listaEl = document.getElementById("lista-pedidos");
 const loadingEl = document.getElementById("loading");
@@ -33,23 +65,16 @@ document.getElementById("search-input")?.addEventListener("input", function () {
 
 // --- FUNCIONES DE FORMATO ---
 function getStatusClass(estado) {
-  const estados = {
-    pendiente: "status-pendiente",
-    listo: "status-listo",
-    cancelado: "status-cancelado",
-  };
-  return estados[(estado || "").toLowerCase()] || "bg-gray-500";
+  const config = estadosConfig[estado];
+  return config ? config.bg : "bg-gray-500";
 }
 
-// ✅ NUEVO: Función para obtener las clases de color para la etiqueta de estado en la tarjeta.
+// ✅ ACTUALIZADO: Función para obtener las clases de color para la etiqueta de estado en la tarjeta.
 function getStatusBadgeClasses(estado) {
-  const normalizedEstado = (estado || "").toLowerCase();
-  const classes = {
-    pendiente: "bg-yellow-100 text-yellow-800",
-    listo: "bg-green-100 text-green-800",
-    cancelado: "bg-red-100 text-red-800",
-  };
-  return classes[normalizedEstado] || "bg-gray-100 text-gray-800"; // Color por defecto
+  const config = estadosConfig[estado];
+  return config
+    ? `${config.bgLight} ${config.text}`
+    : "bg-gray-100 text-gray-800";
 }
 
 function formatDate(fecha) {
@@ -103,8 +128,8 @@ function abrirModal(pedidoId) {
   }
 
   pedidoActual = pedido; // Ahora `pedidoActual` es una referencia directa al objeto en `pedidosData`.
-  const estado = (pedido.estado || "Pendiente").toLowerCase();
-  const statusClass = getStatusClass(estado);
+  const estado = pedido.estado || "Pendiente"; // ✅ Mantener capitalizado
+  const config = estadosConfig[estado] || estadosConfig["Pendiente"]; // ✅ Usar configuración
 
   document.getElementById("modal-titulo").textContent =
     pedido.nombre_cliente || "Cliente sin nombre";
@@ -114,13 +139,16 @@ function abrirModal(pedidoId) {
   document.getElementById("modal-fecha-creacion").textContent = `Pedido #${
     pedido.id_pedido
   } • Creado el ${formatShortDate(fechaCreacionStr)}`;
+
+  // ✅ Usar color del estado para el indicador
   document.getElementById(
     "modal-status-indicator"
-  ).className = `w-5 h-5 rounded-full flex-shrink-0 ${statusClass}`;
+  ).className = `w-5 h-5 rounded-full flex-shrink-0 ${config.bg}`;
 
+  // ✅ Usar colores del badge para el estado
   const badgeEl = document.getElementById("modal-estado-badge");
-  badgeEl.textContent = capitalize(estado);
-  badgeEl.className = `px-4 py-2 rounded-full text-white font-semibold status-badge-large ${statusClass}`;
+  badgeEl.textContent = estado;
+  badgeEl.className = `px-4 py-2 rounded-full font-semibold status-badge-large ${config.bgLight} ${config.text}`;
 
   document.getElementById("modal-cliente").textContent =
     pedido.nombre_cliente || "Sin nombre";
@@ -190,10 +218,53 @@ function abrirModal(pedidoId) {
   const comentariosListEl = document.getElementById("modal-comentarios-list");
   renderizarComentarios(comentariosListEl, pedido.comentarios || []);
 
+  // ✅ NUEVO: Lógica de botones según el estado actual
   const actionsEl = document.getElementById("modal-actions");
-  if (estado === "pendiente") {
-    actionsEl.innerHTML = `<div class="flex items-center justify-center gap-3"><button onclick="cambiarEstado('Cancelado')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium text-sm"><span class="flex items-center justify-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Cancelar</span></button><button onclick="cambiarEstado('Listo')" class="action-button flex-1 px-4 py-2.5 text-white rounded-lg font-medium text-sm" style="background: #059669; background: linear-gradient(135deg, #059669, #10b981); text-white rounded-lg font-medium text-sm"><span class="flex items-center justify-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Marcar Listo</span></button></div>`;
+
+  if (estado === "Pendiente") {
+    // Pendiente → Puede pasar a Listo o Cancelado
+    actionsEl.innerHTML = `
+      <div class="flex items-center justify-center gap-3">
+        <button onclick="cambiarEstado('Cancelado')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium text-sm hover:from-red-600 hover:to-red-700 transition-all">
+          <span class="flex items-center justify-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Cancelar
+          </span>
+        </button>
+        <button onclick="cambiarEstado('Listo')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium text-sm hover:from-blue-600 hover:to-blue-700 transition-all">
+          <span class="flex items-center justify-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Marcar Listo
+          </span>
+        </button>
+      </div>`;
+  } else if (estado === "Listo") {
+    // Listo → Puede pasar a Entregado o Cancelado
+    actionsEl.innerHTML = `
+      <div class="flex items-center justify-center gap-3">
+        <button onclick="cambiarEstado('Cancelado')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium text-sm hover:from-red-600 hover:to-red-700 transition-all">
+          <span class="flex items-center justify-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Cancelar
+          </span>
+        </button>
+        <button onclick="cambiarEstado('Entregado')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium text-sm hover:from-green-600 hover:to-green-700 transition-all">
+          <span class="flex items-center justify-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Marcar Entregado
+          </span>
+        </button>
+      </div>`;
   } else {
+    // Entregado o Cancelado → Sin acciones (estados finales)
     actionsEl.innerHTML = "";
   }
 
@@ -275,6 +346,23 @@ function poblarYAbrirModalEdicion() {
 
   // 5. Inicializar listeners del modal de edición
   inicializarListenersEdicion();
+
+  // 6. Inicializar el botón de agregar producto (debe hacerse cada vez que se abre el modal)
+  const addProductBtn = document.getElementById("edicion-add-product-btn");
+  if (addProductBtn) {
+    // Remover listener anterior si existe para evitar duplicados
+    addProductBtn.replaceWith(addProductBtn.cloneNode(true));
+    const newBtn = document.getElementById("edicion-add-product-btn");
+    newBtn.addEventListener("click", () => {
+      console.log("🔵 Botón clickeado, abriendo modal...");
+      abrirProductModal();
+    });
+    console.log("✅ Botón de agregar producto configurado correctamente");
+  } else {
+    console.error(
+      "❌ No se encontró el botón edicion-add-product-btn en el DOM"
+    );
+  }
 }
 
 function cerrarModalEdicion() {
@@ -317,20 +405,35 @@ function renderEdicionSelectedProducts() {
     container.innerHTML = edicionSelectedProducts
       .map(
         (p) => `
-        <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border">
-            <div class="flex-1"><p class="font-semibold text-sm">${p.nombre} (${
-          p.codigo
-        })</p><p class="text-xs text-gray-500">${formatCLP(
-          p.precio_unitario
-        )}</p></div>
-            <div class="flex items-center gap-2"><label class="text-sm font-medium">Cant:</label><input type="number" value="${
-              p.cantidad
-            }" min="1" onchange="updateEdicionQuantity(${
+        <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border border-gray-200">
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-sm break-words">
+                ${p.nombre} (${p.codigo || "N/A"})
+                ${
+                  p.es_temporal
+                    ? '<span class="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">⏱️ Temporal</span>'
+                    : ""
+                }
+              </p>
+              <p class="text-xs text-gray-500">${formatCLP(
+                p.precio_unitario || 0
+              )}</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <label class="text-sm font-medium whitespace-nowrap">Cant:</label>
+              <input type="number" value="${
+                p.cantidad
+              }" min="1" onchange="updateEdicionQuantity('${
           p.id_producto
-        }, this.value)" class="w-16 p-1 border rounded text-center"></div>
-            <button type="button" onclick="removeEdicionProduct(${
+        }', this.value)" class="w-16 p-1 border border-gray-300 rounded text-center">
+            </div>
+            <button type="button" onclick="removeEdicionProduct('${
               p.id_producto
-            })" class="text-red-500 hover:text-red-700 p-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+            }')" class="shrink-0 text-red-500 hover:text-red-700 p-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
         </div>`
       )
       .join("");
@@ -372,8 +475,14 @@ function selectEdicionProduct(productId) {
 }
 
 function removeEdicionProduct(productId) {
+  console.log(
+    "🗑️ Eliminando producto con ID:",
+    productId,
+    "Tipo:",
+    typeof productId
+  );
   edicionSelectedProducts = edicionSelectedProducts.filter(
-    (p) => p.id_producto !== productId
+    (p) => String(p.id_producto) !== String(productId)
   );
   renderEdicionSelectedProducts();
 }
@@ -385,10 +494,21 @@ function updateEdicionQuantity(productId, newQuantity) {
     renderEdicionSelectedProducts();
     return;
   }
-  const product = edicionSelectedProducts.find(
-    (p) => p.id_producto === productId
+  console.log(
+    "📝 Actualizando cantidad para producto:",
+    productId,
+    "Nueva cantidad:",
+    quantity
   );
-  if (product) product.cantidad = quantity;
+  const product = edicionSelectedProducts.find(
+    (p) => String(p.id_producto) === String(productId)
+  );
+  if (product) {
+    product.cantidad = quantity;
+    console.log("✅ Cantidad actualizada correctamente");
+  } else {
+    console.error("❌ No se encontró el producto con ID:", productId);
+  }
 }
 
 // --- Listeners para el modal de edición ---
@@ -412,8 +532,8 @@ function inicializarListenersEdicion() {
     }
     const results = allProducts.filter(
       (p) =>
-        p.nombre.toLowerCase().includes(searchTerm) ||
-        p.codigo.toLowerCase().includes(searchTerm)
+        (p.nombre && p.nombre.toLowerCase().includes(searchTerm)) ||
+        (p.codigo && p.codigo.toLowerCase().includes(searchTerm))
     );
     renderEdicionSearchResults(results);
   });
@@ -460,32 +580,24 @@ function inicializarListenersEdicion() {
 async function guardarCambiosPedido() {
   if (!pedidoActual) return;
 
-  const currentPedidoId = pedidoActual.id_pedido; // Guardamos el ID para buscarlo después
+  const currentPedidoId = pedidoActual.id_pedido;
   const form = document.getElementById("form-edicion");
   const submitBtnText = document.getElementById("edicion-submit-text");
   const submitBtnSpinner = document.getElementById("edicion-submit-spinner");
 
-  const pedidoData = {
-    cliente: form.querySelector('[name="cliente"]').value,
-    fecha: form.querySelector('[name="fecha"]').value,
-    email: form.querySelector('[name="email"]').value,
-    telefono: form.querySelector('[name="telefono"]').value,
-    etiquetas: form.querySelector('[name="etiquetas"]').value,
-    productos: edicionSelectedProducts.map((p) => ({
-      id_producto: p.id_producto,
-      cantidad: p.cantidad,
-    })),
-  };
+  // Validaciones previas
+  const cliente = form.querySelector('[name="cliente"]').value;
+  const fecha = form.querySelector('[name="fecha"]').value;
 
-  // Validaciones
-  if (!pedidoData.cliente || !pedidoData.fecha) {
+  if (!cliente || !fecha) {
     mostrarNotificacion(
       "El nombre del cliente y la fecha son obligatorios.",
       "error"
     );
     return;
   }
-  if (pedidoData.productos.length === 0) {
+
+  if (edicionSelectedProducts.length === 0) {
     mostrarNotificacion("El pedido debe tener al menos un producto.", "error");
     return;
   }
@@ -494,19 +606,157 @@ async function guardarCambiosPedido() {
   submitBtnSpinner.classList.remove("hidden");
 
   try {
-    const res = await fetch(`${API_BASE}/pedidos/${pedidoActual.id_pedido}`, {
+    // PASO 1: Crear productos temporales pendientes en el backend
+    const productosTemporalesPendientes = edicionSelectedProducts.filter(
+      (p) => p.es_temporal
+    );
+    const productosTemporalesCreados = [];
+
+    if (productosTemporalesPendientes.length > 0) {
+      submitBtnText.textContent = "Creando productos temporales...";
+
+      for (const productoTemp of productosTemporalesPendientes) {
+        try {
+          // Asegurar que id_categoria sea un número o null
+          const idCategoriaValido = productoTemp.id_categoria
+            ? parseInt(productoTemp.id_categoria)
+            : null;
+
+          // Validar que stock no sea demasiado grande (límite PostgreSQL INTEGER: 2147483647)
+          const stockValido = productoTemp.stock
+            ? Math.min(parseInt(productoTemp.stock), 2147483647)
+            : null;
+
+          const response = await fetch(`${API_BASE}/productos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              codigo: productoTemp.codigo,
+              nombre: productoTemp.nombre,
+              descripcion: productoTemp.descripcion,
+              id_categoria: idCategoriaValido,
+              precio_unitario: productoTemp.precio_unitario,
+              largo_cm: productoTemp.largo_cm,
+              ancho_cm: productoTemp.ancho_cm,
+              alto_cm: productoTemp.alto_cm,
+              diametro_cm: productoTemp.diametro_cm,
+              fondo_cm: productoTemp.fondo_cm,
+              altura_asiento_cm: productoTemp.altura_asiento_cm,
+              altura_cubierta_cm: productoTemp.altura_cubierta_cm,
+              peso_kg: productoTemp.peso_kg,
+              material: productoTemp.material,
+              moneda: productoTemp.moneda,
+              incluye_iva: productoTemp.incluye_iva,
+              requiere_presupuesto: productoTemp.requiere_presupuesto,
+              unidad_venta: productoTemp.unidad_venta,
+              stock: stockValido,
+              notas_especiales: productoTemp.notas_especiales,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(
+              errorData.error ||
+                `Error al crear producto temporal "${productoTemp.nombre}"`
+            );
+          }
+
+          const result = await response.json();
+          productosTemporalesCreados.push({
+            tempId: productoTemp.id_producto,
+            realId: result.producto_id,
+            cantidad: productoTemp.cantidad,
+          });
+        } catch (error) {
+          throw new Error(`Error al crear producto temporal: ${error.message}`);
+        }
+      }
+    }
+
+    // PASO 2: Preparar lista de productos (temporales ya creados + permanentes)
+    submitBtnText.textContent = "Actualizando pedido...";
+
+    const productosParaPedido = edicionSelectedProducts.map((p) => {
+      // Si es temporal, usar el ID real creado
+      if (p.es_temporal) {
+        const tempCreado = productosTemporalesCreados.find(
+          (t) => t.tempId === p.id_producto
+        );
+
+        if (!tempCreado) {
+          console.error(
+            `No se encontró mapeo para producto temporal: ${p.id_producto}`
+          );
+          throw new Error(
+            `Error interno: No se pudo mapear el producto temporal "${p.nombre}"`
+          );
+        }
+
+        return {
+          id_producto: parseInt(tempCreado.realId),
+          cantidad: parseInt(tempCreado.cantidad),
+        };
+      }
+      // Si es permanente, usar su ID original
+      return {
+        id_producto: parseInt(p.id_producto),
+        cantidad: parseInt(p.cantidad),
+      };
+    });
+
+    const pedidoData = {
+      cliente: cliente,
+      fecha: fecha,
+      email: form.querySelector('[name="email"]').value,
+      telefono: form.querySelector('[name="telefono"]').value,
+      etiquetas: form.querySelector('[name="etiquetas"]').value,
+      productos: productosParaPedido,
+    };
+
+    console.log("📦 Datos del pedido a enviar:", pedidoData);
+    console.log(
+      "📦 Productos para pedido:",
+      JSON.stringify(productosParaPedido, null, 2)
+    );
+
+    // PASO 3: Actualizar el pedido
+    const res = await fetch(`${API_BASE}/pedidos/${currentPedidoId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pedidoData),
     });
+
     if (!res.ok) {
       const errorData = await res.json();
       throw new Error(errorData.error || "Error al actualizar el pedido");
     }
 
-    await cargarPedidos(); // Recargar la lista principal de pedidos
+    // PASO 4: Actualizar productos temporales con el id_pedido_origen
+    if (productosTemporalesCreados.length > 0) {
+      submitBtnText.textContent = "Finalizando...";
 
-    // Buscar el pedido recién actualizado en la lista de datos
+      for (const tempProd of productosTemporalesCreados) {
+        try {
+          await fetch(`${API_BASE}/productos/${tempProd.realId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id_pedido_origen: currentPedidoId,
+              es_temporal: true,
+            }),
+          });
+        } catch (error) {
+          console.warn(
+            `No se pudo actualizar producto temporal ${tempProd.realId}:`,
+            error
+          );
+        }
+      }
+    }
+
+    await cargarPedidos();
+
     const updatedPedido = pedidosData.find(
       (p) => p.id_pedido === currentPedidoId
     );
@@ -514,10 +764,14 @@ async function guardarCambiosPedido() {
     cerrarModalEdicion();
 
     if (updatedPedido) {
-      abrirModal(updatedPedido.id_pedido); // Reabrir el modal de detalles con los datos frescos
+      abrirModal(updatedPedido.id_pedido);
     }
 
-    mostrarNotificacion("Pedido actualizado exitosamente", "success");
+    let mensajeExito = "Pedido actualizado exitosamente";
+    if (productosTemporalesCreados.length > 0) {
+      mensajeExito += `. ${productosTemporalesCreados.length} producto(s) temporal(es) guardado(s).`;
+    }
+    mostrarNotificacion(mensajeExito, "success");
   } catch (e) {
     console.error("Error:", e);
     mostrarNotificacion(`Error: ${e.message}`, "error");
@@ -593,8 +847,8 @@ function poblarYAbrirModal(pedidoId) {
   }
 
   pedidoActual = pedido; // Ahora `pedidoActual` es una referencia directa al objeto en `pedidosData`.
-  const estado = (pedido.estado || "Pendiente").toLowerCase();
-  const statusClass = getStatusClass(estado);
+  const estado = pedido.estado || "Pendiente"; // ✅ Mantener capitalizado
+  const config = estadosConfig[estado] || estadosConfig["Pendiente"]; // ✅ Usar configuración
 
   document.getElementById("modal-titulo").textContent =
     pedido.nombre_cliente || "Cliente sin nombre";
@@ -604,13 +858,16 @@ function poblarYAbrirModal(pedidoId) {
   document.getElementById("modal-fecha-creacion").textContent = `Pedido #${
     pedido.id_pedido
   } • Creado el ${formatShortDate(fechaCreacionStr)}`;
+
+  // ✅ Usar color del estado para el indicador
   document.getElementById(
     "modal-status-indicator"
-  ).className = `w-5 h-5 rounded-full flex-shrink-0 ${statusClass}`;
+  ).className = `w-5 h-5 rounded-full flex-shrink-0 ${config.bg}`;
 
+  // ✅ Usar colores del badge para el estado
   const badgeEl = document.getElementById("modal-estado-badge");
-  badgeEl.textContent = capitalize(estado);
-  badgeEl.className = `px-4 py-2 rounded-full text-white font-semibold status-badge-large ${statusClass}`;
+  badgeEl.textContent = estado;
+  badgeEl.className = `px-4 py-2 rounded-full font-semibold status-badge-large ${config.bgLight} ${config.text}`;
 
   document.getElementById("modal-cliente").textContent =
     pedido.nombre_cliente || "Sin nombre";
@@ -680,10 +937,53 @@ function poblarYAbrirModal(pedidoId) {
   const comentariosListEl = document.getElementById("modal-comentarios-list");
   renderizarComentarios(comentariosListEl, pedido.comentarios || []);
 
+  // ✅ NUEVO: Lógica de botones según el estado actual (duplicado en poblarYAbrirModal)
   const actionsEl = document.getElementById("modal-actions");
-  if (estado === "pendiente") {
-    actionsEl.innerHTML = `<div class="flex items-center justify-center gap-3"><button onclick="cambiarEstado('Cancelado')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium text-sm"><span class="flex items-center justify-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>Cancelar</span></button><button onclick="cambiarEstado('Listo')" class="action-button flex-1 px-4 py-2.5 text-white rounded-lg font-medium text-sm" style="background: #059669; background: linear-gradient(135deg, #059669, #10b981); text-white rounded-lg font-medium text-sm"><span class="flex items-center justify-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Marcar Listo</span></button></div>`;
+
+  if (estado === "Pendiente") {
+    // Pendiente → Puede pasar a Listo o Cancelado
+    actionsEl.innerHTML = `
+      <div class="flex items-center justify-center gap-3">
+        <button onclick="cambiarEstado('Cancelado')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium text-sm hover:from-red-600 hover:to-red-700 transition-all">
+          <span class="flex items-center justify-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Cancelar
+          </span>
+        </button>
+        <button onclick="cambiarEstado('Listo')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium text-sm hover:from-blue-600 hover:to-blue-700 transition-all">
+          <span class="flex items-center justify-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Marcar Listo
+          </span>
+        </button>
+      </div>`;
+  } else if (estado === "Listo") {
+    // Listo → Puede pasar a Entregado o Cancelado
+    actionsEl.innerHTML = `
+      <div class="flex items-center justify-center gap-3">
+        <button onclick="cambiarEstado('Cancelado')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium text-sm hover:from-red-600 hover:to-red-700 transition-all">
+          <span class="flex items-center justify-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Cancelar
+          </span>
+        </button>
+        <button onclick="cambiarEstado('Entregado')" class="action-button flex-1 px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium text-sm hover:from-green-600 hover:to-green-700 transition-all">
+          <span class="flex items-center justify-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Marcar Entregado
+          </span>
+        </button>
+      </div>`;
   } else {
+    // Entregado o Cancelado → Sin acciones (estados finales)
     actionsEl.innerHTML = "";
   }
 
@@ -900,7 +1200,6 @@ function confirmarAccion() {
 }
 
 // --- LÓGICA DE CAMBIO DE ESTADO (API) ---
-// (Esta sección no tiene cambios)
 async function ejecutarCambioEstado(nuevoEstado) {
   if (!pedidoActual) return;
   try {
@@ -912,18 +1211,31 @@ async function ejecutarCambioEstado(nuevoEstado) {
         body: JSON.stringify({ estado: nuevoEstado }),
       }
     );
-    if (!res.ok) throw new Error("Error al actualizar estado");
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Error al actualizar estado");
+    }
+
     cerrarModal();
     await cargarPedidos();
+
+    // ✅ Mensajes personalizados según el estado
+    const mensajes = {
+      Listo: "Pedido marcado como listo",
+      Entregado: "Pedido marcado como entregado",
+      Cancelado: "Pedido cancelado",
+    };
+
     mostrarNotificacion(
-      `Pedido ${
-        nuevoEstado === "Listo" ? "completado" : "cancelado"
-      } exitosamente`,
+      mensajes[nuevoEstado] || "Estado actualizado exitosamente",
       "success"
     );
   } catch (e) {
     console.error("Error:", e);
-    mostrarNotificacion("Error al actualizar el estado del pedido", "error");
+    mostrarNotificacion(
+      e.message || "Error al actualizar el estado del pedido",
+      "error"
+    );
   }
 }
 
@@ -932,8 +1244,15 @@ function cambiarEstado(nuevoEstado) {
     abrirConfirmacion(
       "¿Marcar como Listo?",
       "¿Estás seguro de que quieres marcar este pedido como listo para entrega?",
-      "bg-green-500 hover:bg-green-600",
+      "bg-blue-500 hover:bg-blue-600",
       () => ejecutarCambioEstado("Listo")
+    );
+  } else if (nuevoEstado === "Entregado") {
+    abrirConfirmacion(
+      "¿Marcar como Entregado?",
+      "¿Confirmas que este pedido ha sido entregado al cliente?",
+      "bg-green-500 hover:bg-green-600",
+      () => ejecutarCambioEstado("Entregado")
     );
   } else if (nuevoEstado === "Cancelado") {
     abrirConfirmacion(
@@ -1122,4 +1441,379 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   inicializarListenersEdicion();
+  inicializarModalProducto();
 });
+
+// ========= INICIO: LÓGICA DEL MODAL DE PRODUCTOS =========
+
+function inicializarModalProducto() {
+  const productModal = document.getElementById("product-modal");
+  const closeModalBtn = document.getElementById("close-modal");
+  const cancelProductBtn = document.getElementById("cancel-product");
+  const productForm = document.getElementById("product-form");
+  const toggleNuevaCategoriaBtn = document.getElementById(
+    "toggle-nueva-categoria"
+  );
+  const guardarCategoriaBtn = document.getElementById("guardar-categoria");
+  const cancelarCategoriaBtn = document.getElementById("cancelar-categoria");
+
+  // Cerrar modal
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener("click", cerrarProductModal);
+  }
+  if (cancelProductBtn) {
+    cancelProductBtn.addEventListener("click", cerrarProductModal);
+  }
+
+  // Cerrar modal al hacer clic fuera del contenido
+  if (productModal) {
+    productModal.addEventListener("click", (e) => {
+      // Solo cerrar si se hace clic exactamente en el fondo negro o en el overlay
+      if (
+        e.target.id === "product-modal" ||
+        e.target.id === "product-modal-overlay"
+      ) {
+        cerrarProductModal();
+      }
+    });
+  }
+
+  // Toggle nueva categoría
+  if (toggleNuevaCategoriaBtn) {
+    toggleNuevaCategoriaBtn.addEventListener("click", () => {
+      const container = document.getElementById("nueva-categoria-container");
+      container.classList.toggle("hidden");
+      if (!container.classList.contains("hidden")) {
+        document.getElementById("nueva-categoria-input").focus();
+      }
+    });
+  }
+
+  // Guardar nueva categoría
+  if (guardarCategoriaBtn) {
+    guardarCategoriaBtn.addEventListener("click", guardarNuevaCategoria);
+  }
+
+  // Cancelar nueva categoría
+  if (cancelarCategoriaBtn) {
+    cancelarCategoriaBtn.addEventListener("click", () => {
+      document
+        .getElementById("nueva-categoria-container")
+        .classList.add("hidden");
+      document.getElementById("nueva-categoria-input").value = "";
+    });
+  }
+
+  // Enviar formulario de producto
+  if (productForm) {
+    productForm.addEventListener("submit", guardarProducto);
+  }
+
+  // Cargar categorías al inicializar
+  cargarCategoriasEnModal();
+}
+
+function abrirProductModal() {
+  console.log("🔵 Intentando abrir modal de producto...");
+  const productModal = document.getElementById("product-modal");
+  if (!productModal) {
+    console.error("❌ No se encontró el modal de producto (product-modal)");
+    return;
+  }
+  console.log("✅ Modal encontrado, abriendo...");
+  productModal.classList.remove("hidden");
+  limpiarFormularioProducto();
+}
+
+function cerrarProductModal() {
+  const productModal = document.getElementById("product-modal");
+  productModal.classList.add("hidden");
+  limpiarFormularioProducto();
+}
+
+function limpiarFormularioProducto() {
+  document.getElementById("product-form").reset();
+  document.getElementById("nueva-categoria-container").classList.add("hidden");
+  document.getElementById("nueva-categoria-input").value = "";
+  // Restablecer el radio button a "permanente"
+  document.querySelector(
+    'input[name="tipo-agregado"][value="permanente"]'
+  ).checked = true;
+}
+
+async function cargarCategoriasEnModal() {
+  try {
+    const res = await fetch(`${API_BASE}/categorias`);
+    if (!res.ok) throw new Error("Error al cargar categorías");
+    const data = await res.json();
+
+    const select = document.getElementById("prod-categoria");
+    select.innerHTML = '<option value="">Sin categoría</option>';
+
+    if (data.categorias && data.categorias.length > 0) {
+      data.categorias.forEach((cat) => {
+        const option = document.createElement("option");
+        option.value = cat.id_categoria;
+        option.textContent = cat.nombre;
+        select.appendChild(option);
+      });
+    }
+  } catch (e) {
+    console.error("Error al cargar categorías:", e);
+  }
+}
+
+async function guardarNuevaCategoria() {
+  const input = document.getElementById("nueva-categoria-input");
+  const nombreCategoria = input.value.trim();
+
+  if (!nombreCategoria) {
+    mostrarNotificacion("Por favor ingresa un nombre de categoría", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/categorias`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: nombreCategoria }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || "Error al crear categoría");
+    }
+
+    const data = await res.json();
+    mostrarNotificacion("Categoría creada exitosamente", "success");
+
+    // Recargar las categorías
+    await cargarCategoriasEnModal();
+
+    // Seleccionar la nueva categoría
+    const select = document.getElementById("prod-categoria");
+    select.value = data.categoria_id;
+
+    // Limpiar y ocultar el contenedor de nueva categoría
+    document
+      .getElementById("nueva-categoria-container")
+      .classList.add("hidden");
+    input.value = "";
+  } catch (e) {
+    console.error("Error:", e);
+    mostrarNotificacion(`Error: ${e.message}`, "error");
+  }
+}
+
+async function guardarProducto(e) {
+  e.preventDefault();
+
+  // Validación previa del nombre
+  const nombre = document.getElementById("prod-nombre").value.trim();
+  if (!nombre) {
+    mostrarNotificacion("📝 El nombre del producto es obligatorio", "error");
+    document.getElementById("prod-nombre").focus();
+    return;
+  }
+
+  const tipoAgregado = document.querySelector(
+    'input[name="tipo-agregado"]:checked'
+  ).value;
+
+  // Obtener y convertir id_categoria correctamente
+  const categoriaValue = document.getElementById("prod-categoria").value;
+  const idCategoria =
+    categoriaValue && categoriaValue !== "" ? parseInt(categoriaValue) : null;
+
+  const producto = {
+    codigo: document.getElementById("prod-codigo").value.trim() || null,
+    nombre: nombre,
+    descripcion:
+      document.getElementById("prod-descripcion").value.trim() || null,
+    id_categoria: idCategoria,
+    material: document.getElementById("prod-material").value.trim() || null,
+    largo: parseFloat(document.getElementById("prod-largo").value) || null,
+    ancho: parseFloat(document.getElementById("prod-ancho").value) || null,
+    alto: parseFloat(document.getElementById("prod-alto").value) || null,
+    diametro:
+      parseFloat(document.getElementById("prod-diametro").value) || null,
+    fondo: parseFloat(document.getElementById("prod-fondo").value) || null,
+    altura_asiento:
+      parseFloat(document.getElementById("prod-altura-asiento").value) || null,
+    altura_cubierta:
+      parseFloat(document.getElementById("prod-altura-cubierta").value) || null,
+    peso: parseFloat(document.getElementById("prod-peso").value) || null,
+    precio: parseFloat(document.getElementById("prod-precio").value) || null,
+    moneda: document.getElementById("prod-moneda").value,
+    stock: parseInt(document.getElementById("prod-stock").value) || null,
+    unidad_venta:
+      document.getElementById("prod-unidad").value.trim() || "unidad",
+    incluye_iva: document.getElementById("prod-incluye-iva").checked,
+    requiere_presupuesto: document.getElementById("prod-requiere-presupuesto")
+      .checked,
+    notas_especiales:
+      document.getElementById("prod-notas").value.trim() || null,
+  };
+
+  // Obtener elementos del botón para mostrar spinner
+  const btnGuardar = document.getElementById("save-product");
+  const btnIcon = btnGuardar.querySelector("svg");
+  const btnText = btnGuardar.querySelector("path").nextSibling;
+  const originalBtnContent = btnGuardar.innerHTML;
+
+  // Mostrar spinner
+  btnGuardar.disabled = true;
+  btnGuardar.classList.add("opacity-75", "cursor-not-allowed");
+  btnGuardar.innerHTML = `
+    <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <span>Guardando...</span>
+  `;
+
+  try {
+    if (tipoAgregado === "temporal") {
+      // Agregar producto temporal solo a la lista de edición actual
+      // Guardar TODOS los campos para poder crear el producto después
+      const productoTemporal = {
+        id_producto: `temp-${Date.now()}`, // ID temporal único
+        nombre: producto.nombre,
+        codigo: producto.codigo,
+        descripcion: producto.descripcion,
+        id_categoria: producto.id_categoria,
+        material: producto.material,
+        largo_cm: producto.largo,
+        ancho_cm: producto.ancho,
+        alto_cm: producto.alto,
+        diametro_cm: producto.diametro,
+        fondo_cm: producto.fondo,
+        altura_asiento_cm: producto.altura_asiento,
+        altura_cubierta_cm: producto.altura_cubierta,
+        peso_kg: producto.peso,
+        precio_unitario: producto.precio,
+        moneda: producto.moneda,
+        stock: producto.stock,
+        unidad_venta: producto.unidad_venta,
+        incluye_iva: producto.incluye_iva,
+        requiere_presupuesto: producto.requiere_presupuesto,
+        notas_especiales: producto.notas_especiales,
+        cantidad: 1,
+        es_temporal: true,
+      };
+
+      edicionSelectedProducts.push(productoTemporal);
+      renderEdicionSelectedProducts();
+      cerrarProductModal();
+      mostrarNotificacion(
+        `✅ Producto temporal "${producto.nombre}" agregado al pedido`,
+        "success"
+      );
+    } else {
+      // Guardar producto permanente en el catálogo
+      const res = await fetch(`${API_BASE}/productos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          codigo: producto.codigo,
+          nombre: producto.nombre,
+          descripcion: producto.descripcion,
+          id_categoria: producto.id_categoria,
+          material: producto.material,
+          largo_cm: producto.largo,
+          ancho_cm: producto.ancho,
+          alto_cm: producto.alto,
+          diametro_cm: producto.diametro,
+          fondo_cm: producto.fondo,
+          altura_asiento_cm: producto.altura_asiento,
+          altura_cubierta_cm: producto.altura_cubierta,
+          peso_kg: producto.peso,
+          precio_unitario: producto.precio,
+          moneda: producto.moneda,
+          stock: producto.stock,
+          unidad_venta: producto.unidad_venta,
+          incluye_iva: producto.incluye_iva,
+          requiere_presupuesto: producto.requiere_presupuesto,
+          notas_especiales: producto.notas_especiales,
+          es_temporal: false, // ✅ IMPORTANTE: Marcar explícitamente como permanente
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Manejo de errores específicos
+        let errorMsg = "No se pudo crear el producto";
+
+        if (res.status === 400) {
+          if (data.error && data.error.includes("duplicate key")) {
+            errorMsg = `⚠️ Ya existe un producto con el código "${producto.codigo}"`;
+          } else if (data.error && data.error.includes("nombre")) {
+            errorMsg = "⚠️ El nombre del producto es obligatorio";
+          } else if (data.code === "VALIDATION_ERROR") {
+            errorMsg = `⚠️ ${data.error}`;
+          } else {
+            errorMsg = `❌ ${
+              data.error || "Datos inválidos. Verifica los campos."
+            }`;
+          }
+        } else if (res.status === 409) {
+          errorMsg = `⚠️ ${data.error || "El producto ya existe"}`;
+        } else if (res.status === 500) {
+          errorMsg =
+            "❌ Error en el servidor. Intenta nuevamente en unos momentos.";
+        } else {
+          errorMsg = data.error || "Error desconocido al crear el producto";
+        }
+
+        throw new Error(errorMsg);
+      }
+
+      console.log("✅ Producto creado exitosamente:", data);
+
+      // El backend solo devuelve producto_id, necesitamos construir el objeto
+      const productoParaLista = {
+        id_producto: data.producto_id,
+        nombre: producto.nombre,
+        codigo: producto.codigo,
+        precio_unitario: producto.precio,
+        cantidad: 1,
+        es_temporal: false,
+      };
+
+      edicionSelectedProducts.push(productoParaLista);
+
+      // También agregarlo a la lista completa con todos los campos
+      const productoCompleto = {
+        id_producto: data.producto_id,
+        nombre: producto.nombre,
+        codigo: producto.codigo,
+        precio: producto.precio,
+        precio_unitario: producto.precio,
+        descripcion: producto.descripcion,
+        id_categoria: producto.id_categoria,
+        material: producto.material,
+      };
+      allProducts.push(productoCompleto);
+
+      renderEdicionSelectedProducts();
+      cerrarProductModal();
+      mostrarNotificacion(
+        `✅ Producto "${producto.nombre}" agregado al catálogo y al pedido exitosamente`,
+        "success"
+      );
+    }
+  } catch (error) {
+    console.error("❌ Error al guardar producto:", error);
+    const errorMessage =
+      error.message || "Error desconocido al guardar el producto";
+    mostrarNotificacion(errorMessage, "error");
+  } finally {
+    // Restaurar botón en cualquier caso
+    btnGuardar.disabled = false;
+    btnGuardar.classList.remove("opacity-75", "cursor-not-allowed");
+    btnGuardar.innerHTML = originalBtnContent;
+  }
+}
+
+// ========= FIN: LÓGICA DEL MODAL DE PRODUCTOS =========

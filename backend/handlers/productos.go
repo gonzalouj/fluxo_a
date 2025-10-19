@@ -4,26 +4,259 @@ package handlers
 import (
 	"database/sql"
 	"fluxo/backend/models"
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
+// CrearProducto maneja POST /api/productos
+func CrearProducto(c *gin.Context) {
+	var req struct {
+		Codigo            *string  `json:"codigo"`
+		Nombre            string   `json:"nombre" binding:"required"`
+		Descripcion       *string  `json:"descripcion"`
+		IDCategoria       *int     `json:"id_categoria"`
+		PrecioUnitario    *float64 `json:"precio_unitario"`
+		LargoCm           *float64 `json:"largo_cm"`
+		AnchoCm           *float64 `json:"ancho_cm"`
+		AltoCm            *float64 `json:"alto_cm"`
+		DiametroCm        *float64 `json:"diametro_cm"`
+		FondoCm           *float64 `json:"fondo_cm"`
+		AlturaAsientoCm   *float64 `json:"altura_asiento_cm"`
+		AlturaCubiertaCm  *float64 `json:"altura_cubierta_cm"`
+		PesoKg            *float64 `json:"peso_kg"`
+		Material          *string  `json:"material"`
+		Moneda            string   `json:"moneda"`
+		IncluyeIVA        bool     `json:"incluye_iva"`
+		RequierePresupuesto bool   `json:"requiere_presupuesto"`
+		UnidadVenta       string   `json:"unidad_venta"`
+		Stock             *int     `json:"stock"`
+		FotoURL           *string  `json:"foto_principal_url"`
+		NotasEspeciales   *string  `json:"notas_especiales"`
+		EsTemporal        *bool    `json:"es_temporal"` // Cambiado a puntero para detectar null
+		IDPedidoOrigen    *int     `json:"id_pedido_origen"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "El nombre del producto es obligatorio",
+			"code":  "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	// DEBUG: Log para ver qué está recibiendo
+	log.Printf("🔵 CrearProducto - Nombre: %s, EsTemporal: %v, IDPedidoOrigen: %v", 
+		req.Nombre, req.EsTemporal, req.IDPedidoOrigen)
+
+	// Validaciones adicionales
+	if req.Nombre == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "El nombre del producto no puede estar vacío",
+			"code":  "EMPTY_NAME",
+		})
+		return
+	}
+
+	// VALIDACIÓN DE NOMBRES DUPLICADOS:
+	// Solo validar duplicados para productos PERMANENTES EXPLÍCITOS
+	// NO validar si:
+	// - es_temporal = true (producto temporal explícito)
+	// - es_temporal no se envió (nil) - puede ser temporal en proceso de creación
+	// SÍ validar si:
+	// - es_temporal = false (producto permanente explícito)
+	
+	esPermanenteExplicito := req.EsTemporal != nil && *req.EsTemporal == false
+	
+	log.Printf("🔵 esPermanenteExplicito: %v (EsTemporal ptr: %v)", esPermanenteExplicito, req.EsTemporal)
+	
+	if esPermanenteExplicito {
+		log.Printf("⚠️ Validando nombres duplicados para producto PERMANENTE: %s", req.Nombre)
+		// Verificar que no exista OTRO producto permanente con el mismo nombre
+		var existeNombre bool
+		checkQuery := `
+			SELECT EXISTS(
+				SELECT 1 FROM productos 
+				WHERE LOWER(TRIM(nombre)) = LOWER(TRIM($1))
+				AND (es_temporal = FALSE OR es_temporal IS NULL)
+			)
+		`
+		err := db.QueryRow(checkQuery, strings.TrimSpace(req.Nombre)).Scan(&existeNombre)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Error al validar el producto",
+				"code":  "VALIDATION_ERROR",
+			})
+			return
+		}
+
+		if existeNombre {
+			log.Printf("❌ Nombre duplicado encontrado: %s", req.Nombre)
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Ya existe un producto permanente con el nombre '" + req.Nombre + "'",
+				"code":  "DUPLICATE_NAME",
+			})
+			return
+		}
+		log.Printf("✅ Nombre único verificado: %s", req.Nombre)
+	} else {
+		log.Printf("✅ NO validando nombres duplicados (producto temporal o sin especificar): %s", req.Nombre)
+	}
+
+	// NOTA: Los productos temporales pueden crearse sin id_pedido_origen inicialmente
+	// El id_pedido_origen se asigna después mediante PATCH una vez que el pedido existe
+
+	// Validar que si NO es temporal, NO debe tener id_pedido_origen
+	esPermanenteConPedido := (req.EsTemporal == nil || *req.EsTemporal == false) && req.IDPedidoOrigen != nil
+	if esPermanenteConPedido {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Un producto permanente no puede estar asociado a un pedido específico",
+			"code":  "INVALID_PEDIDO_ORIGEN",
+		})
+		return
+	}
+
+	// Valores por defecto
+	if req.Moneda == "" {
+		req.Moneda = "CLP"
+	}
+	if req.UnidadVenta == "" {
+		req.UnidadVenta = "unidad"
+	}
+
+	// Convertir puntero de bool a valor para INSERT
+	esTemporalValue := false
+	if req.EsTemporal != nil {
+		esTemporalValue = *req.EsTemporal
+	}
+
+	var productoID int
+	err := db.QueryRow(`
+		INSERT INTO productos (
+			codigo, nombre, descripcion, id_categoria, precio_unitario,
+			largo_cm, ancho_cm, alto_cm, diametro_cm, fondo_cm,
+			altura_asiento_cm, altura_cubierta_cm, peso_kg, material,
+			moneda, incluye_iva, requiere_presupuesto, unidad_venta,
+			stock, foto_principal_url, notas_especiales, es_temporal, id_pedido_origen
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+		RETURNING id_producto`,
+		req.Codigo, req.Nombre, req.Descripcion, req.IDCategoria, req.PrecioUnitario,
+		req.LargoCm, req.AnchoCm, req.AltoCm, req.DiametroCm, req.FondoCm,
+		req.AlturaAsientoCm, req.AlturaCubiertaCm, req.PesoKg, req.Material,
+		req.Moneda, req.IncluyeIVA, req.RequierePresupuesto, req.UnidadVenta,
+		req.Stock, req.FotoURL, req.NotasEspeciales, esTemporalValue, req.IDPedidoOrigen,
+	).Scan(&productoID)
+
+	if err != nil {
+		// Manejo detallado de errores de PostgreSQL
+		errorMsg := err.Error()
+		
+		// Error de código duplicado
+		if strings.Contains(errorMsg, "productos_codigo_key") {
+			codigoValue := "este código"
+			if req.Codigo != nil && *req.Codigo != "" {
+				codigoValue = "el código '" + *req.Codigo + "'"
+			}
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Ya existe un producto con " + codigoValue + ". Por favor, usa un código diferente.",
+				"code":  "DUPLICATE_CODE",
+			})
+			return
+		}
+		
+		// Error de nombre duplicado
+		if strings.Contains(errorMsg, "productos_nombre_key") {
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Ya existe un producto con el nombre '" + req.Nombre + "'. Por favor, usa un nombre diferente.",
+				"code":  "DUPLICATE_NAME",
+			})
+			return
+		}
+		
+		// Error de categoría inválida
+		if strings.Contains(errorMsg, "violates foreign key constraint") && strings.Contains(errorMsg, "id_categoria") {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "La categoría seleccionada no existe. Por favor, selecciona una categoría válida.",
+				"code":  "INVALID_CATEGORY",
+			})
+			return
+		}
+
+		// Error de pedido origen inválido
+		if strings.Contains(errorMsg, "violates foreign key constraint") && strings.Contains(errorMsg, "id_pedido_origen") {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "El pedido seleccionado no existe.",
+				"code":  "INVALID_PEDIDO_ORIGEN",
+			})
+			return
+		}
+		
+		// Error de precio negativo
+		if strings.Contains(errorMsg, "precio_unitario") && strings.Contains(errorMsg, "check constraint") {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "El precio no puede ser negativo.",
+				"code":  "INVALID_PRICE",
+			})
+			return
+		}
+		
+		// Error genérico de base de datos
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "No se pudo crear el producto. Por favor, verifica los datos e intenta nuevamente.",
+			"code":  "DATABASE_ERROR",
+		})
+		return
+	}
+
+	// Asignar atributos por defecto (los 6 atributos comunes)
+	_, err = db.Exec(`
+		INSERT INTO producto_atributos (id_producto, id_atributo)
+		SELECT $1, id_atributo FROM atributos
+		WHERE nombre IN (
+			'Waterproof',
+			'Resistente a hongos e insectos',
+			'No requiere mantención',
+			'No se astilla',
+			'100% reciclado',
+			'Uso exterior'
+		)
+	`, productoID)
+
+	if err != nil {
+		// Este error es menos crítico, el producto ya fue creado
+		c.JSON(http.StatusCreated, gin.H{
+			"message":      "Producto creado exitosamente (algunos atributos no se pudieron asignar)",
+			"producto_id":  productoID,
+			"warning":      true,
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":      "Producto creado exitosamente",
+		"producto_id":  productoID,
+	})
+}
+
 // ListarProductos maneja GET /api/productos
 func ListarProductos(c *gin.Context) {
-	// Se modifica la consulta para devolver solo productos que tengan un código (codigo)
-	// que no sea nulo ni esté vacío.
+	// Consulta que incluye SOLO productos permanentes (no temporales)
+	// Excluye los que requieren presupuesto y los temporales
 	query := `
 		SELECT id_producto, codigo, nombre, precio_unitario, stock, foto_principal_url
 		FROM productos 
-		WHERE codigo IS NOT NULL AND codigo <> '' AND COALESCE(requiere_presupuesto, FALSE) = FALSE
+		WHERE COALESCE(es_temporal, FALSE) = FALSE
 		ORDER BY nombre ASC`
 
 	rows, err := db.Query(query)
 	if err != nil {
-		// Si la consulta falla (ej. la columna 'codigo' no existe en un esquema antiguo),
-		// devolvemos una lista vacía para cumplir con el requisito de no mostrar productos sin código.
-		c.JSON(http.StatusOK, gin.H{"productos": []models.Producto{}})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error al consultar productos",
+			"productos": []models.Producto{},
+		})
 		return
 	}
 	defer rows.Close()
@@ -31,20 +264,22 @@ func ListarProductos(c *gin.Context) {
 	var productos []models.Producto
 	for rows.Next() {
 		var p models.Producto
-		// Usamos sql.NullString para escanear columnas que pueden ser NULL
+		// Usamos sql.NullString y sql.NullFloat64 para escanear columnas que pueden ser NULL
 		var codigo, fotoURL sql.NullString
-		var stock sql.NullInt64 // Para manejar stock NULL
+		var precioUnitario sql.NullFloat64
+		var stock sql.NullInt64
+		
 		err := rows.Scan(
 			&p.ID,
 			&codigo,
 			&p.Nombre,
-			&p.PrecioUnitario,
+			&precioUnitario,
 			&stock,
 			&fotoURL,
 		)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al escanear producto: " + err.Error()})
-			return
+			// Logueamos el error pero continuamos con los demás productos
+			continue
 		}
 
 		// Asignamos el valor solo si no es nulo
@@ -53,6 +288,12 @@ func ListarProductos(c *gin.Context) {
 		}
 		if fotoURL.Valid {
 			p.FotoURL = &fotoURL.String
+		}
+		// PrecioUnitario puede ser NULL
+		if precioUnitario.Valid {
+			p.PrecioUnitario = precioUnitario.Float64
+		} else {
+			p.PrecioUnitario = 0
 		}
 		// Stock puede ser NULL
 		if stock.Valid {
@@ -70,5 +311,237 @@ func ListarProductos(c *gin.Context) {
 		return
 	}
 
+	// Si no hay productos, devolver array vacío en lugar de null
+	if productos == nil {
+		productos = []models.Producto{}
+	}
+
 	c.JSON(http.StatusOK, gin.H{"productos": productos})
+}
+
+// ListarProductosConTemporales maneja GET /api/productos/con-temporales?id_pedido=X
+// Devuelve productos permanentes + productos temporales de un pedido específico
+func ListarProductosConTemporales(c *gin.Context) {
+	idPedidoStr := c.Query("id_pedido")
+	
+	var query string
+	var rows *sql.Rows
+	var err error
+
+	if idPedidoStr != "" {
+		// Si se proporciona id_pedido, incluir productos temporales de ese pedido
+		query = `
+			SELECT id_producto, codigo, nombre, precio_unitario, stock, foto_principal_url, 
+			       COALESCE(es_temporal, FALSE) as es_temporal
+			FROM productos 
+			WHERE COALESCE(requiere_presupuesto, FALSE) = FALSE
+			  AND (
+			      COALESCE(es_temporal, FALSE) = FALSE 
+			      OR (es_temporal = TRUE AND id_pedido_origen = $1)
+			  )
+			ORDER BY es_temporal ASC, nombre ASC`
+		rows, err = db.Query(query, idPedidoStr)
+	} else {
+		// Si no se proporciona id_pedido, solo productos permanentes
+		query = `
+			SELECT id_producto, codigo, nombre, precio_unitario, stock, foto_principal_url,
+			       COALESCE(es_temporal, FALSE) as es_temporal
+			FROM productos 
+			WHERE COALESCE(requiere_presupuesto, FALSE) = FALSE
+			  AND COALESCE(es_temporal, FALSE) = FALSE
+			ORDER BY nombre ASC`
+		rows, err = db.Query(query)
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error al consultar productos",
+			"productos": []models.Producto{},
+		})
+		return
+	}
+	defer rows.Close()
+
+	type ProductoConTemporal struct {
+		models.Producto
+		EsTemporal bool `json:"es_temporal"`
+	}
+
+	var productos []ProductoConTemporal
+	for rows.Next() {
+		var p ProductoConTemporal
+		var codigo, fotoURL sql.NullString
+		var precioUnitario sql.NullFloat64
+		var stock sql.NullInt64
+		
+		err := rows.Scan(
+			&p.ID,
+			&codigo,
+			&p.Nombre,
+			&precioUnitario,
+			&stock,
+			&fotoURL,
+			&p.EsTemporal,
+		)
+		if err != nil {
+			continue
+		}
+
+		if codigo.Valid {
+			p.Codigo = &codigo.String
+		}
+		if fotoURL.Valid {
+			p.FotoURL = &fotoURL.String
+		}
+		if precioUnitario.Valid {
+			p.PrecioUnitario = precioUnitario.Float64
+		} else {
+			p.PrecioUnitario = 0
+		}
+		if stock.Valid {
+			p.Stock = int(stock.Int64)
+		} else {
+			p.Stock = 0
+		}
+
+		productos = append(productos, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al procesar la lista de productos"})
+		return
+	}
+
+	if productos == nil {
+		productos = []ProductoConTemporal{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"productos": productos})
+}
+
+// ListarCategorias maneja GET /api/categorias
+func ListarCategorias(c *gin.Context) {
+	query := `SELECT id_categoria, nombre FROM categorias ORDER BY nombre ASC`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener categorías"})
+		return
+	}
+	defer rows.Close()
+
+	type Categoria struct {
+		ID     int    `json:"id_categoria"`
+		Nombre string `json:"nombre"`
+	}
+
+	var categorias []Categoria
+	for rows.Next() {
+		var cat Categoria
+		if err := rows.Scan(&cat.ID, &cat.Nombre); err != nil {
+			continue
+		}
+		categorias = append(categorias, cat)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"categorias": categorias})
+}
+
+// CrearCategoria maneja POST /api/categorias
+func CrearCategoria(c *gin.Context) {
+	var req struct {
+		Nombre string `json:"nombre" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "El nombre de la categoría es obligatorio",
+			"code":  "VALIDATION_ERROR",
+		})
+		return
+	}
+
+	var categoriaID int
+	err := db.QueryRow(`
+		INSERT INTO categorias (nombre)
+		VALUES ($1)
+		RETURNING id_categoria`,
+		req.Nombre,
+	).Scan(&categoriaID)
+
+	if err != nil {
+		errorMsg := err.Error()
+		
+		// Error de nombre duplicado
+		if strings.Contains(errorMsg, "categorias_nombre_key") {
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Ya existe una categoría con el nombre '" + req.Nombre + "'",
+				"code":  "DUPLICATE_NAME",
+			})
+			return
+		}
+		
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "No se pudo crear la categoría",
+			"code":  "DATABASE_ERROR",
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":      "Categoría creada exitosamente",
+		"categoria_id": categoriaID,
+		"nombre":       req.Nombre,
+	})
+}
+
+// ActualizarProducto maneja PATCH /api/productos/:id
+// Permite actualizar campos específicos de un producto (ej: id_pedido_origen, es_temporal)
+func ActualizarProducto(c *gin.Context) {
+	id := c.Param("id")
+	
+	var req struct {
+		IDPedidoOrigen *int  `json:"id_pedido_origen"`
+		EsTemporal     *bool `json:"es_temporal"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos"})
+		return
+	}
+
+	// Construir query dinámicamente según los campos presentes
+	query := "UPDATE productos SET "
+	params := []interface{}{}
+	paramCount := 1
+	updates := []string{}
+
+	if req.IDPedidoOrigen != nil {
+		updates = append(updates, "id_pedido_origen = $"+strconv.Itoa(paramCount))
+		params = append(params, req.IDPedidoOrigen)
+		paramCount++
+	}
+
+	if req.EsTemporal != nil {
+		updates = append(updates, "es_temporal = $"+strconv.Itoa(paramCount))
+		params = append(params, req.EsTemporal)
+		paramCount++
+	}
+
+	if len(updates) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No hay campos para actualizar"})
+		return
+	}
+
+	query += strings.Join(updates, ", ") + " WHERE id_producto = $" + strconv.Itoa(paramCount)
+	params = append(params, id)
+
+	_, err := db.Exec(query, params...)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al actualizar producto"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Producto actualizado exitosamente"})
 }
