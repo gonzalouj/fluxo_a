@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Historial de Pedidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .status-pendiente {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      }
+      .status-listo {
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+      .status-entregado {
+        background: linear-gradient(135deg, #059669, #047857);
+      }
+      .status-cancelado {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+      }
+      .pedido-card {
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+      .pedido-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+      .search-input:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+      .modal-backdrop {
+        animation: fadeIn 0.2s ease-out;
+      }
+      .modal-content {
+        animation: slideUp 0.3s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .status-badge-large {
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+
+      /* Panel de Filtros */
+      .filtros-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      .filtros-panel.active {
+        pointer-events: all;
+      }
+
+      .filtros-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        backdrop-filter: blur(2px);
+      }
+
+      .filtros-panel.active .filtros-overlay {
+        opacity: 1;
+      }
+
+      .filtros-content {
+        position: relative;
+        background: white;
+        width: 100%;
+        max-height: 80vh;
+        border-radius: 1.5rem 1.5rem 0 0;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+      }
+
+      .filtros-panel.active .filtros-content {
+        transform: translateY(0);
+      }
+
+      .filtros-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      .filtros-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .filtros-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 0.75rem;
+        flex-shrink: 0;
+        background: #f9fafb;
+      }
+
+      .filtros-footer button {
+        flex: 1;
+        padding: 0.875rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+
+      .btn-secondary {
+        background: white;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+      }
+
+      .btn-secondary:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+      }
+
+      .filtro-section {
+        margin-bottom: 1.75rem;
+      }
+
+      .filtro-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .filtro-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .filtro-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .filtro-checkbox {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        transition: background 0.2s ease;
+        position: relative;
+        user-select: none;
+      }
+
+      .filtro-checkbox:hover {
+        background: #f3f4f6;
+      }
+
+      .filtro-checkbox input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .checkmark {
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 2px solid #d1d5db;
+        border-radius: 0.5rem;
+        margin-right: 0.75rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .filtro-checkbox input[type="checkbox"]:checked ~ .checkmark {
+        background: #3b82f6;
+        border-color: #3b82f6;
+      }
+
+      .filtro-checkbox input[type="checkbox"]:checked ~ .checkmark::after {
+        content: "";
+        width: 0.45rem;
+        height: 0.75rem;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        margin-bottom: 0.125rem;
+      }
+
+      .label-text {
+        color: #374151;
+        font-size: 0.9375rem;
+        font-weight: 500;
+      }
+
+      .filtro-radio {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        transition: background 0.2s ease;
+        position: relative;
+        user-select: none;
+      }
+
+      .filtro-radio:hover {
+        background: #f3f4f6;
+      }
+
+      .filtro-radio input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .radiomark {
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 2px solid #d1d5db;
+        border-radius: 50%;
+        margin-right: 0.75rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .filtro-radio input[type="radio"]:checked ~ .radiomark {
+        border-color: #3b82f6;
+      }
+
+      .filtro-radio input[type="radio"]:checked ~ .radiomark::after {
+        content: "";
+        width: 0.75rem;
+        height: 0.75rem;
+        background: #3b82f6;
+        border-radius: 50%;
+      }
+
+      .fecha-personalizada-inputs {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.875rem;
+      }
+
+      .fecha-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .fecha-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6b7280;
+      }
+
+      .fecha-input {
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: white;
+      }
+
+      .fecha-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .filter-badge {
+        position: absolute;
+        top: -0.5rem;
+        right: -0.5rem;
+        background: #ef4444;
+        color: white;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+      }
+
+      @media (min-width: 768px) {
+        .filtros-panel {
+          align-items: flex-start;
+          justify-content: flex-end;
+          padding: 5rem 1rem 1rem;
+        }
+
+        .filtros-content {
+          width: 400px;
+          max-height: calc(100vh - 6rem);
+          border-radius: 1rem;
+          transform: translateX(100%);
+          box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .filtros-panel.active .filtros-content {
+          transform: translateX(0);
+        }
+
+        .filtros-footer {
+          background: white;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div id="menu-placeholder"></div>
+    <div id="header-placeholder"></div>
+
+    <!-- Panel de Filtros -->
+    <div id="filtros-panel" class="filtros-panel hidden">
+      <div class="filtros-overlay" id="filtros-overlay"></div>
+      <div class="filtros-content">
+        <div class="filtros-header">
+          <h3 class="text-lg font-semibold text-gray-800">Filtros</h3>
+          <button
+            id="filtros-close"
+            class="text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="filtros-body">
+          <!-- Filtro por Estado -->
+          <div class="filtro-section">
+            <h4 class="filtro-title">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+              Estado
+            </h4>
+            <div class="filtro-options">
+              <label class="filtro-checkbox">
+                <input
+                  type="checkbox"
+                  value="Pendiente"
+                  class="filtro-estado-checkbox"
+                />
+                <span class="checkmark"></span>
+                <span class="label-text">Pendiente</span>
+              </label>
+              <label class="filtro-checkbox">
+                <input
+                  type="checkbox"
+                  value="Listo"
+                  class="filtro-estado-checkbox"
+                />
+                <span class="checkmark"></span>
+                <span class="label-text">Listo</span>
+              </label>
+              <label class="filtro-checkbox">
+                <input
+                  type="checkbox"
+                  value="Entregado"
+                  class="filtro-estado-checkbox"
+                />
+                <span class="checkmark"></span>
+                <span class="label-text">Entregado</span>
+              </label>
+              <label class="filtro-checkbox">
+                <input
+                  type="checkbox"
+                  value="Cancelado"
+                  class="filtro-estado-checkbox"
+                />
+                <span class="checkmark"></span>
+                <span class="label-text">Cancelado</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Filtro por Fecha de Entrega -->
+          <div class="filtro-section">
+            <h4 class="filtro-title">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+              Fecha de Entrega
+            </h4>
+            <div class="filtro-options">
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="todos"
+                  class="filtro-fecha-radio"
+                  checked
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Todas las fechas</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="hoy"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Hoy</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="semana"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Esta semana</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="mes"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Este mes</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="personalizado"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Personalizado</span>
+              </label>
+
+              <div
+                id="fecha-personalizada-inputs"
+                class="fecha-personalizada-inputs hidden"
+              >
+                <div class="fecha-input-group">
+                  <label class="fecha-label">Desde:</label>
+                  <input type="date" id="fecha-desde" class="fecha-input" />
+                </div>
+                <div class="fecha-input-group">
+                  <label class="fecha-label">Hasta:</label>
+                  <input type="date" id="fecha-hasta" class="fecha-input" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filtro por Fecha de Creación -->
+          <div class="filtro-section">
+            <h4 class="filtro-title">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+              Fecha de Creación
+            </h4>
+            <div class="filtro-options">
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-creacion-preset"
+                  value="todos"
+                  class="filtro-fecha-creacion-radio"
+                  checked
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Todas las fechas</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-creacion-preset"
+                  value="hoy"
+                  class="filtro-fecha-creacion-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Hoy</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-creacion-preset"
+                  value="semana"
+                  class="filtro-fecha-creacion-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Esta semana</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-creacion-preset"
+                  value="mes"
+                  class="filtro-fecha-creacion-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Este mes</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-creacion-preset"
+                  value="personalizado"
+                  class="filtro-fecha-creacion-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Personalizado</span>
+              </label>
+
+              <div
+                id="fecha-creacion-personalizada-inputs"
+                class="fecha-personalizada-inputs hidden"
+              >
+                <div class="fecha-input-group">
+                  <label class="fecha-label">Desde:</label>
+                  <input
+                    type="date"
+                    id="fecha-creacion-desde"
+                    class="fecha-input"
+                  />
+                </div>
+                <div class="fecha-input-group">
+                  <label class="fecha-label">Hasta:</label>
+                  <input
+                    type="date"
+                    id="fecha-creacion-hasta"
+                    class="fecha-input"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="filtros-footer">
+          <button id="filtros-limpiar" class="btn-secondary">
+            Limpiar filtros
+          </button>
+          <button id="filtros-aplicar" class="btn-primary">Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+      <!-- Título y estadísticas -->
+      <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+          Historial de Pedidos
+        </h1>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+            <p class="text-xs text-gray-600 font-medium">Total</p>
+            <p id="stat-total" class="text-2xl font-bold text-gray-900">0</p>
+          </div>
+          <div
+            class="bg-yellow-50 rounded-lg p-3 shadow-sm border border-yellow-200"
+          >
+            <p class="text-xs text-yellow-800 font-medium">Pendiente</p>
+            <p id="stat-pendiente" class="text-2xl font-bold text-yellow-900">
+              0
+            </p>
+          </div>
+          <div
+            class="bg-blue-50 rounded-lg p-3 shadow-sm border border-blue-200"
+          >
+            <p class="text-xs text-blue-800 font-medium">Listo</p>
+            <p id="stat-listo" class="text-2xl font-bold text-blue-900">0</p>
+          </div>
+          <div
+            class="bg-green-50 rounded-lg p-3 shadow-sm border border-green-200"
+          >
+            <p class="text-xs text-green-800 font-medium">Entregado</p>
+            <p id="stat-entregado" class="text-2xl font-bold text-green-900">
+              0
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div id="loading" class="flex justify-center items-center py-12">
+        <div
+          class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+        ></div>
+      </div>
+
+      <div id="lista-pedidos" class="space-y-4 hidden"></div>
+
+      <div id="empty-state" class="hidden text-center py-12">
+        <div class="text-gray-400 mb-4">
+          <svg
+            class="w-16 h-16 mx-auto"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            ></path>
+          </svg>
+        </div>
+        <p class="text-gray-500 text-lg font-semibold">No hay pedidos</p>
+        <p class="text-gray-400 text-sm mt-2">
+          Aún no se han creado pedidos en el sistema
+        </p>
+      </div>
+    </main>
+
+    <!-- Modal de Detalles -->
+    <div id="modal-detalle" class="fixed inset-0 z-50 overflow-y-auto hidden">
+      <div
+        class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+      ></div>
+      <div
+        class="fixed inset-0 flex items-center justify-center p-4"
+        onclick="cerrarModal()"
+        style="
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        "
+      >
+        <div
+          class="modal-content relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full z-10"
+          onclick="event.stopPropagation()"
+        >
+          <div
+            class="relative rounded-t-2xl px-6 py-5 border-b border-gray-200"
+          >
+            <button
+              onclick="cerrarModal()"
+              class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+            <div class="flex items-start space-x-4">
+              <div
+                id="modal-status-indicator"
+                class="w-5 h-5 rounded-full flex-shrink-0 mt-1.5"
+              ></div>
+              <div>
+                <h2
+                  id="modal-titulo"
+                  class="text-2xl font-bold text-gray-900"
+                ></h2>
+                <p id="modal-fecha-creacion" class="text-sm text-gray-500"></p>
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-5 max-h-[60vh] overflow-y-auto">
+            <div class="mb-6">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-700"
+                  >Estado actual</span
+                >
+                <span
+                  id="modal-estado-badge"
+                  class="px-4 py-2 rounded-full text-white font-semibold status-badge-large"
+                ></span>
+              </div>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4 mb-4">
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  ></path></svg
+                >Información del Cliente
+              </h3>
+              <div class="space-y-2">
+                <div class="flex justify-between">
+                  <span class="text-sm text-gray-600">Nombre:</span
+                  ><span
+                    id="modal-cliente"
+                    class="text-sm font-medium text-gray-900"
+                  ></span>
+                </div>
+                <div id="modal-email-container" class="flex justify-between">
+                  <span class="text-sm text-gray-600">Email:</span
+                  ><span
+                    id="modal-email"
+                    class="text-sm font-medium text-gray-900"
+                  ></span>
+                </div>
+                <div id="modal-telefono-container" class="flex justify-between">
+                  <span class="text-sm text-gray-600">Teléfono:</span
+                  ><span
+                    id="modal-telefono"
+                    class="text-sm font-medium text-gray-900"
+                  ></span>
+                </div>
+              </div>
+            </div>
+            <div class="bg-blue-50 rounded-xl p-4 mb-4">
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path></svg
+                >Fecha de Entrega
+              </h3>
+              <p
+                id="modal-fecha-entrega"
+                class="text-lg font-semibold text-gray-900"
+              ></p>
+            </div>
+            <div class="bg-green-50 rounded-xl p-4 mb-4">
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  ></path></svg
+                >Productos del Pedido
+              </h3>
+              <div id="modal-productos" class="space-y-2"></div>
+            </div>
+            <div
+              id="modal-etiquetas-container"
+              class="bg-purple-50 rounded-xl p-4 mb-4"
+            >
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                  ></path></svg
+                >Etiquetas
+              </h3>
+              <div
+                id="modal-etiquetas"
+                class="flex flex-wrap items-center gap-2"
+              ></div>
+            </div>
+            <div
+              id="modal-comentarios-container"
+              class="bg-yellow-50 rounded-xl p-4"
+            >
+              <h3
+                class="text-sm font-semibold text-gray-700 mb-3 flex items-center"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V4a2 2 0 012-2h6a2 2 0 012 2v1z"
+                  ></path></svg
+                >Comentarios
+              </h3>
+              <div id="modal-comentarios-list" class="space-y-3"></div>
+            </div>
+          </div>
+          <!-- Contenedor de acciones (botones) -->
+          <div
+            id="modal-actions"
+            class="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-200"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div
+      id="modal-confirmacion"
+      class="fixed inset-0 z-50 overflow-y-auto hidden"
+    >
+      <div class="flex items-center justify-center min-h-screen px-4 py-6">
+        <div
+          class="fixed inset-0 bg-black bg-opacity-60 transition-opacity"
+          onclick="cerrarConfirmacion()"
+        ></div>
+        <div
+          class="relative bg-white rounded-2xl shadow-xl max-w-sm w-full mx-auto z-10 p-6 text-center"
+        >
+          <div
+            id="confirmacion-icono"
+            class="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-4"
+          >
+            <svg
+              class="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+          </div>
+          <h3
+            id="confirmacion-titulo"
+            class="text-xl font-bold text-gray-800 mb-2"
+          ></h3>
+          <p id="confirmacion-mensaje" class="text-sm text-gray-600 mb-6"></p>
+          <div class="flex justify-center gap-4">
+            <button
+              onclick="cerrarConfirmacion()"
+              class="w-full px-4 py-2.5 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              id="confirmacion-boton-accion"
+              onclick="confirmarAccion()"
+              class="w-full px-4 py-2.5 text-white rounded-lg font-medium transition-colors"
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./historial.js"></script>
+    <script src="./header-inline.js"></script>
+    <script src="./menu-inline.js"></script>
+  </body>
+</html>

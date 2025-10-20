@@ -14,6 +14,11 @@ document.addEventListener("DOMContentLoaded", () => {
       actions: ["filter"], // Botón de filtro
       extra: "search", // Barra de búsqueda
     },
+    "historial.html": {
+      title: "Historial de Pedidos",
+      actions: ["filter"], // Botón de filtro
+      extra: "search", // Barra de búsqueda
+    },
     "configuracion.html": {
       title: "Configuración",
       actions: ["save", "reset"], // Botones de guardar y reset

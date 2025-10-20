@@ -404,8 +404,8 @@ func ActualizarEstadoPedido(c *gin.Context) {
 	transicionesValidas := map[string]map[string]bool{
 		"Pendiente":  {"Listo": true, "Cancelado": true},
 		"Listo":      {"Entregado": true, "Cancelado": true},
-		"Entregado":  {}, // Estado final, no se puede cambiar
-		"Cancelado":  {}, // Estado final, no se puede cambiar
+		"Entregado":  {},                        // Estado final, no se puede cambiar
+		"Cancelado":  {"Pendiente": true},       // Se puede reactivar a Pendiente
 	}
 
 	if !transicionesValidas[estadoActual][req.Estado] {
