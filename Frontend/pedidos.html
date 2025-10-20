@@ -348,12 +348,532 @@
       .view-toggle-btn:hover {
         opacity: 0.8;
       }
+
+      /* ============================================
+         ESTILOS DEL PANEL DE FILTROS
+         ============================================ */
+
+      /* Panel principal */
+      .filtros-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      .filtros-panel.active {
+        pointer-events: all;
+      }
+
+      /* Overlay oscuro */
+      .filtros-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        backdrop-filter: blur(2px);
+      }
+
+      .filtros-panel.active .filtros-overlay {
+        opacity: 1;
+      }
+
+      /* Contenido del panel */
+      .filtros-content {
+        position: relative;
+        background: white;
+        width: 100%;
+        max-height: 80vh;
+        border-radius: 1.5rem 1.5rem 0 0;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        z-index: 10;
+      }
+
+      .filtros-panel.active .filtros-content {
+        transform: translateY(0);
+      }
+
+      /* Header del panel */
+      .filtros-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      /* Body del panel (scrollable) */
+      .filtros-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex: 1;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Footer del panel */
+      .filtros-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 0.75rem;
+        flex-shrink: 0;
+        background: #f9fafb;
+      }
+
+      .filtros-footer button {
+        flex: 1;
+        padding: 0.875rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: #3b82f6;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+
+      .btn-primary:active {
+        transform: translateY(0);
+      }
+
+      .btn-secondary {
+        background: white;
+        color: #6b7280;
+        border: 1px solid #d1d5db;
+      }
+
+      .btn-secondary:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+      }
+
+      /* Secciones de filtros */
+      .filtro-section {
+        margin-bottom: 1.75rem;
+      }
+
+      .filtro-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .filtro-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .filtro-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      /* Checkbox personalizado */
+      .filtro-checkbox {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        transition: background 0.2s ease;
+        position: relative;
+        user-select: none;
+      }
+
+      .filtro-checkbox:hover {
+        background: #f3f4f6;
+      }
+
+      .filtro-checkbox input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .checkmark {
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 2px solid #d1d5db;
+        border-radius: 0.5rem;
+        margin-right: 0.75rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .filtro-checkbox input[type="checkbox"]:checked ~ .checkmark {
+        background: #3b82f6;
+        border-color: #3b82f6;
+      }
+
+      .filtro-checkbox input[type="checkbox"]:checked ~ .checkmark::after {
+        content: "";
+        width: 0.45rem;
+        height: 0.75rem;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        margin-bottom: 0.125rem;
+      }
+
+      .label-text {
+        color: #374151;
+        font-size: 0.9375rem;
+        font-weight: 500;
+      }
+
+      /* Radio button personalizado */
+      .filtro-radio {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.75rem;
+        border-radius: 0.75rem;
+        transition: background 0.2s ease;
+        position: relative;
+        user-select: none;
+      }
+
+      .filtro-radio:hover {
+        background: #f3f4f6;
+      }
+
+      .filtro-radio input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+      }
+
+      .radiomark {
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 2px solid #d1d5db;
+        border-radius: 50%;
+        margin-right: 0.75rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .filtro-radio input[type="radio"]:checked ~ .radiomark {
+        border-color: #3b82f6;
+      }
+
+      .filtro-radio input[type="radio"]:checked ~ .radiomark::after {
+        content: "";
+        width: 0.75rem;
+        height: 0.75rem;
+        background: #3b82f6;
+        border-radius: 50%;
+      }
+
+      /* Inputs de fecha personalizada */
+      .fecha-personalizada-inputs {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.875rem;
+      }
+
+      .fecha-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .fecha-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6b7280;
+      }
+
+      .fecha-input {
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+        background: white;
+      }
+
+      .fecha-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      /* Estilos para desktop */
+      @media (min-width: 768px) {
+        .filtros-panel {
+          align-items: flex-start;
+          justify-content: flex-end;
+          padding: 5rem 1rem 1rem;
+        }
+
+        .filtros-content {
+          width: 400px;
+          max-height: calc(100vh - 6rem);
+          border-radius: 1rem;
+          transform: translateX(100%);
+          box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .filtros-panel.active .filtros-content {
+          transform: translateX(0);
+        }
+
+        .filtros-footer {
+          background: white;
+        }
+      }
+
+      /* Badge de contador en botón de filtros */
+      .filter-badge {
+        position: absolute;
+        top: -0.5rem;
+        right: -0.5rem;
+        background: #ef4444;
+        color: white;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+      }
     </style>
   </head>
 
   <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
     <div id="menu-placeholder"></div>
     <div id="header-placeholder"></div>
+
+    <!-- Panel de Filtros -->
+    <div id="filtros-panel" class="filtros-panel hidden">
+      <div class="filtros-overlay" id="filtros-overlay"></div>
+      <div class="filtros-content">
+        <!-- Header del panel -->
+        <div class="filtros-header">
+          <h3 class="text-lg font-semibold text-gray-800">Filtros</h3>
+          <button
+            id="filtros-close"
+            class="text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Body del panel -->
+        <div class="filtros-body">
+          <!-- Filtro por Estado -->
+          <div class="filtro-section">
+            <h4 class="filtro-title">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+              Estado
+            </h4>
+            <div class="filtro-options">
+              <label class="filtro-checkbox">
+                <input
+                  type="checkbox"
+                  value="Pendiente"
+                  class="filtro-estado-checkbox"
+                />
+                <span class="checkmark"></span>
+                <span class="label-text">Pendiente</span>
+              </label>
+              <label class="filtro-checkbox">
+                <input
+                  type="checkbox"
+                  value="Listo"
+                  class="filtro-estado-checkbox"
+                />
+                <span class="checkmark"></span>
+                <span class="label-text">Listo</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Filtro por Fecha de Entrega -->
+          <div class="filtro-section">
+            <h4 class="filtro-title">
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+              Fecha de Entrega
+            </h4>
+            <div class="filtro-options">
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="todos"
+                  class="filtro-fecha-radio"
+                  checked
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Todas las fechas</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="hoy"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Hoy</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="manana"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Mañana</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="semana"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Esta semana</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="proximos7"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Próximos 7 días</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="mes"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Este mes</span>
+              </label>
+              <label class="filtro-radio">
+                <input
+                  type="radio"
+                  name="fecha-preset"
+                  value="personalizado"
+                  class="filtro-fecha-radio"
+                />
+                <span class="radiomark"></span>
+                <span class="label-text">Personalizado</span>
+              </label>
+
+              <!-- Inputs de fecha personalizada -->
+              <div
+                id="fecha-personalizada-inputs"
+                class="fecha-personalizada-inputs hidden"
+              >
+                <div class="fecha-input-group">
+                  <label class="fecha-label">Desde:</label>
+                  <input type="date" id="fecha-desde" class="fecha-input" />
+                </div>
+                <div class="fecha-input-group">
+                  <label class="fecha-label">Hasta:</label>
+                  <input type="date" id="fecha-hasta" class="fecha-input" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer del panel -->
+        <div class="filtros-footer">
+          <button id="filtros-limpiar" class="btn-secondary">
+            Limpiar filtros
+          </button>
+          <button id="filtros-aplicar" class="btn-primary">Aplicar</button>
+        </div>
+      </div>
+    </div>
 
     <main class="max-w-7xl mx-auto px-4 py-6">
       <!-- Botón Toggle para cambiar entre vista lista y calendario -->

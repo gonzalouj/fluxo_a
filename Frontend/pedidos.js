@@ -7,6 +7,17 @@ let pedidoActual = null;
 let accionAConfirmar = null;
 let calendar = null;
 let vistaActual = "lista"; // "lista" o "calendario"
+let textoBusqueda = ""; // Estado para la búsqueda
+
+// Estado de filtros
+let filtrosActivos = {
+  estados: [], // Array de estados seleccionados: ['Pendiente', 'Listo', 'Entregado', 'Cancelado']
+  fechaEntrega: {
+    tipo: "todos", // 'todos', 'hoy', 'manana', 'semana', 'proximos7', 'mes', 'personalizado'
+    desde: null,
+    hasta: null,
+  },
+};
 
 // ✅ CONFIGURACIÓN DE ESTADOS CON COLORES
 const estadosConfig = {
@@ -1386,14 +1397,36 @@ function renderPedidoCard(pedido) {
 function renderizarPedidos() {
   // Filtrar solo pedidos activos (Pendiente y Listo)
   // Los pedidos Entregados y Cancelados se muestran en la sección de Historial
-  const pedidosActivos = pedidosData.filter(
+  let pedidosActivos = pedidosData.filter(
     (p) => p.estado === "Pendiente" || p.estado === "Listo"
   );
+
+  // Aplicar filtro de búsqueda si hay texto
+  if (textoBusqueda.trim() !== "") {
+    pedidosActivos = filtrarPedidosPorTexto(pedidosActivos, textoBusqueda);
+  }
+
+  // Aplicar filtros de estado y fecha
+  pedidosActivos = aplicarFiltros(pedidosActivos);
 
   if (pedidosActivos.length === 0) {
     emptyStateEl.classList.remove("hidden");
     listaEl.classList.add("hidden");
     calendarContainerEl.classList.add("hidden");
+
+    // Actualizar mensaje según si hay búsqueda activa
+    if (textoBusqueda.trim() !== "") {
+      emptyStateEl.querySelector("p.text-lg").textContent =
+        "No se encontraron pedidos";
+      emptyStateEl.querySelector(
+        "p.text-sm"
+      ).textContent = `No hay resultados para "${textoBusqueda}"`;
+    } else {
+      emptyStateEl.querySelector("p.text-lg").textContent =
+        "No hay pedidos activos";
+      emptyStateEl.querySelector("p.text-sm").textContent =
+        "Los pedidos completados y cancelados se encuentran en el Historial";
+    }
     return;
   }
 
@@ -1408,6 +1441,133 @@ function renderizarPedidos() {
     calendarContainerEl.classList.remove("hidden");
   }
   emptyStateEl.classList.add("hidden");
+}
+
+// Función para filtrar pedidos por texto de búsqueda
+function filtrarPedidosPorTexto(pedidos, texto) {
+  const textoLower = texto.toLowerCase().trim();
+
+  return pedidos.filter((pedido) => {
+    // 1. Buscar en nombre del cliente
+    const matchNombre = pedido.nombre_cliente
+      ?.toLowerCase()
+      .includes(textoLower);
+
+    // 2. Buscar en teléfono del cliente
+    const matchTelefono = pedido.telefono_cliente?.includes(textoLower);
+
+    // 3. Buscar en email del cliente
+    const matchEmail = pedido.email_cliente?.toLowerCase().includes(textoLower);
+
+    // 4. Buscar en productos (nombres)
+    const matchProductos = pedido.productos?.some((producto) =>
+      producto.producto?.toLowerCase().includes(textoLower)
+    );
+
+    // 5. Buscar por ID del pedido
+    const matchId = pedido.id_pedido?.toString().includes(textoLower);
+
+    // Si coincide en CUALQUIERA de estos campos, mostrar el pedido
+    return (
+      matchNombre || matchTelefono || matchEmail || matchProductos || matchId
+    );
+  });
+}
+
+// Función para aplicar filtros de estado y fecha
+function aplicarFiltros(pedidos) {
+  return pedidos.filter((pedido) => {
+    // 1. Filtro por estado
+    if (filtrosActivos.estados.length > 0) {
+      if (!filtrosActivos.estados.includes(pedido.estado)) {
+        return false;
+      }
+    }
+
+    // 2. Filtro por fecha de entrega
+    if (filtrosActivos.fechaEntrega.tipo !== "todos") {
+      // Parsear la fecha como local (sin conversión de timezone)
+      const [year, month, day] = pedido.fecha_entrega.split("-").map(Number);
+      const fechaEntrega = new Date(year, month - 1, day);
+      fechaEntrega.setHours(0, 0, 0, 0);
+
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+
+      switch (filtrosActivos.fechaEntrega.tipo) {
+        case "hoy": {
+          const fechaEntregaStr = fechaEntrega.toDateString();
+          const hoyStr = hoy.toDateString();
+          if (fechaEntregaStr !== hoyStr) return false;
+          break;
+        }
+        case "manana": {
+          const manana = new Date(hoy);
+          manana.setDate(manana.getDate() + 1);
+          const fechaEntregaStr = fechaEntrega.toDateString();
+          const mananaStr = manana.toDateString();
+          if (fechaEntregaStr !== mananaStr) return false;
+          break;
+        }
+        case "semana": {
+          // Esta semana = desde hoy hasta el próximo domingo (o hasta hoy si hoy es domingo)
+          const finSemana = new Date(hoy);
+          const diaActual = hoy.getDay(); // 0 = domingo, 1 = lunes, ..., 6 = sábado
+
+          if (diaActual === 0) {
+            // Si hoy es domingo, la semana termina hoy
+            finSemana.setHours(23, 59, 59, 999);
+          } else {
+            // Calcular días hasta el próximo domingo
+            const diasHastaDomingo = 7 - diaActual;
+            finSemana.setDate(finSemana.getDate() + diasHastaDomingo);
+            finSemana.setHours(23, 59, 59, 999);
+          }
+
+          if (fechaEntrega < hoy || fechaEntrega > finSemana) return false;
+          break;
+        }
+        case "proximos7": {
+          const proximos7 = new Date(hoy);
+          proximos7.setDate(proximos7.getDate() + 7);
+          proximos7.setHours(23, 59, 59, 999);
+          if (fechaEntrega < hoy || fechaEntrega > proximos7) return false;
+          break;
+        }
+        case "mes": {
+          if (
+            fechaEntrega.getMonth() !== hoy.getMonth() ||
+            fechaEntrega.getFullYear() !== hoy.getFullYear()
+          ) {
+            return false;
+          }
+          break;
+        }
+        case "personalizado": {
+          if (
+            filtrosActivos.fechaEntrega.desde &&
+            filtrosActivos.fechaEntrega.hasta
+          ) {
+            // Parsear fechas desde/hasta como locales
+            const [yearDesde, monthDesde, dayDesde] =
+              filtrosActivos.fechaEntrega.desde.split("-").map(Number);
+            const desde = new Date(yearDesde, monthDesde - 1, dayDesde);
+            desde.setHours(0, 0, 0, 0);
+
+            const [yearHasta, monthHasta, dayHasta] =
+              filtrosActivos.fechaEntrega.hasta.split("-").map(Number);
+            const hasta = new Date(yearHasta, monthHasta - 1, dayHasta);
+            hasta.setHours(23, 59, 59, 999);
+
+            if (fechaEntrega < desde || fechaEntrega > hasta) return false;
+          }
+          break;
+        }
+      }
+    }
+
+    return true;
+  });
 }
 
 async function cargarPedidos() {
@@ -1511,9 +1671,17 @@ function renderizarCalendario() {
 function convertirPedidosAEventos() {
   // Filtrar solo pedidos activos (Pendiente y Listo) para el calendario
   // Los pedidos Entregados y Cancelados se muestran en la sección de Historial
-  const pedidosActivos = pedidosData.filter(
+  let pedidosActivos = pedidosData.filter(
     (p) => p.estado === "Pendiente" || p.estado === "Listo"
   );
+
+  // Aplicar filtro de búsqueda si hay texto
+  if (textoBusqueda.trim() !== "") {
+    pedidosActivos = filtrarPedidosPorTexto(pedidosActivos, textoBusqueda);
+  }
+
+  // Aplicar filtros de estado y fecha
+  pedidosActivos = aplicarFiltros(pedidosActivos);
 
   return pedidosActivos.map((pedido) => ({
     id: pedido.id_pedido.toString(),
@@ -1697,6 +1865,9 @@ document.addEventListener("keydown", (e) => {
 
 document.addEventListener("DOMContentLoaded", () => {
   cargarPedidos();
+
+  // Inicializar panel de filtros
+  inicializarPanelFiltros();
 
   // Event listeners para los botones de vista
   document.getElementById("view-list-btn")?.addEventListener("click", () => {
@@ -2114,3 +2285,176 @@ async function guardarProducto(e) {
 }
 
 // ========= FIN: LÓGICA DEL MODAL DE PRODUCTOS =========
+
+// ========= INICIO: LÓGICA DEL PANEL DE FILTROS =========
+
+function inicializarPanelFiltros() {
+  const filtrosPanel = document.getElementById("filtros-panel");
+  const filtrosOverlay = document.getElementById("filtros-overlay");
+  const filtrosClose = document.getElementById("filtros-close");
+  const filtrosAplicar = document.getElementById("filtros-aplicar");
+  const filtrosLimpiar = document.getElementById("filtros-limpiar");
+  const filterToggleBtn = document.getElementById("filter-toggle");
+
+  const estadoCheckboxes = document.querySelectorAll(".filtro-estado-checkbox");
+  const fechaRadios = document.querySelectorAll(".filtro-fecha-radio");
+  const fechaPersonalizadaInputs = document.getElementById(
+    "fecha-personalizada-inputs"
+  );
+  const fechaDesde = document.getElementById("fecha-desde");
+  const fechaHasta = document.getElementById("fecha-hasta");
+
+  // Abrir panel
+  function abrirPanel() {
+    filtrosPanel.classList.remove("hidden");
+    filtrosPanel.classList.add("active");
+    document.body.style.overflow = "hidden";
+  }
+
+  // Cerrar panel
+  function cerrarPanel() {
+    filtrosPanel.classList.remove("active");
+    setTimeout(() => {
+      filtrosPanel.classList.add("hidden");
+      document.body.style.overflow = "";
+    }, 300);
+  }
+
+  // Event listeners para abrir/cerrar
+  if (filterToggleBtn) {
+    filterToggleBtn.addEventListener("click", abrirPanel);
+  }
+
+  if (filtrosClose) {
+    filtrosClose.addEventListener("click", cerrarPanel);
+  }
+
+  if (filtrosOverlay) {
+    filtrosOverlay.addEventListener("click", cerrarPanel);
+  }
+
+  // Mostrar/ocultar inputs de fecha personalizada
+  fechaRadios.forEach((radio) => {
+    radio.addEventListener("change", function () {
+      if (this.value === "personalizado") {
+        fechaPersonalizadaInputs.classList.remove("hidden");
+      } else {
+        fechaPersonalizadaInputs.classList.add("hidden");
+      }
+    });
+  });
+
+  // Aplicar filtros
+  if (filtrosAplicar) {
+    filtrosAplicar.addEventListener("click", function () {
+      // Obtener estados seleccionados
+      filtrosActivos.estados = Array.from(estadoCheckboxes)
+        .filter((cb) => cb.checked)
+        .map((cb) => cb.value);
+
+      // Obtener preset de fecha seleccionado
+      const fechaSeleccionada = document.querySelector(
+        'input[name="fecha-preset"]:checked'
+      );
+      if (fechaSeleccionada) {
+        filtrosActivos.fechaEntrega.tipo = fechaSeleccionada.value;
+
+        // Si es personalizado, obtener las fechas
+        if (fechaSeleccionada.value === "personalizado") {
+          filtrosActivos.fechaEntrega.desde = fechaDesde.value;
+          filtrosActivos.fechaEntrega.hasta = fechaHasta.value;
+        } else {
+          filtrosActivos.fechaEntrega.desde = null;
+          filtrosActivos.fechaEntrega.hasta = null;
+        }
+      }
+
+      // Re-renderizar pedidos con los filtros aplicados
+      renderizarPedidos();
+
+      // Actualizar indicador visual
+      actualizarIndicadorFiltros();
+
+      // Cerrar panel
+      cerrarPanel();
+    });
+  }
+
+  // Limpiar filtros
+  if (filtrosLimpiar) {
+    filtrosLimpiar.addEventListener("click", function () {
+      // Resetear estados
+      filtrosActivos.estados = [];
+      estadoCheckboxes.forEach((cb) => (cb.checked = false));
+
+      // Resetear fecha
+      filtrosActivos.fechaEntrega = {
+        tipo: "todos",
+        desde: null,
+        hasta: null,
+      };
+
+      // Marcar "Todas las fechas" como seleccionado
+      const todosFechaRadio = document.querySelector(
+        'input[name="fecha-preset"][value="todos"]'
+      );
+      if (todosFechaRadio) {
+        todosFechaRadio.checked = true;
+      }
+
+      // Ocultar inputs personalizados
+      fechaPersonalizadaInputs.classList.add("hidden");
+      fechaDesde.value = "";
+      fechaHasta.value = "";
+
+      // Re-renderizar pedidos
+      renderizarPedidos();
+
+      // Actualizar indicador visual
+      actualizarIndicadorFiltros();
+
+      // Cerrar panel
+      cerrarPanel();
+    });
+  }
+}
+
+// Función para contar filtros activos
+function contarFiltrosActivos() {
+  let count = 0;
+
+  // Contar estados seleccionados
+  count += filtrosActivos.estados.length;
+
+  // Contar filtro de fecha si no es "todos"
+  if (filtrosActivos.fechaEntrega.tipo !== "todos") {
+    count++;
+  }
+
+  return count;
+}
+
+// Función para actualizar el badge del botón de filtros
+function actualizarIndicadorFiltros() {
+  const filterToggleBtn = document.getElementById("filter-toggle");
+  if (!filterToggleBtn) return;
+
+  const count = contarFiltrosActivos();
+
+  // Remover badge existente si hay
+  const existingBadge = filterToggleBtn.querySelector(".filter-badge");
+  if (existingBadge) {
+    existingBadge.remove();
+  }
+
+  // Agregar nuevo badge si hay filtros activos
+  if (count > 0) {
+    const badge = document.createElement("span");
+    badge.className = "filter-badge";
+    badge.textContent = count;
+    filterToggleBtn.style.position = "relative";
+    filterToggleBtn.appendChild(badge);
+  }
+}
+
+// ========= FIN: LÓGICA DEL PANEL DE FILTROS =========
