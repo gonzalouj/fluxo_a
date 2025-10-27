@@ -15,6 +15,11 @@ services:
     networks:
       red_taller_software:
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fluxo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # Backend Go
   backend:
@@ -30,7 +35,8 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres123
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
       - "4006:4006"
     networks:
