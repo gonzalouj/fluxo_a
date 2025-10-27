@@ -1,31 +1,14 @@
-# Dockerfile para frontend con nginx y proxy al backend
-FROM nginx:alpine
+# Dockerfile para el frontend con servidor HTTP simple
+FROM python:3-alpine
 
 # Copiar archivos del frontend
-COPY Frontend/ /usr/share/nginx/html
+COPY Frontend/ /app
 
-# Configuración nginx con proxy interno al backend
-COPY <<EOF /etc/nginx/conf.d/default.conf
-server {
-    listen 80;
-    
-    # Servir archivos estáticos
-    location / {
-        root /usr/share/nginx/html;
-        index index.html;
-        try_files \$uri \$uri/ /index.html;
-    }
-    
-    # Proxy interno a backend para API
-    location /api/ {
-        proxy_pass http://backend:8080/api/;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-}
-EOF
+# Establecer directorio de trabajo
+WORKDIR /app
 
 # Exponer puerto
-EXPOSE 80
+EXPOSE 3006
+
+# Ejecutar servidor HTTP simple
+CMD ["python", "-m", "http.server", "3006", "--bind", "0.0.0.0"]

@@ -134,6 +134,452 @@
     <div id="menu-placeholder"></div>
     <div id="header-placeholder"></div>
 
+    <!-- Modal para agregar producto -->
+    <div
+      id="product-modal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+      >
+        <div
+          class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center"
+        >
+          <h2 class="text-2xl font-bold text-gray-800">
+            Agregar Producto al Catálogo
+          </h2>
+          <button
+            type="button"
+            id="close-modal"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+
+        <form id="product-form" class="p-6 space-y-6">
+          <!-- Información Básica -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">
+              Información Básica
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Código</label
+                >
+                <input
+                  type="text"
+                  id="prod-codigo"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="Ej: SS2"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Nombre *</label
+                >
+                <input
+                  type="text"
+                  id="prod-nombre"
+                  required
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="Ej: Silla Simple"
+                />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1"
+                >Descripción</label
+              >
+              <textarea
+                id="prod-descripcion"
+                rows="2"
+                class="w-full px-3 py-2 professional-input rounded-lg resize-none text-sm"
+                placeholder="Descripción del producto..."
+              ></textarea>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-sm font-medium text-gray-600"
+                    >Categoría</label
+                  >
+                  <button
+                    type="button"
+                    id="toggle-nueva-categoria"
+                    class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                    title="Agregar nueva categoría"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"
+                      ></path>
+                    </svg>
+                    Nueva
+                  </button>
+                </div>
+                <select
+                  id="prod-categoria"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                >
+                  <option value="">Sin categoría</option>
+                  <!-- Categorías se cargarán dinámicamente -->
+                </select>
+
+                <!-- Input para nueva categoría (oculto por defecto) -->
+                <div
+                  id="nueva-categoria-container"
+                  class="hidden mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200"
+                >
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Nueva Categoría
+                  </label>
+                  <div class="flex gap-2">
+                    <input
+                      type="text"
+                      id="nueva-categoria-input"
+                      placeholder="Ej: Bancos"
+                      class="flex-1 px-3 py-2 professional-input rounded-lg text-sm"
+                    />
+                    <button
+                      type="button"
+                      id="guardar-categoria"
+                      class="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+                      title="Guardar categoría"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      type="button"
+                      id="cancelar-categoria"
+                      class="px-3 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 text-sm font-medium"
+                      title="Cancelar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Material</label
+                >
+                <input
+                  type="text"
+                  id="prod-material"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="Ej: Plástico 100% reciclado"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Dimensiones -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">
+              Dimensiones (cm)
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Largo</label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  id="prod-largo"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Ancho</label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  id="prod-ancho"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Alto</label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  id="prod-alto"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Diámetro</label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  id="prod-diametro"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Fondo</label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  id="prod-fondo"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Alt. Asiento</label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  id="prod-altura-asiento"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Alt. Cubierta</label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  id="prod-altura-cubierta"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Peso (kg)</label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  id="prod-peso"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Precio y Stock -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">
+              Precio y Stock
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Precio Unitario</label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  id="prod-precio"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Moneda</label
+                >
+                <select
+                  id="prod-moneda"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                >
+                  <option value="CLP">CLP</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Stock</label
+                >
+                <input
+                  type="number"
+                  id="prod-stock"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1"
+                  >Unidad de Venta</label
+                >
+                <input
+                  type="text"
+                  id="prod-unidad"
+                  class="w-full px-3 py-2 professional-input rounded-lg text-sm"
+                  placeholder="Ej: unidad"
+                  value="unidad"
+                />
+              </div>
+              <div class="space-y-2">
+                <label class="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="prod-incluye-iva"
+                    checked
+                    class="rounded border-gray-300"
+                  />
+                  <span class="text-sm font-medium text-gray-600"
+                    >Incluye IVA</span
+                  >
+                </label>
+                <label class="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="prod-requiere-presupuesto"
+                    class="rounded border-gray-300"
+                  />
+                  <span class="text-sm font-medium text-gray-600"
+                    >Requiere Presupuesto</span
+                  >
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información Adicional -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">
+              Información Adicional
+            </h3>
+            <div>
+              <label class="block text-sm font-medium text-gray-600 mb-1"
+                >Notas Especiales</label
+              >
+              <textarea
+                id="prod-notas"
+                rows="2"
+                class="w-full px-3 py-2 professional-input rounded-lg resize-none text-sm"
+                placeholder="Notas adicionales del producto..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Tipo de Agregado -->
+          <div
+            class="space-y-4 bg-blue-50 p-4 rounded-lg border border-blue-200"
+          >
+            <h3 class="text-lg font-semibold text-blue-800">
+              Tipo de Agregado
+            </h3>
+            <div class="space-y-2">
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="tipo-agregado"
+                  value="permanente"
+                  checked
+                  class="mt-1"
+                />
+                <div>
+                  <div class="font-medium text-gray-800">
+                    📦 Permanente (Agregar al Catálogo)
+                  </div>
+                  <div class="text-sm text-gray-600">
+                    El producto se agregará al catálogo y estará disponible para
+                    futuros pedidos
+                  </div>
+                </div>
+              </label>
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="tipo-agregado"
+                  value="temporal"
+                  class="mt-1"
+                />
+                <div>
+                  <div class="font-medium text-gray-800">
+                    ⏱️ Temporal (Solo este pedido)
+                  </div>
+                  <div class="text-sm text-gray-600">
+                    El producto solo se usará en este pedido. Se eliminará
+                    automáticamente si el pedido es eliminado.
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Botones -->
+          <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+            <button
+              type="button"
+              id="cancel-product"
+              class="flex-1 px-6 py-3 btn-secondary text-white rounded-lg font-semibold"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              id="save-product"
+              class="flex-1 px-6 py-3 btn-enterprise text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+              <span>Agregar al Catálogo</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <main class="max-w-4xl mx-auto py-8 px-4">
       <div
         class="bg-white rounded-lg shadow-enterprise border border-gray-200 fade-in"
@@ -143,17 +589,18 @@
           <div class="space-y-4">
             <label class="block text-lg label-enterprise">Productos</label>
             <div>
-              <div class="flex items-center gap-3">
+              <div class="flex flex-wrap items-center gap-2">
                 <input
                   type="text"
                   id="product-search"
                   placeholder="Buscar por nombre o código..."
-                  class="flex-grow px-4 py-3 professional-input rounded-lg"
+                  class="flex-1 min-w-[200px] px-4 py-3 professional-input rounded-lg"
                 />
                 <button
                   type="button"
                   id="toggle-product-list"
-                  class="px-4 py-3 btn-secondary text-white rounded-lg hover:shadow-subtle"
+                  class="px-4 py-3 btn-secondary text-white rounded-lg hover:shadow-subtle shrink-0"
+                  title="Mostrar todos los productos"
                 >
                   <svg
                     class="w-5 h-5"
@@ -168,6 +615,27 @@
                       d="M19 9l-7 7-7-7"
                     ></path>
                   </svg>
+                </button>
+                <button
+                  type="button"
+                  id="add-product-btn"
+                  class="px-4 py-3 btn-enterprise text-white rounded-lg hover:shadow-subtle flex items-center gap-2 shrink-0"
+                  title="Agregar nuevo producto al catálogo"
+                >
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 4v16m8-8H4"
+                    ></path>
+                  </svg>
+                  <span class="hidden sm:inline">Nuevo</span>
                 </button>
               </div>
               <div id="search-results" class="search-results hidden">
@@ -316,10 +784,11 @@
     <script>
       // ESTADO GLOBAL
       // Detect if the current origin is NOT the Go backend (e.g., when served by VS Code Live Server on port 5500)
-      const API_BASE =
-        window.location.port === "8080" ? "/api" : "/api";
+      const API_BASE = window.location.port === "8080" ? "/api" : "/api";
       let allProducts = [];
       let selectedProducts = [];
+      let allCategories = [];
+      let productosTemporalesPendientes = []; // Productos temporales que se guardarán con el pedido
 
       // --- RENDERIZADO ---
       function renderSelectedProducts() {
@@ -332,27 +801,32 @@
         container.innerHTML = selectedProducts
           .map(
             (p) => `
-            <div class="selected-product p-4 rounded-lg flex items-center justify-between gap-4">
-                <div class="flex-grow">
-                    <p class="font-semibold text-gray-800">${p.nombre}</p>
-                    <p class="text-sm text-gray-600">${new Intl.NumberFormat(
-                      "es-CL",
-                      { style: "currency", currency: "CLP" }
-                    ).format(p.precio_unitario)} c/u</p>
+            <div class="selected-product p-4 rounded-lg flex items-center gap-3">
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-gray-800 break-words">
+                      ${p.nombre}
+                      ${
+                        p.es_temporal_pendiente
+                          ? '<span class="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full whitespace-nowrap">⏱️ Temporal</span>'
+                          : ""
+                      }
+                    </p>
           </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 shrink-0">
                     <label for="cantidad-${
                       p.id_producto
-                    }" class="text-sm font-medium">Cant:</label>
+                    }" class="text-sm font-medium whitespace-nowrap">Cant:</label>
                     <input type="number" id="cantidad-${
                       p.id_producto
-                    }" value="${p.cantidad}" min="1" onchange="updateQuantity(${
+                    }" value="${
+              p.cantidad
+            }" min="1" onchange="updateQuantity('${
               p.id_producto
-            }, this.value)" class="w-20 text-center bg-white border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            }', this.value)" class="w-20 text-center bg-white border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
           </div>
-                <button type="button" onclick="removeProduct(${
+                <button type="button" onclick="removeProduct('${
                   p.id_producto
-                })" class="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full transition">
+                }')" class="shrink-0 p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full transition">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
           </button>
         </div>
@@ -386,7 +860,7 @@
       // --- LÓGICA DE PRODUCTOS ---
       function selectProduct(productId) {
         if (selectedProducts.some((p) => p.id_producto === productId)) {
-          showToast("Este producto ya ha sido añadido.", "info");
+          showToast("ℹ️ Este producto ya está en la lista del pedido.", "info");
           return;
         }
         const product = allProducts.find((p) => p.id_producto === productId);
@@ -399,8 +873,10 @@
       }
 
       function removeProduct(productId) {
+        // Convertir a string para comparación consistente (IDs numéricos y temporales)
+        const idStr = String(productId);
         selectedProducts = selectedProducts.filter(
-          (p) => p.id_producto !== productId
+          (p) => String(p.id_producto) !== idStr
         );
         renderSelectedProducts();
       }
@@ -430,13 +906,125 @@
           const response = await fetch(`${API_BASE}/productos`);
           if (!response.ok)
             throw new Error(
-              "No se pudieron cargar los productos desde el servidor."
+              "No se pudieron cargar los productos. Por favor, verifica tu conexión."
             );
           const data = await response.json();
           allProducts = data.productos || [];
         } catch (error) {
-          console.error("Error:", error);
-          showToast(error.message, "error");
+          console.error("Error al cargar productos:", error);
+          showToast("❌ " + error.message, "error");
+        }
+      }
+
+      async function cargarCategorias() {
+        try {
+          const response = await fetch(`${API_BASE}/categorias`);
+          if (!response.ok)
+            throw new Error(
+              "No se pudieron cargar las categorías desde el servidor"
+            );
+          const data = await response.json();
+          allCategories = data.categorias || [];
+
+          // Llenar el select de categorías
+          const selectCategoria = document.getElementById("prod-categoria");
+          selectCategoria.innerHTML = '<option value="">Sin categoría</option>';
+          allCategories.forEach((cat) => {
+            const option = document.createElement("option");
+            option.value = cat.id_categoria;
+            option.textContent = cat.nombre;
+            selectCategoria.appendChild(option);
+          });
+        } catch (error) {
+          console.error("Error al cargar categorías:", error);
+          // No mostramos toast aquí porque es menos crítico
+        }
+      }
+
+      // --- FUNCIONES PARA NUEVA CATEGORÍA ---
+      function mostrarNuevaCategoria() {
+        const container = document.getElementById("nueva-categoria-container");
+        const input = document.getElementById("nueva-categoria-input");
+        const select = document.getElementById("prod-categoria");
+
+        container.classList.remove("hidden");
+        select.classList.add("opacity-50", "pointer-events-none");
+        input.focus();
+      }
+
+      function ocultarNuevaCategoria() {
+        const container = document.getElementById("nueva-categoria-container");
+        const input = document.getElementById("nueva-categoria-input");
+        const select = document.getElementById("prod-categoria");
+
+        container.classList.add("hidden");
+        select.classList.remove("opacity-50", "pointer-events-none");
+        input.value = "";
+      }
+
+      async function guardarNuevaCategoria() {
+        const input = document.getElementById("nueva-categoria-input");
+        const nombreCategoria = input.value.trim();
+
+        if (!nombreCategoria) {
+          showToast(
+            "📝 El nombre de la categoría es obligatorio",
+            "error",
+            3000
+          );
+          input.focus();
+          return;
+        }
+
+        const guardarBtn = document.getElementById("guardar-categoria");
+        const originalText = guardarBtn.innerHTML;
+        guardarBtn.disabled = true;
+        guardarBtn.innerHTML =
+          '<div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mx-auto"></div>';
+
+        try {
+          const response = await fetch(`${API_BASE}/categorias`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nombre: nombreCategoria }),
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            let errorMessage = result.error || "Error al crear la categoría";
+
+            if (result.code === "DUPLICATE_NAME") {
+              errorMessage = "⚠️ " + errorMessage;
+            } else {
+              errorMessage = "❌ " + errorMessage;
+            }
+
+            throw new Error(errorMessage);
+          }
+
+          // Éxito
+          showToast(
+            `Categoría "${nombreCategoria}" creada exitosamente`,
+            "success",
+            3000
+          );
+
+          // Recargar categorías
+          await cargarCategorias();
+
+          // Seleccionar la nueva categoría automáticamente
+          const select = document.getElementById("prod-categoria");
+          select.value = result.categoria_id;
+
+          // Ocultar el formulario
+          ocultarNuevaCategoria();
+        } catch (error) {
+          console.error("Error al crear categoría:", error);
+          showToast(error.message, "error", 4000);
+        } finally {
+          guardarBtn.disabled = false;
+          guardarBtn.innerHTML = originalText;
         }
       }
 
@@ -452,32 +1040,21 @@
 
           // Validaciones
           if (selectedProducts.length === 0) {
-            showToast("Debes añadir al menos un producto.", "error");
+            showToast(
+              "📦 Debes añadir al menos un producto al pedido.",
+              "error"
+            );
             return;
           }
           const cliente = document.getElementById("cliente").value.trim();
           const fecha = document.getElementById("fecha").value;
           if (!cliente || !fecha) {
             showToast(
-              "El nombre del cliente y la fecha de entrega son obligatorios.",
+              "📝 El nombre del cliente y la fecha de entrega son obligatorios.",
               "error"
             );
             return;
           }
-
-          // Preparar datos
-          const pedidoData = {
-            cliente: cliente,
-            fecha: fecha,
-            email: document.getElementById("email").value.trim(),
-            telefono: document.getElementById("telefono").value.trim(),
-            etiquetas: document.getElementById("etiquetas").value.trim(),
-            comentarios: document.getElementById("comentarios").value.trim(),
-            productos: selectedProducts.map((p) => ({
-              id_producto: p.id_producto,
-              cantidad: p.cantidad,
-            })),
-          };
 
           // Enviar
           submitBtn.disabled = true;
@@ -485,6 +1062,98 @@
           submitSpinner.classList.remove("hidden");
 
           try {
+            // PASO 1: Crear productos temporales pendientes en el backend
+            const productosTemporalesCreados = [];
+
+            if (productosTemporalesPendientes.length > 0) {
+              submitText.textContent = "Creando productos temporales...";
+
+              for (const productoTemp of productosTemporalesPendientes) {
+                try {
+                  // Crear producto SIN marcarlo como temporal todavía
+                  // (se marcará después de crear el pedido)
+                  const response = await fetch(`${API_BASE}/productos`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      codigo: productoTemp.codigo,
+                      nombre: productoTemp.nombre,
+                      descripcion: productoTemp.descripcion,
+                      id_categoria: productoTemp.id_categoria,
+                      precio_unitario: productoTemp.precio_unitario,
+                      largo_cm: productoTemp.largo_cm,
+                      ancho_cm: productoTemp.ancho_cm,
+                      alto_cm: productoTemp.alto_cm,
+                      diametro_cm: productoTemp.diametro_cm,
+                      fondo_cm: productoTemp.fondo_cm,
+                      altura_asiento_cm: productoTemp.altura_asiento_cm,
+                      altura_cubierta_cm: productoTemp.altura_cubierta_cm,
+                      peso_kg: productoTemp.peso_kg,
+                      material: productoTemp.material,
+                      moneda: productoTemp.moneda,
+                      incluye_iva: productoTemp.incluye_iva,
+                      requiere_presupuesto: productoTemp.requiere_presupuesto,
+                      unidad_venta: productoTemp.unidad_venta,
+                      stock: productoTemp.stock,
+                      notas_especiales: productoTemp.notas_especiales,
+                      // NO enviar es_temporal ni id_pedido_origen todavía
+                    }),
+                  });
+
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(
+                      errorData.error ||
+                        `Error al crear producto temporal "${productoTemp.nombre}"`
+                    );
+                  }
+
+                  const result = await response.json();
+                  productosTemporalesCreados.push({
+                    tempId: productoTemp.id_producto,
+                    realId: result.producto_id,
+                    cantidad: productoTemp.cantidad,
+                  });
+                } catch (error) {
+                  throw new Error(
+                    `Error al crear producto temporal: ${error.message}`
+                  );
+                }
+              }
+            }
+
+            // PASO 2: Preparar lista de productos (temporales ya creados + permanentes)
+            submitText.textContent = "Creando pedido...";
+
+            const productosParaPedido = selectedProducts.map((p) => {
+              // Si es temporal, usar el ID real creado
+              if (p.es_temporal_pendiente) {
+                const tempCreado = productosTemporalesCreados.find(
+                  (t) => t.tempId === p.id_producto
+                );
+                return {
+                  id_producto: tempCreado.realId,
+                  cantidad: tempCreado.cantidad,
+                };
+              }
+              // Si es permanente, usar su ID original
+              return {
+                id_producto: p.id_producto,
+                cantidad: p.cantidad,
+              };
+            });
+
+            const pedidoData = {
+              cliente: cliente,
+              fecha: fecha,
+              email: document.getElementById("email").value.trim(),
+              telefono: document.getElementById("telefono").value.trim(),
+              etiquetas: document.getElementById("etiquetas").value.trim(),
+              comentarios: document.getElementById("comentarios").value.trim(),
+              productos: productosParaPedido,
+            };
+
+            // PASO 3: Crear el pedido
             const response = await fetch(`${API_BASE}/pedidos`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -493,19 +1162,58 @@
 
             if (!response.ok) {
               const errorData = await response.json();
-              throw new Error(
-                errorData.error || "Error desconocido al crear el pedido."
-              );
+              let errorMsg = errorData.error || "No se pudo crear el pedido";
+
+              // Agregar contexto al error
+              if (errorMsg.includes("producto")) {
+                errorMsg = "❌ " + errorMsg;
+              } else if (errorMsg.includes("fecha")) {
+                errorMsg = "📅 " + errorMsg;
+              } else {
+                errorMsg = "❌ " + errorMsg;
+              }
+
+              throw new Error(errorMsg);
             }
 
             const result = await response.json();
-            showToast(
-              `Pedido #${result.pedido_id} creado exitosamente.`,
-              "success"
-            );
+            const pedidoId = result.pedido_id;
 
-            // Resetear formulario
+            // PASO 4: Actualizar productos temporales con el id_pedido_origen
+            if (productosTemporalesCreados.length > 0) {
+              submitText.textContent = "Finalizando...";
+
+              // Actualizar cada producto temporal con el pedido creado
+              for (const tempProd of productosTemporalesCreados) {
+                try {
+                  await fetch(`${API_BASE}/productos/${tempProd.realId}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      id_pedido_origen: pedidoId,
+                      es_temporal: true,
+                    }),
+                  });
+                } catch (error) {
+                  console.warn(
+                    `No se pudo actualizar producto temporal ${tempProd.realId}:`,
+                    error
+                  );
+                  // No bloqueamos el flujo si falla esta actualización
+                }
+              }
+            }
+
+            // Mostrar mensaje de éxito
+            let mensajeExito = `Pedido #${pedidoId} creado exitosamente.`;
+            if (productosTemporalesCreados.length > 0) {
+              mensajeExito += ` ${productosTemporalesCreados.length} producto(s) temporal(es) guardado(s).`;
+            }
+            showToast(mensajeExito, "success");
+
+            // Resetear formulario y estado
             selectedProducts = [];
+            productosTemporalesPendientes = [];
             renderSelectedProducts();
             e.target.reset();
             document
@@ -513,7 +1221,7 @@
               .setAttribute("min", new Date().toISOString().split("T")[0]);
           } catch (error) {
             console.error("Error al enviar pedido:", error);
-            showToast(error.message, "error");
+            showToast(error.message, "error", 6000);
           } finally {
             submitBtn.disabled = false;
             submitText.textContent = "Crear Pedido";
@@ -578,6 +1286,29 @@
           .getElementById("fecha")
           .setAttribute("min", new Date().toISOString().split("T")[0]);
 
+        // --- EVENT LISTENERS PARA NUEVA CATEGORÍA ---
+        document
+          .getElementById("toggle-nueva-categoria")
+          .addEventListener("click", mostrarNuevaCategoria);
+        document
+          .getElementById("guardar-categoria")
+          .addEventListener("click", guardarNuevaCategoria);
+        document
+          .getElementById("cancelar-categoria")
+          .addEventListener("click", ocultarNuevaCategoria);
+
+        // Enter para guardar, Escape para cancelar
+        document
+          .getElementById("nueva-categoria-input")
+          .addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              guardarNuevaCategoria();
+            } else if (e.key === "Escape") {
+              ocultarNuevaCategoria();
+            }
+          });
+
         // Render inicial
         renderSelectedProducts();
       }
@@ -585,20 +1316,30 @@
       // --- NOTIFICACIONES TOAST ---
       function showToast(message, type = "info", duration = 4000) {
         const toast = document.createElement("div");
-        toast.className = `fixed top-20 right-5 z-50 px-4 py-3 rounded-lg shadow-enterprise text-white transform translate-x-full transition-all duration-300 ${
-          type === "success"
-            ? "bg-green-600"
-            : type === "error"
-            ? "bg-red-600"
-            : "bg-blue-600"
-        }`;
+
+        // Colores según el tipo
+        let bgColor = "bg-blue-600";
+        let icon = "ℹ️";
+
+        if (type === "success") {
+          bgColor = "bg-green-600";
+          icon = "✓";
+        } else if (type === "error") {
+          bgColor = "bg-red-600";
+          icon = "✕";
+        } else if (type === "warning") {
+          bgColor = "bg-yellow-600";
+          icon = "⚠";
+        }
+
+        toast.className = `fixed top-20 right-5 z-50 px-4 py-3 rounded-lg shadow-enterprise text-white transform translate-x-full transition-all duration-300 max-w-md ${bgColor}`;
 
         toast.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="text-sm font-bold">
-              ${type === "success" ? "✓" : type === "error" ? "✕" : "i"}
+          <div class="flex items-start gap-3">
+            <div class="text-lg font-bold flex-shrink-0 mt-0.5">
+              ${icon}
             </div>
-            <div class="font-medium text-sm">${message}</div>
+            <div class="font-medium text-sm leading-relaxed">${message}</div>
           </div>
         `;
 
@@ -614,10 +1355,231 @@
         }, duration);
       }
 
+      // --- MANEJO DEL MODAL ---
+      function abrirModal() {
+        document.getElementById("product-modal").classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+      }
+
+      function cerrarModal() {
+        document.getElementById("product-modal").classList.add("hidden");
+        document.body.style.overflow = "auto";
+        document.getElementById("product-form").reset();
+      }
+
+      // --- ENVIAR NUEVO PRODUCTO ---
+      async function crearProducto(e) {
+        e.preventDefault();
+
+        // Obtener el tipo de producto (permanente o temporal)
+        const tipoProducto = document.querySelector(
+          'input[name="tipo-agregado"]:checked'
+        ).value;
+        const esTemporal = tipoProducto === "temporal";
+
+        const formData = {
+          codigo: document.getElementById("prod-codigo").value.trim() || null,
+          nombre: document.getElementById("prod-nombre").value.trim(),
+          descripcion:
+            document.getElementById("prod-descripcion").value.trim() || null,
+          id_categoria:
+            parseInt(document.getElementById("prod-categoria").value) || null,
+          precio_unitario:
+            parseFloat(document.getElementById("prod-precio").value) || null,
+          largo_cm:
+            parseFloat(document.getElementById("prod-largo").value) || null,
+          ancho_cm:
+            parseFloat(document.getElementById("prod-ancho").value) || null,
+          alto_cm:
+            parseFloat(document.getElementById("prod-alto").value) || null,
+          diametro_cm:
+            parseFloat(document.getElementById("prod-diametro").value) || null,
+          fondo_cm:
+            parseFloat(document.getElementById("prod-fondo").value) || null,
+          altura_asiento_cm:
+            parseFloat(document.getElementById("prod-altura-asiento").value) ||
+            null,
+          altura_cubierta_cm:
+            parseFloat(document.getElementById("prod-altura-cubierta").value) ||
+            null,
+          peso_kg:
+            parseFloat(document.getElementById("prod-peso").value) || null,
+          material:
+            document.getElementById("prod-material").value.trim() || null,
+          moneda: document.getElementById("prod-moneda").value,
+          incluye_iva: document.getElementById("prod-incluye-iva").checked,
+          requiere_presupuesto: document.getElementById(
+            "prod-requiere-presupuesto"
+          ).checked,
+          unidad_venta:
+            document.getElementById("prod-unidad").value.trim() || "unidad",
+          stock: parseInt(document.getElementById("prod-stock").value) || null,
+          notas_especiales:
+            document.getElementById("prod-notas").value.trim() || null,
+        };
+
+        // Validación básica
+        if (!formData.nombre) {
+          showToast("📝 El nombre del producto es obligatorio", "error", 4000);
+          return;
+        }
+
+        const saveBtn = document.getElementById("save-product");
+        const originalText = saveBtn.innerHTML;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML =
+          '<div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mx-auto"></div>';
+
+        try {
+          // --- PRODUCTOS TEMPORALES: No se guardan en BD todavía ---
+          if (esTemporal) {
+            // Crear un ID temporal único
+            const tempId = `temp_${Date.now()}`;
+
+            // Crear objeto de producto temporal
+            const productoTemporal = {
+              ...formData,
+              id_producto: tempId,
+              es_temporal_pendiente: true,
+              cantidad: 1,
+            };
+
+            // Guardar en array de pendientes
+            productosTemporalesPendientes.push(productoTemporal);
+
+            // Agregar a productos seleccionados
+            selectedProducts.push(productoTemporal);
+            renderSelectedProducts();
+
+            cerrarModal();
+            showToast(
+              "Producto temporal agregado. Se guardará al crear el pedido.",
+              "success",
+              4000
+            );
+
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+            return; // No hacer llamada a la API
+          }
+
+          // --- PRODUCTOS PERMANENTES: Guardar inmediatamente ---
+          const response = await fetch(`${API_BASE}/productos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...formData,
+              es_temporal: false, // ✅ Marcar explícitamente como permanente
+            }),
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            // Manejo específico de errores del backend
+            let errorMessage = result.error || "Error al crear el producto";
+
+            // Agregar íconos y formato según el tipo de error
+            switch (result.code) {
+              case "DUPLICATE_CODE":
+                errorMessage = "⚠️ " + errorMessage;
+                break;
+              case "DUPLICATE_NAME":
+                errorMessage = "⚠️ " + errorMessage;
+                break;
+              case "VALIDATION_ERROR":
+              case "EMPTY_NAME":
+                errorMessage = "📝 " + errorMessage;
+                break;
+              case "INVALID_CATEGORY":
+                errorMessage = "🗂️ " + errorMessage;
+                break;
+              case "INVALID_PRICE":
+                errorMessage = "💰 " + errorMessage;
+                break;
+              case "DATABASE_ERROR":
+              default:
+                errorMessage = "❌ " + errorMessage;
+                break;
+            }
+
+            throw new Error(errorMessage);
+          }
+
+          // Éxito - verificar si hay advertencia
+          if (result.warning) {
+            showToast("⚠️ " + result.message, "warning", 5000);
+          } else {
+            showToast(
+              "Producto agregado exitosamente al catálogo y al pedido",
+              "success",
+              5000
+            );
+          }
+
+          // Cerrar modal primero para mejor UX
+          cerrarModal();
+
+          // Recargar productos
+          await cargarProductos();
+
+          // Agregar automáticamente el producto recién creado al pedido
+          if (result.producto_id) {
+            // Buscar el producto recién creado en la lista actualizada
+            const nuevoProducto = allProducts.find(
+              (p) => p.id_producto === result.producto_id
+            );
+
+            if (nuevoProducto) {
+              // Verificar que no esté ya en la lista (por si acaso)
+              if (
+                !selectedProducts.some(
+                  (p) => p.id_producto === nuevoProducto.id_producto
+                )
+              ) {
+                selectedProducts.push({ ...nuevoProducto, cantidad: 1 });
+                renderSelectedProducts();
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error al crear producto:", error);
+          // El mensaje ya viene formateado del backend
+          showToast(error.message, "error", 6000);
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = originalText;
+        }
+      }
+
       // --- INICIALIZACIÓN ---
       document.addEventListener("DOMContentLoaded", () => {
         cargarProductos();
+        cargarCategorias();
         inicializarListeners();
+
+        // Listeners del modal
+        document
+          .getElementById("add-product-btn")
+          .addEventListener("click", abrirModal);
+        document
+          .getElementById("close-modal")
+          .addEventListener("click", cerrarModal);
+        document
+          .getElementById("cancel-product")
+          .addEventListener("click", cerrarModal);
+        document
+          .getElementById("product-form")
+          .addEventListener("submit", crearProducto);
+
+        // Cerrar modal al hacer clic fuera
+        document
+          .getElementById("product-modal")
+          .addEventListener("click", (e) => {
+            if (e.target.id === "product-modal") {
+              cerrarModal();
+            }
+          });
       });
     </script>
 
