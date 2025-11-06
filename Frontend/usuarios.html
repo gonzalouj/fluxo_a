@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Usuarios</title>
+  <link rel="stylesheet" href="styles.css" /> <!-- el mismo CSS que usa tu sistema -->
+  <script defer src="js/usuarios.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Gestión de Usuarios</h1>
+  </header>
+
+  <main class="contenedor">
+    <section class="panel">
+      <button id="btnAgregarUsuario" class="btn btn-primary">+ Nuevo Usuario</button>
+
+      <table id="tablaUsuarios" class="tabla">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre Completo</th>
+            <th>Email</th>
+            <th>RUT</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Se cargan los usuarios desde la base -->
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
