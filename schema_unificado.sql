@@ -23,7 +23,8 @@ DROP TYPE IF EXISTS rol_usuario CASCADE;
 
 -- ========= CREACIÓN DE TIPOS ENUMERADOS =========
 CREATE TYPE rol_usuario AS ENUM ('Admin', 'Trabajador');
-CREATE TYPE estado_pedido AS ENUM ('Pendiente', 'Listo', 'Cancelado');
+-- Estado de pedido: Pendiente (recién creado), Listo (preparado), Entregado (entregado al cliente), Cancelado (anulado)
+CREATE TYPE estado_pedido AS ENUM ('Pendiente', 'Listo', 'Entregado', 'Cancelado');
 
 -- ========= CREACIÓN DE TABLAS =========
 
@@ -54,11 +55,11 @@ CREATE TABLE usuarios (
 );
 COMMENT ON TABLE usuarios IS 'Tabla para almacenar los usuarios del sistema.';
 
--- 4. Tabla de Productos (Catálogo) - VERSIÓN COMPLETA
+-- 4. Tabla de Productos (Catálogo) - VERSIÓN COMPLETA con soporte de productos temporales
 CREATE TABLE productos (
     id_producto SERIAL PRIMARY KEY,
     codigo VARCHAR(20) UNIQUE,
-    nombre VARCHAR(255) UNIQUE NOT NULL,
+    nombre VARCHAR(255) NOT NULL,  -- UNIQUE removido para permitir nombres duplicados en productos temporales
     descripcion TEXT,
     id_categoria INTEGER REFERENCES categorias(id_categoria) ON DELETE SET NULL,
     precio_unitario NUMERIC(12,2) CHECK (precio_unitario >= 0),
@@ -78,9 +79,14 @@ CREATE TABLE productos (
     stock INTEGER,
     foto_principal_url TEXT,
     notas_especiales TEXT,
+    -- Campos para soporte de productos temporales
+    es_temporal BOOLEAN DEFAULT FALSE,
+    id_pedido_origen INTEGER,
     fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-COMMENT ON TABLE productos IS 'Catálogo completo de productos disponibles para la venta.';
+COMMENT ON TABLE productos IS 'Catálogo completo de productos disponibles para la venta. Soporta productos permanentes y temporales asociados a pedidos específicos.';
+COMMENT ON COLUMN productos.es_temporal IS 'Si es TRUE, el producto existe solo para un pedido específico y se eliminará cuando el pedido se elimine';
+COMMENT ON COLUMN productos.id_pedido_origen IS 'ID del pedido al que pertenece este producto temporal. NULL para productos permanentes';
 
 -- 5. Tabla Intermedia: producto_atributos (Muchos a Muchos)
 CREATE TABLE producto_atributos (
@@ -123,6 +129,24 @@ CREATE TABLE comentarios (
     fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 COMMENT ON TABLE comentarios IS 'Almacena los comentarios asociados a cada pedido.';
+
+-- ========= CONSTRAINTS ADICIONALES =========
+
+-- Foreign key para productos temporales (referencia a pedidos creada después de que ambas tablas existen)
+ALTER TABLE productos
+ADD CONSTRAINT fk_productos_pedido_origen 
+FOREIGN KEY (id_pedido_origen) 
+REFERENCES pedidos(id_pedido) 
+ON DELETE CASCADE;
+
+-- Índices para rendimiento de productos temporales
+CREATE INDEX idx_productos_temporal 
+ON productos(es_temporal) 
+WHERE es_temporal = true;
+
+CREATE INDEX idx_productos_pedido_origen 
+ON productos(id_pedido_origen) 
+WHERE id_pedido_origen IS NOT NULL;
 
 -- ========= INSERCIÓN DE DATOS INICIALES =========
 
