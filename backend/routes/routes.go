@@ -37,14 +37,20 @@ func SetupRouter() *gin.Engine {
 			pedidos.GET("/:id", handlers.ObtenerPedidoPorID)
 			pedidos.PATCH("/:id", handlers.ActualizarPedido)
 			pedidos.PATCH("/:id/estado", handlers.ActualizarEstadoPedido)
-            pedidos.POST("/:id/comentarios", handlers.AddComentario)
+			pedidos.POST("/:id/comentarios", handlers.AddComentario)
 		}
 
-        comentarios := api.Group("/comentarios")
-        {
-            comentarios.PATCH("/:id", handlers.UpdateComentario)
-            comentarios.DELETE("/:id", handlers.DeleteComentario)
-        }
+		comentarios := api.Group("/comentarios")
+		{
+			comentarios.PATCH("/:id", handlers.UpdateComentario)
+			comentarios.DELETE("/:id", handlers.DeleteComentario)
+		}
+		/*usuarios := api.Group("/usuarios")
+		{
+			usuarios.GET("", handlers.ListarUsuarios)
+			usuarios.POST("", handlers.CrearUsuario)
+			usuarios.DELETE("/:id", handlers.EliminarUsuario)
+		}*/
 	}
 
 	// Usamos un manejador "NoRoute" para atrapar cualquier petición
