@@ -46,4 +46,5 @@ type Producto struct {
 	PrecioUnitario float64 `json:"precio_unitario"`
 	Stock          int     `json:"stock"`
 	FotoURL        *string `json:"foto_url,omitempty"`
+	IDCategoria    *int    `json:"id_categoria,omitempty"`
 }

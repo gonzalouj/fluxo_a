@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <li class="mb-2"><a href="index.html" class="block p-2 rounded hover:bg-gray-100">Inicio</a></li>
                     <li class="mb-2"><a href="pedidos.html" class="block p-2 rounded hover:bg-gray-100">Pedidos</a></li>
                     <li class="mb-2"><a href="historial.html" class="block p-2 rounded hover:bg-gray-100">Historial</a></li>
+                    <li class="mb-2"><a href="catalogo.html" class="block p-2 rounded hover:bg-gray-100">Catálogo</a></li>
                     <li class="mb-2"><a href="usuarios.html" class="block p-2 rounded hover:bg-gray-100">Usuarios</a></li>
                 </ul>
             </div>

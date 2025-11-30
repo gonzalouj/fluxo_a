@@ -27,6 +27,8 @@ func SetupRouter() *gin.Engine {
 		api.GET("/productos/con-temporales", handlers.ListarProductosConTemporales)
 		api.POST("/productos", handlers.CrearProducto)
 		api.PATCH("/productos/:id", handlers.ActualizarProducto)
+		api.PUT("/productos/:id", handlers.ActualizarProductoCompleto)
+		api.DELETE("/productos/:id", handlers.EliminarProducto)
 		api.GET("/categorias", handlers.ListarCategorias)
 		api.POST("/categorias", handlers.CrearCategoria)
 
