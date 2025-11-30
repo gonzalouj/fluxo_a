@@ -2,12 +2,11 @@
 package routes
 
 import (
+	"fluxo/backend/auth"
 	"fluxo/backend/handlers"
 	"fluxo/backend/middleware"
 	"os"
 	"path/filepath"
-
-	//"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,12 +44,13 @@ func SetupRouter() *gin.Engine {
 			comentarios.PATCH("/:id", handlers.UpdateComentario)
 			comentarios.DELETE("/:id", handlers.DeleteComentario)
 		}
-		/*usuarios := api.Group("/usuarios")
+
+		// --- RUTAS DE AUTENTICACIÓN (Google) ---
+		authGroup := api.Group("/auth")
 		{
-			usuarios.GET("", handlers.ListarUsuarios)
-			usuarios.POST("", handlers.CrearUsuario)
-			usuarios.DELETE("/:id", handlers.EliminarUsuario)
-		}*/
+			authGroup.GET("/google/login", auth.GoogleLogin)
+    		authGroup.GET("/google/callback", auth.GoogleCallback)
+		}
 	}
 
 	// Usamos un manejador "NoRoute" para atrapar cualquier petición
@@ -66,7 +66,6 @@ func SetupRouter() *gin.Engine {
 		}
 
 		// Construimos la ruta completa al archivo en la carpeta Frontend
-		// filepath.Join es una forma segura de unir rutas de directorios
 		filePath := filepath.Join("../Frontend", path)
 
 		// Verificamos si el archivo solicitado existe
