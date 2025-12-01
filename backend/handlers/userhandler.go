@@ -10,7 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
-	// Asegúrate de que esta ruta sea correcta para tu proyecto
+	"fmt"
+	"strconv"
+
 	"fluxo/backend/models"
 )
 
@@ -79,4 +81,100 @@ func CrearUsuario(c *gin.Context) {
 	})
 }
 
-// ... Otras funciones de manejador (ListarUsuarios, EliminarUsuario)
+// handlers/user_handler.go (Añadir esta función)
+
+// ListarUsuarios consulta y devuelve la lista de todos los usuarios activos
+func ListarUsuarios(c *gin.Context) {
+	// 1. Consulta SQL
+	// Seleccionamos todos los campos necesarios para la tabla del frontend.
+	query := `
+        SELECT id_usuario, rut, nombre_completo, email, rol, activo
+        FROM usuarios
+		WHERE activo = TRUE -- Agregar esta línea para solo mostrar usuarios activos
+        ORDER BY id_usuario DESC
+    `
+	rows, err := DB.Query(query)
+	if err != nil {
+		// Loguear el error y responder con un error 500
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Error de base de datos al listar usuarios", "error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	var usuarios []models.UserResponse // Usamos el struct definido para la respuesta
+
+	// 2. Iterar sobre los resultados
+	for rows.Next() {
+		var u models.UserResponse
+
+		// Scan de los campos de la fila de la DB
+		if err := rows.Scan(
+			&u.IDUsuario,
+			&u.Rut,
+			&u.NombreCompleto,
+			&u.Email,
+			&u.Rol,
+			&u.Activo,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"msg": "Error al leer datos de la DB", "error": err.Error()})
+			return
+		}
+
+		// NOTA sobre Permisos:
+		// Si hay una tabla de permisos (ej: usuario_permisos), aquí
+		// se debería hacer una sub-consulta o un JOIN para obtener los permisos
+		// del usuario actual y asignarlos a u.Permisos.
+		// Por ahora, lo dejaremos como una lista vacía o nula.
+		u.Permisos = []string{}
+
+		usuarios = append(usuarios, u)
+	}
+
+	if err = rows.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Error en la iteración de resultados", "error": err.Error()})
+		return
+	}
+
+	// 3. Devolver la respuesta al frontend
+
+	c.JSON(http.StatusOK, gin.H{
+		"usuarios": usuarios,
+		"total":    len(usuarios),
+	})
+}
+
+// handlers/user_handler.go (Añadir esta función)
+
+// EliminarUsuario realiza una eliminación LÓGICA (desactiva) del usuario.
+// Si deseas una eliminación física, cambia la consulta.
+func EliminarUsuario(c *gin.Context) {
+	// 1. Obtener el ID desde el parámetro de la URL
+	idParam := c.Param("id")
+	userID, err := strconv.Atoi(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": "ID de usuario inválido"})
+		return
+	}
+
+	// 2. Consulta SQL: Desactivar el usuario (Borrado Lógico)
+	query := `UPDATE usuarios SET activo = FALSE WHERE id_usuario = $1`
+
+	// Si decides hacer un borrado FÍSICO (menos recomendado):
+	// query := `DELETE FROM usuarios WHERE id_usuario = $1`
+
+	result, err := DB.Exec(query, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Error de base de datos al intentar desactivar usuario", "error": err.Error()})
+		return
+	}
+
+	// Verificar si alguna fila fue afectada (si el usuario existía)
+	rowsAffected, err := result.RowsAffected()
+	if err != nil || rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"msg": "Usuario no encontrado o ya inactivo"})
+		return
+	}
+
+	// 3. Devolver la respuesta
+	c.JSON(http.StatusOK, gin.H{"msg": fmt.Sprintf("Usuario con ID %d desactivado exitosamente.", userID)})
+}
