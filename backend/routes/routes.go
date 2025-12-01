@@ -49,7 +49,9 @@ func SetupRouter() *gin.Engine {
 
 		usuarios := api.Group("/usuarios")
 		{
+			usuarios.GET("", handlers.ListarUsuarios)
 			usuarios.POST("", handlers.CrearUsuario)
+			usuarios.DELETE("/:id", handlers.EliminarUsuario)
 		}
 
 		// --- RUTAS DE AUTENTICACIÓN (Google) ---
@@ -68,12 +70,12 @@ func SetupRouter() *gin.Engine {
 
 		// Si la ruta es la raíz "/", servimos index.html
 		if path == "/" {
-			c.File("../Frontend/index.html")
+			c.File("./Frontend/index.html")
 			return
 		}
 
 		// Construimos la ruta completa al archivo en la carpeta Frontend
-		filePath := filepath.Join("../Frontend", path)
+		filePath := filepath.Join("./Frontend", path)
 
 		// Verificamos si el archivo solicitado existe
 		if _, err := os.Stat(filePath); err == nil {
@@ -81,7 +83,7 @@ func SetupRouter() *gin.Engine {
 			c.File(filePath)
 		} else {
 			// Si el archivo no existe, servimos la página 404
-			c.File("../Frontend/404.html")
+			c.File("./Frontend/404.html")
 		}
 	})
 

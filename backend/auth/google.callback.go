@@ -1,13 +1,18 @@
 package auth
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
+
+// DB referencia a la base de datos (se inicializa desde main)
+var DB *sql.DB
 
 // Estructura para leer datos básicos del usuario de Google
 type GoogleUserInfo struct {
@@ -47,15 +52,51 @@ func GoogleCallback(c *gin.Context) {
 		return
 	}
 
-	log.Printf("Usuario Google logeado: email=%s, name=%s\n", userInfo.Email, userInfo.Name)
+	log.Printf("Usuario Google intentando login: email=%s, name=%s\n", userInfo.Email, userInfo.Name)
 
-	// 🧠 Aquí es donde en el futuro:
-	// - Buscarías/crearías el usuario en la base de datos
-	// - Crearías una sesión (cookie / JWT) con su ID o email
+	// Verificar si el email existe en la base de datos
+	var userID int
+	var nombreCompleto string
+	var rol string
+	var activo bool
 
-	// Por ahora, para no meternos en sesiones reales,
-	// lo redirigimos al frontend (index) y le pasamos el email por querystring.
-	redirectURL := "http://localhost:3006/index.html?google_email=" + url.QueryEscape(userInfo.Email)
+	err = DB.QueryRow(
+		"SELECT id_usuario, nombre_completo, rol, activo FROM usuarios WHERE email = $1",
+		userInfo.Email,
+	).Scan(&userID, &nombreCompleto, &rol, &activo)
+
+	if err == sql.ErrNoRows {
+		// Email no autorizado
+		log.Printf("Acceso denegado: email %s no está registrado\n", userInfo.Email)
+		redirectURL := BaseURL + "/login.html?error=no_autorizado&email=" + url.QueryEscape(userInfo.Email)
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
+	if err != nil {
+		log.Println("Error consultando usuario en BD:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+
+	if !activo {
+		log.Printf("Acceso denegado: usuario %s está desactivado\n", userInfo.Email)
+		redirectURL := BaseURL + "/login.html?error=usuario_inactivo"
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
+	log.Printf("Login exitoso: %s (ID: %d, Rol: %s)\n", userInfo.Email, userID, rol)
+
+	// Redirigir con los datos del usuario
+	redirectURL := fmt.Sprintf(
+		"%s/index.html?google_email=%s&user_id=%d&user_name=%s&user_rol=%s",
+		BaseURL,
+		url.QueryEscape(userInfo.Email),
+		userID,
+		url.QueryEscape(nombreCompleto),
+		url.QueryEscape(rol),
+	)
 	c.Redirect(http.StatusFound, redirectURL)
 }
 

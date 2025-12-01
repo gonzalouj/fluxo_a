@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <script src="auth.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gestión de Usuarios</title>
 
@@ -9,17 +10,17 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Header dinámico -->
-  <script defer src="components/header.js"></script>
+  <script defer src="header-inline.js"></script>
 
   <!-- Menú lateral dinámico -->
-  <script defer src="components/menu-inline.js"></script>
+  <script defer src="menu-inline.js"></script>
 
   <!-- Lógica de usuarios -->
-  <script defer src="js/usuarios.js"></script>
+  <script defer src="usuarios.js"></script>
 
-  <!-- Toast -->
-  <script defer src="components/toast.js"></script>
-  <link rel="stylesheet" href="components/toast.css" />
+  <!-- Toast (comentado si no existe) -->
+  <!-- <script defer src="toast.js"></script> -->
+  <!-- <link rel="stylesheet" href="toast.css" /> -->
 </head>
 
 <body class="bg-gray-100">
@@ -96,8 +97,8 @@
 
         <label class="block font-semibold mb-2">Rol</label>
         <select id="rolNuevo" class="w-full p-2 border rounded mb-4">
-          <option value="administrador">Administrador</option>
-          <option value="trabajador">Trabajador</option>
+          <option value="Admin">Administrador</option>
+          <option value="Trabajador">Trabajador</option>
         </select>
 
         <label class="block font-semibold mb-2">Permisos</label>

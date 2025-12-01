@@ -2,6 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <script src="auth.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Historial de Pedidos</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -665,9 +666,20 @@
     <main class="max-w-7xl mx-auto px-4 py-6">
       <!-- Título y estadísticas -->
       <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">
-          Historial de Pedidos
-        </h1>
+        <div class="flex justify-between items-center mb-2">
+          <h1 class="text-3xl font-bold text-gray-900">
+            Historial de Pedidos
+          </h1>
+          <button 
+            onclick="exportarAExcel()" 
+            class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Exportar Excel
+          </button>
+        </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
             <p class="text-xs text-gray-600 font-medium">Total</p>

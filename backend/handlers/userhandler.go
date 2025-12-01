@@ -16,7 +16,7 @@ import (
 	"fluxo/backend/models"
 )
 
-var DB *sql.DB // **IMPORTANTE: Debes inicializar tu conexión DB aquí o pasarla como dependencia.**
+// Usa la variable 'db' definida en pedidos.go (mismo paquete)
 
 // CrearUsuario maneja la creación de un nuevo usuario
 func CrearUsuario(c *gin.Context) {
@@ -31,7 +31,7 @@ func CrearUsuario(c *gin.Context) {
 	// --- Lógica de Negocio: Validar Existencia (H12) ---
 	// 2. Verificar si el RUT o Email ya existen
 	var existingID int
-	err := DB.QueryRow("SELECT id_usuario FROM usuarios WHERE rut = $1 OR email = $2", req.Rut, req.Email).Scan(&existingID)
+	err := db.QueryRow("SELECT id_usuario FROM usuarios WHERE rut = $1 OR email = $2", req.Rut, req.Email).Scan(&existingID)
 
 	if err != nil && err != sql.ErrNoRows {
 		// Error de la base de datos
@@ -60,7 +60,7 @@ func CrearUsuario(c *gin.Context) {
         RETURNING id_usuario
     `
 	var newID int
-	err = DB.QueryRow(query, req.Rut, req.NombreCompleto, req.Email, passwordHash, req.Rol, time.Now()).Scan(&newID)
+	err = db.QueryRow(query, req.Rut, req.NombreCompleto, req.Email, passwordHash, req.Rol, time.Now()).Scan(&newID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Error al crear el usuario", "error": err.Error()})
@@ -93,7 +93,7 @@ func ListarUsuarios(c *gin.Context) {
 		WHERE activo = TRUE -- Agregar esta línea para solo mostrar usuarios activos
         ORDER BY id_usuario DESC
     `
-	rows, err := DB.Query(query)
+	rows, err := db.Query(query)
 	if err != nil {
 		// Loguear el error y responder con un error 500
 		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Error de base de datos al listar usuarios", "error": err.Error()})
@@ -162,7 +162,7 @@ func EliminarUsuario(c *gin.Context) {
 	// Si decides hacer un borrado FÍSICO (menos recomendado):
 	// query := `DELETE FROM usuarios WHERE id_usuario = $1`
 
-	result, err := DB.Exec(query, userID)
+	result, err := db.Exec(query, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"msg": "Error de base de datos al intentar desactivar usuario", "error": err.Error()})
 		return
