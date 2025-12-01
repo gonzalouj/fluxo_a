@@ -47,12 +47,12 @@ func SetupRouter() *gin.Engine {
 			comentarios.PATCH("/:id", handlers.UpdateComentario)
 			comentarios.DELETE("/:id", handlers.DeleteComentario)
 		}
-		/*usuarios := api.Group("/usuarios")
+		usuarios := api.Group("/usuarios")
 		{
-			usuarios.GET("", handlers.ListarUsuarios)
-			usuarios.POST("", handlers.CrearUsuario)
-			usuarios.DELETE("/:id", handlers.EliminarUsuario)
-		}*/
+			//usuarios.GET("", handlers.ListarUsuarios) // Necesitas crear esta función
+			usuarios.POST("", handlers.CrearUsuario) // Esta es la función que acabamos de crear
+			//usuarios.DELETE("/:id", handlers.EliminarUsuario) // Necesitas crear esta función
+		}
 	}
 
 	// Usamos un manejador "NoRoute" para atrapar cualquier petición
