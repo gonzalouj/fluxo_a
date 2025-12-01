@@ -62,3 +62,4 @@ coverage.txt
 
 # Archivos de Docker
 docker-compose.override.ymlgrupo6/
+Frontend/config-local.js
