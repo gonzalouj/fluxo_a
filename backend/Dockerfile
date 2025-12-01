@@ -8,13 +8,13 @@ RUN apk add --no-cache git
 WORKDIR /app
 
 # Copiar go mod files
-COPY backend/go.mod backend/go.sum ./
+COPY go.mod go.sum ./
 
 # Descargar dependencias
 RUN go mod download
 
 # Copiar código fuente
-COPY backend/ .
+COPY . .
 
 # Compilar la aplicación
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o fluxo-backend .
@@ -32,9 +32,6 @@ COPY --from=builder /app/fluxo-backend .
 
 # Copiar archivo de configuración si existe
 COPY --from=builder /app/.env* ./
-
-# Copiar Frontend (para servir archivos estáticos)
-COPY Frontend/ ./Frontend/
 
 # Crear script de espera para PostgreSQL
 RUN echo '#!/bin/sh' > /wait-for-postgres.sh && \
