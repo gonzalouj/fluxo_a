@@ -1,4 +1,11 @@
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = "/api";
+
+// Función showToast simple si no existe
+if (typeof showToast === 'undefined') {
+  window.showToast = function(message, type) {
+    alert(message);
+  };
+}
 
 /* ============================================================
    INICIALIZACIÓN

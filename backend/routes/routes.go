@@ -2,12 +2,11 @@
 package routes
 
 import (
+	"fluxo/backend/auth"
 	"fluxo/backend/handlers"
 	"fluxo/backend/middleware"
 	"os"
 	"path/filepath"
-
-	//"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -47,11 +46,19 @@ func SetupRouter() *gin.Engine {
 			comentarios.PATCH("/:id", handlers.UpdateComentario)
 			comentarios.DELETE("/:id", handlers.DeleteComentario)
 		}
+
 		usuarios := api.Group("/usuarios")
 		{
-			//usuarios.GET("", handlers.ListarUsuarios) // Necesitas crear esta función
-			usuarios.POST("", handlers.CrearUsuario) // Esta es la función que acabamos de crear
-			//usuarios.DELETE("/:id", handlers.EliminarUsuario) // Necesitas crear esta función
+			usuarios.GET("", handlers.ListarUsuarios)
+			usuarios.POST("", handlers.CrearUsuario)
+			usuarios.DELETE("/:id", handlers.EliminarUsuario)
+		}
+
+		// --- RUTAS DE AUTENTICACIÓN (Google) ---
+		authGroup := api.Group("/auth")
+		{
+			authGroup.GET("/google/login", auth.GoogleLogin)
+			authGroup.GET("/google/callback", auth.GoogleCallback)
 		}
 	}
 
@@ -63,13 +70,12 @@ func SetupRouter() *gin.Engine {
 
 		// Si la ruta es la raíz "/", servimos index.html
 		if path == "/" {
-			c.File("../Frontend/index.html")
+			c.File("./Frontend/index.html")
 			return
 		}
 
 		// Construimos la ruta completa al archivo en la carpeta Frontend
-		// filepath.Join es una forma segura de unir rutas de directorios
-		filePath := filepath.Join("../Frontend", path)
+		filePath := filepath.Join("./Frontend", path)
 
 		// Verificamos si el archivo solicitado existe
 		if _, err := os.Stat(filePath); err == nil {
@@ -77,7 +83,7 @@ func SetupRouter() *gin.Engine {
 			c.File(filePath)
 		} else {
 			// Si el archivo no existe, servimos la página 404
-			c.File("../Frontend/404.html")
+			c.File("./Frontend/404.html")
 		}
 	})
 

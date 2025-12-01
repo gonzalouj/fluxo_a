@@ -11,16 +11,16 @@ services:
       - "5006:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./schema_unificado.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./schema_unificado_new.sql:/docker-entrypoint-initdb.d/01-schema.sql
     networks:
       red_taller_software:
     restart: unless-stopped
 
-  # Backend Go
+  # Backend Go (sirve el Frontend también)
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: fluxo-backend
     environment:
       PORT: 4006
@@ -29,24 +29,13 @@ services:
       DB_NAME: fluxo
       DB_USER: postgres
       DB_PASSWORD: postgres123
+      GIN_MODE: release
+      # Para producción, configurar BASE_URL con la URL real
+      # BASE_URL: https://tu-dominio.com
     depends_on:
       - postgres
     ports:
       - "4006:4006"
-    networks:
-      red_taller_software:
-    restart: unless-stopped
-
-  # Frontend
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: fluxo-frontend
-    ports:
-      - "3006:3006"
-    depends_on:
-      - backend
     networks:
       red_taller_software:
     restart: unless-stopped

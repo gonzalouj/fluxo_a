@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>FLUXO - Iniciar sesión</title>
+
+  <!-- Usa los mismos estilos globales que ya usas en index/pedidos -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Estilos específicos para el login -->
+  <style>
+    body {
+      background: #f4f6f9;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      padding: 2.5rem 3rem;
+      max-width: 420px;
+      width: 100%;
+    }
+
+    /* ---------- Estilo del logo FLUXO ---------- */
+    .login-logo {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1f2937;
+      text-align: center;
+      margin-bottom: 0.25rem;
+      letter-spacing: -0.5px;
+    }
+    /* ------------------------------------------- */
+
+    .login-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+
+    .login-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 1.5rem;
+    }
+
+    .login-form-group {
+      margin-bottom: 1rem;
+    }
+
+    .login-form-group label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.35rem;
+      color: #4b5563;
+      font-weight: 500;
+    }
+
+    .login-form-group input {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      padding: 0.65rem 0.8rem;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .login-form-group input:focus {
+      border-color: #16a34a;
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25);
+    }
+
+    .login-button {
+      width: 100%;
+      border: none;
+      border-radius: 999px;
+      padding: 0.75rem 1rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      background: #16a34a;
+      color: #fff;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .login-button:hover {
+      background: #15803d;
+    }
+
+    /* --- Botón de Google --- */
+    .google-login-button {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 999px;
+      padding: 0.7rem 1rem;
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    .google-login-button:hover {
+      background: #f3f4f6;
+    }
+
+    .google-login-button img {
+      width: 18px;
+    }
+
+    .spacer {
+      height: 1.25rem;
+    }
+
+    .login-error {
+      margin-bottom: 0.75rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+
+      <div class="login-logo">FLUXO</div>
+      <div class="login-subtitle">Gestión de pedidos · Ecomaderas Rio Verde</div>
+
+      <h1 class="login-title">Iniciar sesión</h1>
+
+      <div id="loginError" class="login-error">
+        Correo o contraseña inválidos.
+      </div>
+
+      <form id="loginForm" autocomplete="off">
+
+        <!-- Botón Google -->
+        <button
+          type="button"
+          class="google-login-button"
+          onclick="window.location.href = '/api/auth/google/login';">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" />
+          <span>Iniciar sesión con Google</span>
+        </button>
+
+
+        <div class="spacer"></div>
+
+        <div class="login-form-group">
+          <label for="email">Correo electrónico</label>
+          <input type="email" id="email" placeholder="ejemplo@empresa.cl" required />
+        </div>
+
+        <div class="login-form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" placeholder="••••••••" required />
+        </div>
+
+        <button type="submit" class="login-button">
+          <span>Entrar</span>
+        </button>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="login.js"></script>
+</body>
+</html>

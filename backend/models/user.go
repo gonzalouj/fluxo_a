@@ -11,9 +11,9 @@ type NewUserRequest struct {
 	NombreCompleto string   `json:"nombre_completo" binding:"required"`
 	Rut            string   `json:"rut" binding:"required"`
 	Email          string   `json:"email" binding:"required,email"`
-	Password       string   `json:"password" binding:"required,min=6"` // Mínimo de 6 caracteres, por ejemplo
-	Rol            string   `json:"rol" binding:"required,oneof=administrador trabajador"`
-	Permisos       []string `json:"permisos"` // Lista de permisos (ej: ["pedidos", "usuarios"])
+	Password       string   `json:"password" binding:"required,min=6"`
+	Rol            string   `json:"rol" binding:"required,oneof=Admin Trabajador"`
+	Permisos       []string `json:"permisos"`
 }
 
 // UsuarioDB representa la estructura del usuario tal como está en la DB
