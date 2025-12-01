@@ -1,0 +1,50 @@
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: fluxo-postgres
+    environment:
+      POSTGRES_DB: fluxo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5006:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema_unificado.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    restart: unless-stopped
+
+  # Backend Go
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fluxo-backend
+    environment:
+      PORT: 4006
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: fluxo
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+      CORS_ALLOWED_ORIGIN: "http://localhost:3006"
+    depends_on:
+      - postgres
+    ports:
+      - "4006:4006"
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: fluxo-frontend
+    ports:
+      - "3006:3006"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Usuarios</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Header dinámico -->
+  <script defer src="components/header.js"></script>
+
+  <!-- Menú lateral dinámico -->
+  <script defer src="components/menu-inline.js"></script>
+
+  <!-- Lógica de usuarios -->
+  <script defer src="js/usuarios.js"></script>
+
+  <!-- Toast -->
+  <script defer src="components/toast.js"></script>
+  <link rel="stylesheet" href="components/toast.css" />
+</head>
+
+<body class="bg-gray-100">
+
+  <!-- HEADER DINÁMICO -->
+  <div id="header-placeholder"></div>
+
+  <!-- MENÚ DINÁMICO -->
+  <div id="menu-placeholder"></div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="max-w-6xl mx-auto p-6">
+
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Gestión de Usuarios</h1>
+
+    <div class="bg-white shadow-md rounded-xl p-6">
+
+      <!-- Botón agregar usuario -->
+      <div class="flex justify-end mb-4">
+        <button id="btnNuevoUsuario"
+          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+          + Nuevo Usuario
+        </button>
+      </div>
+
+      <!-- Tabla -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-left text-gray-700">
+          <thead class="bg-gray-200 text-gray-700 uppercase text-xs">
+            <tr>
+              <th class="px-4 py-3">ID</th>
+              <th class="px-4 py-3">Nombre</th>
+              <th class="px-4 py-3">Email</th>
+              <th class="px-4 py-3">RUT</th>
+              <th class="px-4 py-3">Rol</th>
+              <th class="px-4 py-3">Activo</th>
+              <th class="px-4 py-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaUsuarios" class="bg-white divide-y divide-gray-200">
+            <!-- Usuarios se cargan aquí -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL: NUEVO USUARIO -->
+  <div id="modalUsuario"
+       class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden z-50">
+
+    <div class="bg-white shadow-xl rounded-xl p-6 w-full max-w-lg">
+      <h2 class="text-xl font-bold mb-4">Crear Nuevo Usuario</h2>
+
+      <form id="formUsuario">
+
+        <label class="block mb-2 font-semibold">Nombre Completo *</label>
+        <input type="text" id="nombreNuevo" required
+               class="w-full p-2 border rounded mb-4">
+
+        <label class="block mb-2 font-semibold">RUT *</label>
+        <input type="text" id="rutNuevo" required
+               placeholder="12345678-9"
+               class="w-full p-2 border rounded mb-4">
+
+        <label class="block mb-2 font-semibold">Email *</label>
+        <input type="email" id="emailNuevo" required
+               class="w-full p-2 border rounded mb-4">
+
+        <label class="block mb-2 font-semibold">Contraseña *</label>
+        <input type="password" id="passwordNuevo" required
+               class="w-full p-2 border rounded mb-4">
+
+        <label class="block font-semibold mb-2">Rol</label>
+        <select id="rolNuevo" class="w-full p-2 border rounded mb-4">
+          <option value="administrador">Administrador</option>
+          <option value="trabajador">Trabajador</option>
+        </select>
+
+        <label class="block font-semibold mb-2">Permisos</label>
+
+        <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
+          <label><input type="checkbox" class="permiso" value="pedidos"> Gestión de Pedidos</label>
+          <label><input type="checkbox" class="permiso" value="historial"> Ver Historial</label>
+          <label><input type="checkbox" class="permiso" value="productos"> Gestionar Productos</label>
+          <label><input type="checkbox" class="permiso" value="usuarios"> Administrar Usuarios</label>
+          <label><input type="checkbox" class="permiso" value="reportes"> Ver Reportes</label>
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <button type="button" id="btnCancelar"
+                  class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">
+            Cancelar
+          </button>
+
+          <button type="submit"
+                  class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700">
+            Guardar
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast-container"></div>
+
+</body>
+</html>

@@ -27,6 +27,8 @@ func SetupRouter() *gin.Engine {
 		api.GET("/productos/con-temporales", handlers.ListarProductosConTemporales)
 		api.POST("/productos", handlers.CrearProducto)
 		api.PATCH("/productos/:id", handlers.ActualizarProducto)
+		api.PUT("/productos/:id", handlers.ActualizarProductoCompleto)
+		api.DELETE("/productos/:id", handlers.EliminarProducto)
 		api.GET("/categorias", handlers.ListarCategorias)
 		api.POST("/categorias", handlers.CrearCategoria)
 
@@ -37,14 +39,20 @@ func SetupRouter() *gin.Engine {
 			pedidos.GET("/:id", handlers.ObtenerPedidoPorID)
 			pedidos.PATCH("/:id", handlers.ActualizarPedido)
 			pedidos.PATCH("/:id/estado", handlers.ActualizarEstadoPedido)
-            pedidos.POST("/:id/comentarios", handlers.AddComentario)
+			pedidos.POST("/:id/comentarios", handlers.AddComentario)
 		}
 
-        comentarios := api.Group("/comentarios")
-        {
-            comentarios.PATCH("/:id", handlers.UpdateComentario)
-            comentarios.DELETE("/:id", handlers.DeleteComentario)
-        }
+		comentarios := api.Group("/comentarios")
+		{
+			comentarios.PATCH("/:id", handlers.UpdateComentario)
+			comentarios.DELETE("/:id", handlers.DeleteComentario)
+		}
+		usuarios := api.Group("/usuarios")
+		{
+			//usuarios.GET("", handlers.ListarUsuarios) // Necesitas crear esta función
+			usuarios.POST("", handlers.CrearUsuario) // Esta es la función que acabamos de crear
+			//usuarios.DELETE("/:id", handlers.EliminarUsuario) // Necesitas crear esta función
+		}
 	}
 
 	// Usamos un manejador "NoRoute" para atrapar cualquier petición

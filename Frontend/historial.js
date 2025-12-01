@@ -1,7 +1,8 @@
 // historial.js
 
 // --- CONSTANTES Y ESTADO GLOBAL ---
-const API_BASE = "/api";
+// Si no existe API_BASE de config-local.js, usar la versión de producción
+var API_BASE = (typeof API_BASE !== 'undefined') ? API_BASE : "/api";
 let pedidosData = [];
 let pedidoActual = null;
 let textoBusqueda = ""; // Estado para la búsqueda

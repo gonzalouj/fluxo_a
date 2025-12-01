@@ -645,7 +645,7 @@ async function guardarCambiosPedido() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              codigo: productoTemp.codigo,
+              codigo: null, // Siempre NULL para productos temporales
               nombre: productoTemp.nombre,
               descripcion: productoTemp.descripcion,
               id_categoria: idCategoriaValido,
@@ -665,6 +665,7 @@ async function guardarCambiosPedido() {
               unidad_venta: productoTemp.unidad_venta,
               stock: stockValido,
               notas_especiales: productoTemp.notas_especiales,
+              es_temporal: true, // Siempre true para productos temporales
             }),
           });
 
@@ -919,7 +920,7 @@ function poblarYAbrirModal(pedidoId) {
       })
       .join("");
   } else {
-    productosEl.innerHTML = `<div class="text-center py-4 text-gray-500"><p class="text-sm italic">Sin productos asociados</p></div>`;
+    productosEl.innerHTML = `<div class="text-center py-2 text-gray-500"><p class="text-sm italic">Sin productos asociados</p></div>`;
   }
 
   // Renderizar Etiquetas
@@ -1314,7 +1315,7 @@ function renderPedidoCard(pedido) {
               }</span></div>`
           )
           .join("")}</div></div>`
-      : `<div class="text-center py-4"><svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg><p class="text-gray-400 text-sm italic">Sin productos asociados</p></div>`;
+      : `<div class="text-center py-2"><svg class="w-6 h-6 text-gray-300 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg><p class="text-gray-400 text-sm italic">Sin productos asociados</p></div>`;
 
   // Renderizar etiquetas (máximo 3 para vista compacta)
   let etiquetasHtml = "";
@@ -2093,8 +2094,14 @@ async function guardarProducto(e) {
   const idCategoria =
     categoriaValue && categoriaValue !== "" ? parseInt(categoriaValue) : null;
 
+  // Para productos temporales, forzar código NULL
+  const codigoValue =
+    tipoAgregado === "temporal"
+      ? null
+      : document.getElementById("prod-codigo").value.trim() || null;
+
   const producto = {
-    codigo: document.getElementById("prod-codigo").value.trim() || null,
+    codigo: codigoValue,
     nombre: nombre,
     descripcion:
       document.getElementById("prod-descripcion").value.trim() || null,
