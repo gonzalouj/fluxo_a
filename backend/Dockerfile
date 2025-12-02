@@ -50,5 +50,4 @@ RUN echo '#!/bin/sh' > /wait-for-postgres.sh && \
 EXPOSE 4006
 
 # Comando para ejecutar: esperar postgres y luego iniciar backend
-ENTRYPOINT ["/wait-for-postgres.sh", "postgres"]
-CMD ["./fluxo-backend"]
+ENTRYPOINT ["/bin/sh", "-c", "/wait-for-postgres.sh $DB_HOST ./fluxo-backend"]
