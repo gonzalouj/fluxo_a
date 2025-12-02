@@ -1,60 +1,118 @@
 services:
-  # Base de datos PostgreSQL
-  postgres:
-    image: postgres:15-alpine
-    container_name: fluxo-postgres
-    environment:
-      POSTGRES_DB: fluxo
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
-    ports:
-      - "5006:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./schema_unificado_new.sql:/docker-entrypoint-initdb.d/01-schema.sql
-    networks:
-      red_taller_software:
+  # ==========================================
+  # BASE DE DATOS PostgreSQL
+  # ==========================================
+  database:
+    image: ${DB_IMAGE}
+    container_name: ${GROUP}_${PROJECT}_db
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./schema_unificado_new.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    networks:
+      - red_taller_software
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
+    labels:
+      - "org.uach.group=${GROUP}"
+      - "org.uach.project=${PROJECT}"
+      - "org.uach.service=database"
+      - "logging=promtail"
 
-  # Backend Go
+  # ==========================================
+  # BACKEND Go
+  # ==========================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: fluxo-backend
-    environment:
-      PORT: 4006
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: fluxo
-      DB_USER: postgres
-      DB_PASSWORD: postgres123
-      GIN_MODE: release
-      BASE_URL: https://fluxo.inf.uach.cl
-    depends_on:
-      - postgres
-    ports:
-      - "4006:4006"
-    networks:
-      red_taller_software:
+    container_name: ${GROUP}_${PROJECT}_backend
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: ${BACKEND_PORT}
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      GIN_MODE: release
+      BASE_URL: ${BASE_URL}
+    expose:
+      - "${BACKEND_PORT}"
+    depends_on:
+      - database
+    networks:
+      - red_taller_software
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 700M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
+    labels:
+      - "org.uach.group=${GROUP}"
+      - "org.uach.project=${PROJECT}"
+      - "org.uach.service=backend"
+      - "logging=promtail"
 
-  # Frontend
+  # ==========================================
+  # FRONTEND
+  # ==========================================
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: fluxo-frontend
-    ports:
-      - "3006:3006"
+      context: ./Frontend
+    container_name: ${GROUP}_${PROJECT}_frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - "${FRONTEND_PORT}"
     depends_on:
       - backend
     networks:
-      red_taller_software:
-    restart: unless-stopped
+      - red_taller_software
+    deploy:
+      resources:
+        limits:
+          cpus: "0.30"
+          memory: 400M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
+    labels:
+      - "org.uach.group=${GROUP}"
+      - "org.uach.project=${PROJECT}"
+      - "org.uach.service=frontend"
+      - "logging=promtail"
 
 volumes:
-  postgres_data:
+  db_data:
+    name: ${GROUP}_${PROJECT}_db_data
 
 networks:
   red_taller_software:
