@@ -57,6 +57,14 @@ func registerAPIRoutes(api *gin.RouterGroup) {
 		usuarios.GET("/verificar/:id", handlers.VerificarUsuario)
 	}
 
+	// Rutas de notificaciones push
+	push := api.Group("/push")
+	{
+		push.GET("/vapid-key", handlers.GetVAPIDPublicKey)
+		push.POST("/subscribe", handlers.SubscribePush)
+		push.POST("/unsubscribe", handlers.UnsubscribePush)
+	}
+
 	// Rutas de autenticación Google
 	authGroup := api.Group("/auth")
 	{

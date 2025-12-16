@@ -94,6 +94,13 @@ func CrearPedido(c *gin.Context) {
 		return
 	}
 
+	// Enviar notificación push a todos los usuarios
+	SendPushToAllUsers(
+		"🛒 Nuevo Pedido",
+		"Pedido #"+strconv.Itoa(pedidoID)+" de "+req.Cliente,
+		"/pedidos.html",
+	)
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message":   "Pedido creado exitosamente",
 		"pedido_id": pedidoID,
