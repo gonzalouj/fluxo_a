@@ -31,6 +31,10 @@
       <svg id="notification-icon-on" class="w-6 h-6 text-green-600 hidden" fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"></path>
       </svg>
+      <svg id="notification-icon-denied" class="w-6 h-6 text-red-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-12.728 12.728"></path>
+      </svg>
       <span id="notification-badge" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
     `;
 
@@ -48,6 +52,12 @@
   async function toggleNotifications() {
     const button = document.getElementById('notification-toggle');
     if (!button) return;
+
+    // Si está denegado, mostrar instrucciones
+    if (Notification.permission === 'denied') {
+      showToast('Notificaciones bloqueadas. Haz clic en el candado 🔒 de la URL para permitirlas.', 'error');
+      return;
+    }
 
     // Deshabilitar temporalmente
     button.disabled = true;
@@ -83,9 +93,21 @@
   async function updateNotificationButtonState() {
     const iconOff = document.getElementById('notification-icon-off');
     const iconOn = document.getElementById('notification-icon-on');
+    const iconDenied = document.getElementById('notification-icon-denied');
     const badge = document.getElementById('notification-badge');
+    const button = document.getElementById('notification-toggle');
 
     if (!iconOff || !iconOn) return;
+
+    // Si el permiso está denegado, mostrar icono tachado
+    if (Notification.permission === 'denied') {
+      iconOff.classList.add('hidden');
+      iconOn.classList.add('hidden');
+      iconDenied?.classList.remove('hidden');
+      badge?.classList.add('hidden');
+      if (button) button.title = 'Notificaciones bloqueadas - Haz clic para ver cómo habilitarlas';
+      return;
+    }
 
     try {
       const isSubscribed = await window.FluxoPush.isSubscribed();
@@ -93,17 +115,22 @@
       if (isSubscribed) {
         iconOff.classList.add('hidden');
         iconOn.classList.remove('hidden');
+        iconDenied?.classList.add('hidden');
         badge?.classList.add('hidden');
+        if (button) button.title = 'Notificaciones activadas';
       } else {
         iconOff.classList.remove('hidden');
         iconOn.classList.add('hidden');
+        iconDenied?.classList.add('hidden');
         // Mostrar badge para indicar que no están activadas
         badge?.classList.remove('hidden');
+        if (button) button.title = 'Activar notificaciones';
       }
     } catch (error) {
       // Por defecto, mostrar como desactivadas
       iconOff.classList.remove('hidden');
       iconOn.classList.add('hidden');
+      iconDenied?.classList.add('hidden');
     }
   }
 
