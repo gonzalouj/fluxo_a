@@ -34,6 +34,47 @@ function logout() {
   window.location.href = 'login.html';
 }
 
-if (!isLoggedIn()) {
-  window.location.href = 'login.html';
+// Verificar sesión con el backend
+async function verificarSesionConBackend() {
+  const user = getCurrentUser();
+  if (!user || !user.id) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(`/api/usuarios/verificar/${user.id}`);
+    const data = await response.json();
+    
+    if (!data.valid) {
+      console.log('Sesión inválida:', data.reason);
+      localStorage.removeItem(STORAGE_KEY);
+      return false;
+    }
+    
+    // Actualizar datos locales si cambiaron en el servidor
+    if (data.rol !== user.rol || data.nombre !== user.nombre) {
+      user.rol = data.rol;
+      user.nombre = data.nombre;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error verificando sesión:', error);
+    // En caso de error de red, permitir continuar con la sesión local
+    return true;
+  }
 }
+
+// Verificar autenticación
+(async function() {
+  if (!isLoggedIn()) {
+    window.location.href = 'login.html';
+    return;
+  }
+  
+  const sesionValida = await verificarSesionConBackend();
+  if (!sesionValida) {
+    window.location.href = 'login.html?error=sesion_expirada';
+  }
+})();

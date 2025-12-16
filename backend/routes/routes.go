@@ -54,6 +54,7 @@ func registerAPIRoutes(api *gin.RouterGroup) {
 		usuarios.GET("", handlers.ListarUsuarios)
 		usuarios.POST("", handlers.CrearUsuario)
 		usuarios.DELETE("/:id", handlers.EliminarUsuario)
+		usuarios.GET("/verificar/:id", handlers.VerificarUsuario)
 	}
 
 	// Rutas de autenticación Google

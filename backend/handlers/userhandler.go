@@ -178,3 +178,45 @@ func EliminarUsuario(c *gin.Context) {
 	// 3. Devolver la respuesta
 	c.JSON(http.StatusOK, gin.H{"msg": fmt.Sprintf("Usuario con ID %d desactivado exitosamente.", userID)})
 }
+
+// VerificarUsuario verifica si un usuario existe y está activo
+func VerificarUsuario(c *gin.Context) {
+	userID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"valid": false, "error": "ID inválido"})
+		return
+	}
+
+	var email string
+	var activo bool
+	var rol string
+	var nombreCompleto string
+
+	err = db.QueryRow(
+		"SELECT email, activo, rol, nombre_completo FROM usuarios WHERE id_usuario = $1",
+		userID,
+	).Scan(&email, &activo, &rol, &nombreCompleto)
+
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusOK, gin.H{"valid": false, "reason": "usuario_no_existe"})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"valid": false, "error": "Error de base de datos"})
+		return
+	}
+
+	if !activo {
+		c.JSON(http.StatusOK, gin.H{"valid": false, "reason": "usuario_inactivo"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"valid":  true,
+		"id":     userID,
+		"email":  email,
+		"nombre": nombreCompleto,
+		"rol":    rol,
+	})
+}
