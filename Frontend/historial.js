@@ -868,7 +868,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// Exporta los pedidos visibles (con filtros aplicados) a CSV
+// Exporta los pedidos visibles (con filtros aplicados) a Excel
 function exportarAExcel() {
   let pedidosFiltrados = [...pedidosData];
 
@@ -886,76 +886,72 @@ function exportarAExcel() {
     return;
   }
 
-  // Una fila por cada producto
-  const filas = [];
-  pedidosFiltrados.forEach((pedido) => {
-    const productos = pedido.productos || [];
-    if (productos.length === 0) {
-      filas.push({
-        nombre: pedido.nombre_cliente || "",
-        cantidad: "",
-        producto: "",
-        fechaDespacho: pedido.fecha_entrega || "",
-        lugarDespacho: pedido.detalles_pedido || "",
-        quienDespacha: "",
-        estado: pedido.estado || "Pendiente",
-      });
-    } else {
-      productos.forEach((prod) => {
-        filas.push({
-          nombre: pedido.nombre_cliente || "",
-          cantidad: prod.cantidad || 0,
-          producto: prod.producto || "",
-          fechaDespacho: pedido.fecha_entrega || "",
-          lugarDespacho: pedido.detalles_pedido || "",
-          quienDespacha: "",
-          estado: pedido.estado || "Pendiente",
+  try {
+    // Una fila por cada producto
+    const datosExcel = [];
+    pedidosFiltrados.forEach((pedido) => {
+      const productos = pedido.productos || [];
+      if (productos.length === 0) {
+        datosExcel.push({
+          Nombre: pedido.nombre_cliente || "",
+          Cantidad: "",
+          Producto: "",
+          "Fecha de Entrega": pedido.fecha_entrega || "",
+          "Lugar despacho": pedido.detalles_pedido || "",
+          "Quien despacha": "",
+          Estado: pedido.estado || "Pendiente",
         });
-      });
-    }
-  });
+      } else {
+        productos.forEach((prod) => {
+          datosExcel.push({
+            Nombre: pedido.nombre_cliente || "",
+            Cantidad: prod.cantidad || 0,
+            Producto: prod.producto || "",
+            "Fecha de Entrega": pedido.fecha_entrega || "",
+            "Lugar despacho": pedido.detalles_pedido || "",
+            "Quien despacha": "",
+            Estado: pedido.estado || "Pendiente",
+          });
+        });
+      }
+    });
 
-  const headers = [
-    "Nombre",
-    "Cantidad",
-    "Producto",
-    "Fecha despacho",
-    "Lugar despacho",
-    "Quien despacha",
-    "Estado",
-  ];
-  const escapar = (v) => `"${(v || "").toString().replace(/"/g, '""')}"`;
+    // Crear libro de trabajo (workbook)
+    const wb = XLSX.utils.book_new();
 
-  const csvContent = [
-    headers.join(","),
-    ...filas.map((f) =>
-      [
-        escapar(f.nombre),
-        f.cantidad,
-        escapar(f.producto),
-        f.fechaDespacho,
-        escapar(f.lugarDespacho),
-        escapar(f.quienDespacha),
-        f.estado,
-      ].join(",")
-    ),
-  ].join("\n");
+    // Crear hoja de cálculo (worksheet) desde los datos
+    const ws = XLSX.utils.json_to_sheet(datosExcel);
 
-  // BOM para UTF-8 en Excel
-  const blob = new Blob(["\uFEFF" + csvContent], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const link = document.createElement("a");
-  const fecha = new Date().toISOString().split("T")[0];
+    // Ajustar anchos de columnas automáticamente
+    const columnWidths = [
+      { wch: 25 }, // Nombre
+      { wch: 10 }, // Cantidad
+      { wch: 40 }, // Producto
+      { wch: 15 }, // Fecha de Entrega
+      { wch: 40 }, // Lugar despacho
+      { wch: 20 }, // Quien despacha
+      { wch: 12 }, // Estado
+    ];
+    ws["!cols"] = columnWidths;
 
-  link.href = URL.createObjectURL(blob);
-  link.download = `pedidos_${fecha}.csv`;
-  link.style.visibility = "hidden";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    // Agregar la hoja al libro
+    XLSX.utils.book_append_sheet(wb, ws, "Historial Pedidos");
 
-  mostrarNotificacion(`✓ ${filas.length} registros exportados`, "success");
+    // Generar nombre de archivo con fecha actual
+    const fecha = new Date().toISOString().split("T")[0];
+    const nombreArchivo = `pedidos_${fecha}.xlsx`;
+
+    // Descargar archivo
+    XLSX.writeFile(wb, nombreArchivo);
+
+    mostrarNotificacion(
+      `✓ ${datosExcel.length} registros exportados a Excel`,
+      "success"
+    );
+  } catch (error) {
+    console.error("Error al exportar Excel:", error);
+    mostrarNotificacion("❌ Error al exportar Excel", "error");
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {

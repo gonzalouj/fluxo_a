@@ -2,6 +2,94 @@
 // Sistema de menú lateral - versión inline que funciona sin servidor
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Obtener usuario actual para filtrar opciones
+  const usuario = getUsuarioActual ? getUsuarioActual() : null;
+  const esAdminUsuario = usuario && usuario.rol === "Admin";
+
+  // Construir opciones de menú según rol
+  let opcionesMenu = "";
+
+  // Crear Pedido - Solo Admin
+  if (esAdminUsuario) {
+    opcionesMenu += `
+                    <li>
+                        <a href="index.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors group">
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            <span class="font-medium text-gray-900 group-hover:text-blue-600">Crear Pedido</span>
+                        </a>
+                    </li>`;
+  }
+
+  // Pedidos Activos - Todos
+  opcionesMenu += `
+                    <li>
+                        <a href="pedidos.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-green-50 transition-colors group">
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <span class="font-medium text-gray-900 group-hover:text-green-600">Pedidos Activos</span>
+                        </a>
+                    </li>`;
+
+  // Historial de Pedidos - Todos
+  opcionesMenu += `
+                    <li>
+                        <a href="historial.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-purple-50 transition-colors group">
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span class="font-medium text-gray-900 group-hover:text-purple-600">Historial de Pedidos</span>
+                        </a>
+                    </li>`;
+
+  // Catálogo de Productos - Solo Admin
+  if (esAdminUsuario) {
+    opcionesMenu += `
+                    <li>
+                        <a href="catalogo.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-orange-50 transition-colors group">
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                            <span class="font-medium text-gray-900 group-hover:text-orange-600">Catálogo de Productos</span>
+                        </a>
+                    </li>`;
+  }
+
+  // Gestión de Usuarios - Solo Admin
+  if (esAdminUsuario) {
+    opcionesMenu += `
+                    <li>
+                        <a href="usuarios.html" class="flex items-center gap-3 p-3 rounded-lg hover:bg-indigo-50 transition-colors group">
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            <span class="font-medium text-gray-900 group-hover:text-indigo-600">Gestión de Usuarios</span>
+                        </a>
+                    </li>`;
+  }
+
+  // Cerrar Sesión - Todos
+  opcionesMenu += `
+                    <li class="mt-4 pt-4 border-t border-gray-200">
+                        <button onclick="cerrarSesion()" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 transition-colors group text-left">
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            <div>
+                                <div class="font-medium text-gray-900 group-hover:text-red-600">Cerrar Sesión</div>
+                                ${
+                                  usuario
+                                    ? `<div class="text-xs text-gray-500">${
+                                        usuario.nombre_completo || usuario.email
+                                      }</div>`
+                                    : ""
+                                }
+                            </div>
+                        </button>
+                    </li>`;
+
   // HTML del menú lateral
   const menuHTML = `
         <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-20 z-[55] hidden"></div>
@@ -15,12 +103,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 </button>
             </div>
             <div class="p-4">
-                <ul>
-                    <li class="mb-2"><a href="index.html" class="block p-2 rounded hover:bg-gray-100">Inicio</a></li>
-                    <li class="mb-2"><a href="pedidos.html" class="block p-2 rounded hover:bg-gray-100">Pedidos</a></li>
-                    <li class="mb-2"><a href="historial.html" class="block p-2 rounded hover:bg-gray-100">Historial</a></li>
-                    <li class="mb-2"><a href="catalogo.html" class="block p-2 rounded hover:bg-gray-100">Catálogo</a></li>
-                    <li class="mb-2"><a href="usuarios.html" class="block p-2 rounded hover:bg-gray-100">Usuarios</a></li>
+                <ul class="space-y-1">
+                    ${opcionesMenu}
                 </ul>
             </div>
         </div>
