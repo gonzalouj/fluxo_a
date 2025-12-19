@@ -120,6 +120,12 @@ function formatShortDate(fecha) {
     return fecha;
   }
 }
+
+function formatNumber(numero) {
+  if (!numero && numero !== 0) return "0";
+  return new Intl.NumberFormat("es-CL").format(numero);
+}
+
 function capitalize(v) {
   return v ? v.charAt(0).toUpperCase() + v.slice(1).toLowerCase() : "";
 }
@@ -192,11 +198,26 @@ function abrirModal(pedidoId) {
   if (pedido.productos && pedido.productos.length > 0) {
     productosEl.innerHTML = pedido.productos
       .map((prod) => {
-        return `<div class="flex justify-between items-center bg-white rounded-lg p-3"><div><span class="text-sm font-medium text-gray-900">${
-          prod.producto || "Producto sin nombre"
-        }</span><div class="text-xs text-gray-500 mt-1">${
-          prod.cantidad || 0
-        } unidad${prod.cantidad !== 1 ? "es" : ""}</div></div></div>`;
+        return `<div 
+          class="flex justify-between items-center bg-white rounded-lg p-3 hover:bg-blue-50 cursor-pointer transition-colors border border-gray-200 hover:border-blue-300" 
+          onclick="mostrarDetalleProducto(${prod.id_producto})"
+        >
+          <div>
+            <span class="text-sm font-medium text-gray-900">${
+              prod.producto || "Producto sin nombre"
+            }</span>
+            <div class="text-xs text-gray-500 mt-1">${
+              prod.cantidad || 0
+            } unidad${prod.cantidad !== 1 ? "es" : ""} • $${formatNumber(
+          prod.precio_unitario_congelado || 0
+        )}</div>
+          </div>
+          <div class="text-blue-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </div>
+        </div>`;
       })
       .join("");
   } else {
@@ -2465,3 +2486,145 @@ function actualizarIndicadorFiltros() {
 }
 
 // ========= FIN: LÓGICA DEL PANEL DE FILTROS =========
+// ========= MODAL DETALLE DE PRODUCTO =========
+
+async function mostrarDetalleProducto(idProducto) {
+  try {
+    // Obtener detalles del producto desde el backend
+    const response = await fetch(`${API_BASE}/productos/${idProducto}`);
+    if (!response.ok) throw new Error("Error al cargar producto");
+
+    const data = await response.json();
+    const producto = data.producto || data;
+
+    // Renderizar el contenido del modal
+    const contenidoEl = document.getElementById("producto-detalle-contenido");
+    contenidoEl.innerHTML = generarHTMLDetalleProducto(producto);
+
+    // Mostrar el modal
+    document
+      .getElementById("modal-producto-detalle")
+      .classList.remove("hidden");
+  } catch (error) {
+    console.error("Error al mostrar detalle del producto:", error);
+    mostrarNotificacion("Error al cargar los detalles del producto", "error");
+  }
+}
+
+function cerrarModalProductoDetalle() {
+  document.getElementById("modal-producto-detalle").classList.add("hidden");
+}
+
+function generarHTMLDetalleProducto(producto) {
+  let html = "";
+
+  // Información básica
+  html += `<div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
+    <h3 class="text-lg font-bold text-gray-800 mb-3">📝 Información Básica</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">`;
+
+  if (producto.codigo)
+    html += `<div><span class="text-xs text-gray-500">Código:</span><div class="font-semibold text-gray-900">${producto.codigo}</div></div>`;
+  if (producto.nombre)
+    html += `<div><span class="text-xs text-gray-500">Nombre:</span><div class="font-semibold text-gray-900">${producto.nombre}</div></div>`;
+  if (producto.categoria)
+    html += `<div><span class="text-xs text-gray-500">Categoría:</span><div class="font-semibold text-gray-900">${producto.categoria}</div></div>`;
+  if (producto.material)
+    html += `<div><span class="text-xs text-gray-500">Material:</span><div class="font-semibold text-gray-900">${producto.material}</div></div>`;
+
+  html += `</div></div>`;
+
+  // Descripción
+  if (producto.descripcion) {
+    html += `<div class="bg-white rounded-lg p-4 border border-gray-300">
+      <h3 class="text-lg font-bold text-gray-800 mb-2">📄 Descripción</h3>
+      <p class="text-gray-700 text-sm">${producto.descripcion}</p>
+    </div>`;
+  }
+
+  // Precios
+  if (producto.precio_unitario || producto.requiere_presupuesto) {
+    html += `<div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">💰 Precio</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">`;
+
+    if (producto.precio_unitario) {
+      html += `<div><span class="text-xs text-gray-500">Precio Unitario:</span><div class="font-semibold text-gray-900 text-lg">${formatNumber(
+        producto.precio_unitario
+      )} ${producto.moneda || "CLP"}</div></div>`;
+      html += `<div><span class="text-xs text-gray-500">IVA:</span><div class="font-semibold text-gray-900">${
+        producto.incluye_iva ? "Incluido" : "No incluido"
+      }</div></div>`;
+    }
+    if (producto.requiere_presupuesto) {
+      html += `<div class="col-span-2"><span class="inline-block bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full border border-amber-300">⚠️ Requiere Presupuesto</span></div>`;
+    }
+    if (producto.unidad_venta) {
+      html += `<div><span class="text-xs text-gray-500">Unidad de venta:</span><div class="font-semibold text-gray-900">${producto.unidad_venta}</div></div>`;
+    }
+
+    html += `</div></div>`;
+  }
+
+  // Dimensiones
+  const tieneDimensiones =
+    producto.largo_cm ||
+    producto.ancho_cm ||
+    producto.alto_cm ||
+    producto.diametro_cm ||
+    producto.fondo_cm ||
+    producto.altura_asiento_cm ||
+    producto.altura_cubierta_cm;
+  if (tieneDimensiones) {
+    html += `<div class="bg-white rounded-lg p-4 border border-gray-300">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">📏 Dimensiones</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">`;
+
+    if (producto.largo_cm)
+      html += `<div><span class="text-xs text-gray-500">Largo:</span><div class="font-semibold text-gray-900">${producto.largo_cm} cm</div></div>`;
+    if (producto.ancho_cm)
+      html += `<div><span class="text-xs text-gray-500">Ancho:</span><div class="font-semibold text-gray-900">${producto.ancho_cm} cm</div></div>`;
+    if (producto.alto_cm)
+      html += `<div><span class="text-xs text-gray-500">Alto:</span><div class="font-semibold text-gray-900">${producto.alto_cm} cm</div></div>`;
+    if (producto.diametro_cm)
+      html += `<div><span class="text-xs text-gray-500">Diámetro:</span><div class="font-semibold text-gray-900">${producto.diametro_cm} cm</div></div>`;
+    if (producto.fondo_cm)
+      html += `<div><span class="text-xs text-gray-500">Fondo:</span><div class="font-semibold text-gray-900">${producto.fondo_cm} cm</div></div>`;
+    if (producto.altura_asiento_cm)
+      html += `<div><span class="text-xs text-gray-500">Altura Asiento:</span><div class="font-semibold text-gray-900">${producto.altura_asiento_cm} cm</div></div>`;
+    if (producto.altura_cubierta_cm)
+      html += `<div><span class="text-xs text-gray-500">Altura Cubierta:</span><div class="font-semibold text-gray-900">${producto.altura_cubierta_cm} cm</div></div>`;
+    if (producto.peso_kg)
+      html += `<div><span class="text-xs text-gray-500">Peso:</span><div class="font-semibold text-gray-900">${producto.peso_kg} kg</div></div>`;
+
+    html += `</div></div>`;
+  }
+
+  // Notas especiales
+  if (producto.notas_especiales) {
+    html += `<div class="bg-amber-50 rounded-lg p-4 border border-amber-300">
+      <h3 class="text-lg font-bold text-gray-800 mb-2">⚠️ Notas Especiales</h3>
+      <p class="text-gray-700 text-sm whitespace-pre-line">${producto.notas_especiales}</p>
+    </div>`;
+  }
+
+  // Información de stock
+  if (producto.stock !== null && producto.stock !== undefined) {
+    html += `<div class="bg-gray-50 rounded-lg p-4 border border-gray-300">
+      <h3 class="text-lg font-bold text-gray-800 mb-2">📦 Stock</h3>
+      <div class="font-semibold text-gray-900 text-lg">${producto.stock} unidades disponibles</div>
+    </div>`;
+  }
+
+  // Producto temporal
+  if (producto.es_temporal) {
+    html += `<div class="bg-slate-100 rounded-lg p-4 border border-slate-300">
+      <span class="inline-block bg-slate-200 text-slate-700 text-sm font-semibold px-3 py-1.5 rounded-full border border-slate-400">🔄 Producto Temporal (asociado a un pedido específico)</span>
+    </div>`;
+  }
+
+  return (
+    html ||
+    '<p class="text-gray-500 text-center py-4">No hay información adicional disponible</p>'
+  );
+}

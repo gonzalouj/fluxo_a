@@ -2,7 +2,7 @@
 
 // --- CONSTANTES Y ESTADO GLOBAL ---
 // Si no existe API_BASE de config-local.js, usar la versión de producción
-var API_BASE = (typeof API_BASE !== 'undefined') ? API_BASE : "/api";
+var API_BASE = typeof API_BASE !== "undefined" ? API_BASE : "/api";
 let pedidosData = [];
 let pedidoActual = null;
 let textoBusqueda = ""; // Estado para la búsqueda
@@ -871,13 +871,15 @@ document.addEventListener("keydown", (e) => {
 // Exporta los pedidos visibles (con filtros aplicados) a CSV
 function exportarAExcel() {
   let pedidosFiltrados = [...pedidosData];
-  
+
   if (textoBusqueda.trim() !== "") {
     pedidosFiltrados = filtrarPedidosPorTexto(pedidosFiltrados, textoBusqueda);
   }
   pedidosFiltrados = aplicarFiltros(pedidosFiltrados);
-  
-  pedidosFiltrados.sort((a, b) => new Date(a.fecha_entrega) - new Date(b.fecha_entrega));
+
+  pedidosFiltrados.sort(
+    (a, b) => new Date(a.fecha_entrega) - new Date(b.fecha_entrega)
+  );
 
   if (pedidosFiltrados.length === 0) {
     mostrarNotificacion("No hay pedidos para exportar", "error");
@@ -886,7 +888,7 @@ function exportarAExcel() {
 
   // Una fila por cada producto
   const filas = [];
-  pedidosFiltrados.forEach(pedido => {
+  pedidosFiltrados.forEach((pedido) => {
     const productos = pedido.productos || [];
     if (productos.length === 0) {
       filas.push({
@@ -896,10 +898,10 @@ function exportarAExcel() {
         fechaDespacho: pedido.fecha_entrega || "",
         lugarDespacho: pedido.detalles_pedido || "",
         quienDespacha: "",
-        estado: pedido.estado || "Pendiente"
+        estado: pedido.estado || "Pendiente",
       });
     } else {
-      productos.forEach(prod => {
+      productos.forEach((prod) => {
         filas.push({
           nombre: pedido.nombre_cliente || "",
           cantidad: prod.cantidad || 0,
@@ -907,40 +909,52 @@ function exportarAExcel() {
           fechaDespacho: pedido.fecha_entrega || "",
           lugarDespacho: pedido.detalles_pedido || "",
           quienDespacha: "",
-          estado: pedido.estado || "Pendiente"
+          estado: pedido.estado || "Pendiente",
         });
       });
     }
   });
 
-  const headers = ["Nombre", "Cantidad", "Producto", "Fecha despacho", "Lugar despacho", "Quien despacha", "Estado"];
+  const headers = [
+    "Nombre",
+    "Cantidad",
+    "Producto",
+    "Fecha despacho",
+    "Lugar despacho",
+    "Quien despacha",
+    "Estado",
+  ];
   const escapar = (v) => `"${(v || "").toString().replace(/"/g, '""')}"`;
-  
+
   const csvContent = [
     headers.join(","),
-    ...filas.map(f => [
-      escapar(f.nombre),
-      f.cantidad,
-      escapar(f.producto),
-      f.fechaDespacho,
-      escapar(f.lugarDespacho),
-      escapar(f.quienDespacha),
-      f.estado
-    ].join(","))
+    ...filas.map((f) =>
+      [
+        escapar(f.nombre),
+        f.cantidad,
+        escapar(f.producto),
+        f.fechaDespacho,
+        escapar(f.lugarDespacho),
+        escapar(f.quienDespacha),
+        f.estado,
+      ].join(",")
+    ),
   ].join("\n");
 
   // BOM para UTF-8 en Excel
-  const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["\uFEFF" + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
   const link = document.createElement("a");
   const fecha = new Date().toISOString().split("T")[0];
-  
+
   link.href = URL.createObjectURL(blob);
   link.download = `pedidos_${fecha}.csv`;
   link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  
+
   mostrarNotificacion(`✓ ${filas.length} registros exportados`, "success");
 }
 

@@ -3,6 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <script src="auth.js"></script>
+    <script>
+      // Proteger página - solo Admin puede crear pedidos
+      if (typeof protegerPagina === "function") {
+        protegerPagina(["Admin"]);
+      }
+    </script>
     <script src="push-subscription.js"></script>
     <script src="push-ui.js" defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -1587,6 +1593,6 @@
     </script>
 
     <script src="./header-inline.js"></script>
-    <script src="./menu-inline.js"></script>
+    <script src="./menu-inline.js?v=4"></script>
   </body>
 </html>

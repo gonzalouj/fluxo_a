@@ -1,80 +1,157 @@
-// auth.js
-const STORAGE_KEY = 'fluxoUser';
+// auth.js - Sistema de autenticación y control de permisos por roles
+const STORAGE_KEY = "fluxoUser";
 
-// Capturar datos del callback de Google
-const urlParams = new URLSearchParams(window.location.search);
-const googleEmail = urlParams.get('google_email');
-const userId = urlParams.get('user_id');
-const userName = urlParams.get('user_name');
-const userRol = urlParams.get('user_rol');
+/* ============================================
+   FUNCIONES DE USUARIO
+============================================ */
 
-if (googleEmail && userId) {
-  const user = {
-    id: parseInt(userId),
-    email: googleEmail,
-    nombre: userName || googleEmail,
-    rol: userRol || 'usuario',
-    loggedAt: new Date().toISOString()
-  };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-  window.history.replaceState({}, document.title, window.location.pathname);
+// Guardar usuario en localStorage
+function guardarUsuario(usuario) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(usuario));
 }
 
-function isLoggedIn() {
-  return !!localStorage.getItem(STORAGE_KEY);
+// Obtener usuario actual
+function getUsuarioActual() {
+  const usuarioStr = localStorage.getItem(STORAGE_KEY);
+  return usuarioStr ? JSON.parse(usuarioStr) : null;
 }
 
-function getCurrentUser() {
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : null;
+// Verificar si está autenticado
+function estaAutenticado() {
+  return getUsuarioActual() !== null;
 }
 
-function logout() {
+// Verificar si el usuario es Admin
+function esAdmin() {
+  const usuario = getUsuarioActual();
+  return usuario && usuario.rol === "Admin";
+}
+
+// Verificar si el usuario es Trabajador
+function esTrabajador() {
+  const usuario = getUsuarioActual();
+  return usuario && usuario.rol === "Trabajador";
+}
+
+// Cerrar sesión
+function cerrarSesion() {
   localStorage.removeItem(STORAGE_KEY);
-  window.location.href = 'login.html';
+  window.location.href = "/login.html";
 }
 
-// Verificar sesión con el backend
-async function verificarSesionConBackend() {
-  const user = getCurrentUser();
-  if (!user || !user.id) {
+/* ============================================
+   CARGAR USUARIO DESDE BACKEND
+============================================ */
+
+// Obtener datos del usuario desde el backend
+async function cargarUsuarioActual(email) {
+  try {
+    const response = await fetch(
+      `/api/auth/me?email=${encodeURIComponent(email)}`
+    );
+    if (response.ok) {
+      const usuario = await response.json();
+      guardarUsuario(usuario);
+      return usuario;
+    } else {
+      console.error("Error cargando usuario:", response.status);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error cargando usuario:", error);
+    return null;
+  }
+}
+
+/* ============================================
+   PROTECCIÓN DE PÁGINAS
+============================================ */
+
+// Proteger página según rol
+function protegerPagina(rolesPermitidos = ["Admin", "Trabajador"]) {
+  const usuario = getUsuarioActual();
+
+  // Si no está autenticado, redirigir a login
+  if (!usuario) {
+    window.location.href = "/login.html";
     return false;
   }
 
-  try {
-    const response = await fetch(`/api/usuarios/verificar/${user.id}`);
-    const data = await response.json();
-    
-    if (!data.valid) {
-      console.log('Sesión inválida:', data.reason);
-      localStorage.removeItem(STORAGE_KEY);
-      return false;
+  // Si no tiene el rol necesario, redirigir a página permitida
+  if (!rolesPermitidos.includes(usuario.rol)) {
+    if (usuario.rol === "Trabajador") {
+      window.location.href = "/pedidos.html"; // Trabajadores van a pedidos activos
+    } else {
+      window.location.href = "/index.html"; // Admin va a crear pedido
     }
-    
-    // Actualizar datos locales si cambiaron en el servidor
-    if (data.rol !== user.rol || data.nombre !== user.nombre) {
-      user.rol = data.rol;
-      user.nombre = data.nombre;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error verificando sesión:', error);
-    // En caso de error de red, permitir continuar con la sesión local
-    return true;
+    return false;
+  }
+
+  return true;
+}
+
+/* ============================================
+   REDIRECCIÓN SEGÚN ROL
+============================================ */
+
+// Redirigir después del login según rol
+function redirigirSegunRol(usuario) {
+  if (!usuario) return;
+
+  if (usuario.rol === "Admin") {
+    window.location.href = "/index.html"; // Admin va a crear pedido
+  } else if (usuario.rol === "Trabajador") {
+    window.location.href = "/pedidos.html"; // Trabajador va a pedidos activos
+  } else {
+    window.location.href = "/pedidos.html"; // Por defecto
   }
 }
 
-// Verificar autenticación
-(async function() {
-  if (!isLoggedIn()) {
-    window.location.href = 'login.html';
-    return;
-  }
-  
-  const sesionValida = await verificarSesionConBackend();
-  if (!sesionValida) {
-    window.location.href = 'login.html?error=sesion_expirada';
+/* ============================================
+   CAPTURA DE CALLBACK DE GOOGLE
+============================================ */
+
+// Capturar datos del callback de Google
+(function () {
+  // Solo ejecutar si no estamos en login.html
+  if (window.location.pathname.includes("login.html")) return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const googleEmail = urlParams.get("google_email");
+  const userId = urlParams.get("user_id");
+  const userName = urlParams.get("user_name");
+  const userRol = urlParams.get("user_rol");
+
+  if (googleEmail && userId) {
+    const user = {
+      id_usuario: parseInt(userId),
+      email: googleEmail,
+      nombre_completo: userName || googleEmail,
+      rol: userRol || "Trabajador",
+      activo: true,
+    };
+    guardarUsuario(user);
+
+    // Limpiar URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    // Redirigir según rol
+    redirigirSegunRol(user);
   }
 })();
+
+/* ============================================
+   FUNCIONES LEGACY (para compatibilidad)
+============================================ */
+
+function isLoggedIn() {
+  return estaAutenticado();
+}
+
+function getCurrentUser() {
+  return getUsuarioActual();
+}
+
+function logout() {
+  cerrarSesion();
+}

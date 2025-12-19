@@ -3,6 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <script src="auth.js"></script>
+    <script>
+      // Proteger página - accesible por Admin y Trabajador
+      if (typeof protegerPagina === "function") {
+        protegerPagina(["Admin", "Trabajador"]);
+      }
+    </script>
     <script src="push-subscription.js"></script>
     <script src="push-ui.js" defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -2145,8 +2151,74 @@
       </div>
     </div>
 
+    <!-- Modal Detalle de Producto -->
+    <div
+      id="modal-producto-detalle"
+      class="fixed inset-0 z-[60] overflow-y-auto hidden"
+    >
+      <div
+        class="flex items-end justify-center min-h-screen px-0 pt-0 pb-0 sm:items-center sm:p-4"
+      >
+        <div
+          class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+          onclick="cerrarModalProductoDetalle()"
+        ></div>
+        <div
+          class="relative inline-block w-full bg-white text-left overflow-hidden shadow-2xl transform transition-all sm:rounded-2xl sm:my-8 sm:max-w-3xl sm:w-full max-h-screen sm:max-h-[90vh] flex flex-col"
+        >
+          <!-- Header -->
+          <div
+            class="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-4 sm:px-6 sm:py-5 flex-shrink-0"
+          >
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg sm:text-2xl font-bold text-white">
+                📦 Detalle del Producto
+              </h2>
+              <button
+                onclick="cerrarModalProductoDetalle()"
+                class="text-white hover:text-gray-200 transition-colors"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Contenido scrolleable -->
+          <div class="px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto flex-1">
+            <div id="producto-detalle-contenido" class="space-y-3 sm:space-y-4">
+              <!-- El contenido se llenará dinámicamente -->
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div
+            class="bg-gray-50 px-4 py-3 sm:px-6 sm:py-4 border-t flex-shrink-0"
+          >
+            <button
+              onclick="cerrarModalProductoDetalle()"
+              class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="./pedidos.js" defer></script>
     <script src="./header-inline.js"></script>
-    <script src="./menu-inline.js"></script>
+    <script src="./menu-inline.js?v=4"></script>
   </body>
 </html>

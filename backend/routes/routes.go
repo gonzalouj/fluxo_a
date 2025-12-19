@@ -26,6 +26,7 @@ func registerAPIRoutes(api *gin.RouterGroup) {
 	api.GET("/hello", handlers.HelloHandler)
 	api.GET("/productos", handlers.ListarProductos)
 	api.GET("/productos/con-temporales", handlers.ListarProductosConTemporales)
+	api.GET("/productos/:id", handlers.ObtenerProducto)
 	api.POST("/productos", handlers.CrearProducto)
 	api.PATCH("/productos/:id", handlers.ActualizarProducto)
 	api.PUT("/productos/:id", handlers.ActualizarProductoCompleto)
@@ -53,6 +54,7 @@ func registerAPIRoutes(api *gin.RouterGroup) {
 	{
 		usuarios.GET("", handlers.ListarUsuarios)
 		usuarios.POST("", handlers.CrearUsuario)
+		usuarios.PUT("/:id", handlers.ActualizarUsuario)
 		usuarios.DELETE("/:id", handlers.EliminarUsuario)
 		usuarios.GET("/verificar/:id", handlers.VerificarUsuario)
 	}
@@ -70,5 +72,7 @@ func registerAPIRoutes(api *gin.RouterGroup) {
 	{
 		authGroup.GET("/google/login", auth.GoogleLogin)
 		authGroup.GET("/google/callback", auth.GoogleCallback)
+		authGroup.POST("/logout", auth.Logout)
+		authGroup.GET("/me", handlers.ObtenerUsuarioActual)
 	}
 }
