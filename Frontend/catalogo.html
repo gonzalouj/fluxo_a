@@ -3,6 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <script src="auth.js"></script>
+    <script>
+      // Proteger página - Solo Admin
+      if (typeof protegerPagina === "function") {
+        protegerPagina(["Admin"]);
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Catálogo de Productos</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -668,17 +674,7 @@
     <main class="max-w-7xl mx-auto py-8 px-4">
       <!-- Header con título y buscador -->
       <div class="bg-white rounded-lg shadow-enterprise p-6 mb-6">
-        <div
-          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
-        >
-          <div>
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">
-              Catálogo de Productos
-            </h1>
-            <p class="text-gray-600">
-              Administra y organiza todos los productos del catálogo
-            </p>
-          </div>
+        <div class="flex flex-col sm:flex-row justify-end items-center gap-4">
           <button
             id="add-product-btn"
             class="w-full sm:w-auto px-6 py-3 btn-enterprise text-white rounded-lg font-semibold flex items-center justify-center gap-2 shadow-enterprise"
@@ -779,7 +775,7 @@
     </main>
 
     <script src="./header-inline.js"></script>
-    <script src="./menu-inline.js"></script>
+    <script src="./menu-inline.js?v=5"></script>
     <script src="./catalogo.js"></script>
   </body>
 </html>

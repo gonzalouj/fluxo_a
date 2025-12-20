@@ -54,6 +54,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       GIN_MODE: release
       BASE_URL: ${BASE_URL}
+      # Notificaciones Push (Web Push API)
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_EMAIL: ${VAPID_EMAIL:-mailto:admin@fluxo.cl}
     expose:
       - "${BACKEND_PORT}"
     depends_on:

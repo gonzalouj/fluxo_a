@@ -390,6 +390,120 @@ func ListarProductos(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"productos": productos})
 }
 
+// ObtenerProducto maneja GET /api/productos/:id
+func ObtenerProducto(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de producto inválido"})
+		return
+	}
+
+	// Consulta completa para obtener todos los campos del producto
+	query := `
+		SELECT 
+			p.id_producto, p.codigo, p.nombre, p.descripcion, p.id_categoria,
+			p.precio_unitario, p.largo_cm, p.ancho_cm, p.alto_cm, p.diametro_cm,
+			p.fondo_cm, p.altura_asiento_cm, p.altura_cubierta_cm, p.peso_kg,
+			p.material, p.moneda, p.incluye_iva, p.requiere_presupuesto,
+			p.unidad_venta, p.stock, p.foto_principal_url, p.notas_especiales,
+			p.es_temporal, p.id_pedido_origen,
+			c.nombre as categoria_nombre
+		FROM productos p
+		LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
+		WHERE p.id_producto = $1`
+
+	var p models.Producto
+	var codigo, descripcion, material, fotoURL, notasEspeciales, categoriaNombre sql.NullString
+	var idCategoria, stock, idPedidoOrigen sql.NullInt64
+	var precioUnitario, largoCm, anchoCm, altoCm, diametroCm, fondoCm sql.NullFloat64
+	var alturaAsientoCm, alturaCubiertaCm, pesoKg sql.NullFloat64
+	var esTemporal sql.NullBool
+
+	err = db.QueryRow(query, id).Scan(
+		&p.ID, &codigo, &p.Nombre, &descripcion, &idCategoria,
+		&precioUnitario, &largoCm, &anchoCm, &altoCm, &diametroCm,
+		&fondoCm, &alturaAsientoCm, &alturaCubiertaCm, &pesoKg,
+		&material, &p.Moneda, &p.IncluyeIVA, &p.RequierePresupuesto,
+		&p.UnidadVenta, &stock, &fotoURL, &notasEspeciales,
+		&esTemporal, &idPedidoOrigen,
+		&categoriaNombre,
+	)
+
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Producto no encontrado"})
+		return
+	}
+	if err != nil {
+		log.Printf("Error al obtener producto: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener producto"})
+		return
+	}
+
+	// Asignar valores opcionales
+	if codigo.Valid {
+		p.Codigo = &codigo.String
+	}
+	if descripcion.Valid {
+		p.Descripcion = &descripcion.String
+	}
+	if idCategoria.Valid {
+		cat := int(idCategoria.Int64)
+		p.IDCategoria = &cat
+	}
+	if precioUnitario.Valid {
+		p.PrecioUnitario = precioUnitario.Float64
+	}
+	if largoCm.Valid {
+		p.LargoCm = &largoCm.Float64
+	}
+	if anchoCm.Valid {
+		p.AnchoCm = &anchoCm.Float64
+	}
+	if altoCm.Valid {
+		p.AltoCm = &altoCm.Float64
+	}
+	if diametroCm.Valid {
+		p.DiametroCm = &diametroCm.Float64
+	}
+	if fondoCm.Valid {
+		p.FondoCm = &fondoCm.Float64
+	}
+	if alturaAsientoCm.Valid {
+		p.AlturaAsientoCm = &alturaAsientoCm.Float64
+	}
+	if alturaCubiertaCm.Valid {
+		p.AlturaCubiertaCm = &alturaCubiertaCm.Float64
+	}
+	if pesoKg.Valid {
+		p.PesoKg = &pesoKg.Float64
+	}
+	if material.Valid {
+		p.Material = &material.String
+	}
+	if stock.Valid {
+		p.Stock = int(stock.Int64)
+	}
+	if fotoURL.Valid {
+		p.FotoPrincipalURL = &fotoURL.String
+	}
+	if notasEspeciales.Valid {
+		p.NotasEspeciales = &notasEspeciales.String
+	}
+	if esTemporal.Valid {
+		p.EsTemporal = &esTemporal.Bool
+	}
+	if idPedidoOrigen.Valid {
+		origen := int(idPedidoOrigen.Int64)
+		p.IDPedidoOrigen = &origen
+	}
+	if categoriaNombre.Valid {
+		p.CategoriaNombre = &categoriaNombre.String
+	}
+
+	c.JSON(http.StatusOK, gin.H{"producto": p})
+}
+
 // ListarProductosConTemporales maneja GET /api/productos/con-temporales?id_pedido=X
 // Devuelve productos permanentes + productos temporales de un pedido específico
 func ListarProductosConTemporales(c *gin.Context) {

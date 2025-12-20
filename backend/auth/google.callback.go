@@ -29,7 +29,10 @@ func GoogleCallback(c *gin.Context) {
 	state := c.Query("state")
 
 	if code == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "code missing"})
+		// Limpiar cualquier cookie OAuth residual
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=no_code"
+		c.Redirect(http.StatusFound, redirectURL)
 		return
 	}
 
@@ -40,7 +43,10 @@ func GoogleCallback(c *gin.Context) {
 	token, err := GoogleOAuthConfig.Exchange(c.Request.Context(), code)
 	if err != nil {
 		log.Println("Error intercambiando code por token:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "token exchange failed"})
+		// Limpiar cookies OAuth antes de redirigir
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=exchange_failed"
+		c.Redirect(http.StatusFound, redirectURL)
 		return
 	}
 
@@ -48,7 +54,10 @@ func GoogleCallback(c *gin.Context) {
 	userInfo, err := fetchGoogleUserInfo(token.AccessToken)
 	if err != nil {
 		log.Println("Error obteniendo userinfo de Google:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get userinfo"})
+		// Limpiar cookies OAuth antes de redirigir
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=user_info_failed"
+		c.Redirect(http.StatusFound, redirectURL)
 		return
 	}
 
@@ -66,8 +75,9 @@ func GoogleCallback(c *gin.Context) {
 	).Scan(&userID, &nombreCompleto, &rol, &activo)
 
 	if err == sql.ErrNoRows {
-		// Email no autorizado
+		// Email no autorizado - limpiar cookies OAuth
 		log.Printf("Acceso denegado: email %s no está registrado\n", userInfo.Email)
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
 		redirectURL := BaseURL + "/login.html?error=no_autorizado&email=" + url.QueryEscape(userInfo.Email)
 		c.Redirect(http.StatusFound, redirectURL)
 		return
@@ -75,12 +85,17 @@ func GoogleCallback(c *gin.Context) {
 
 	if err != nil {
 		log.Println("Error consultando usuario en BD:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		// Limpiar cookies OAuth antes de redirigir
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=database_error"
+		c.Redirect(http.StatusFound, redirectURL)
 		return
 	}
 
 	if !activo {
+		// Usuario inactivo - limpiar cookies OAuth
 		log.Printf("Acceso denegado: usuario %s está desactivado\n", userInfo.Email)
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
 		redirectURL := BaseURL + "/login.html?error=usuario_inactivo"
 		c.Redirect(http.StatusFound, redirectURL)
 		return

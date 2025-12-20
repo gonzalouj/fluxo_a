@@ -1,135 +1,309 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <script src="auth.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestión de Usuarios</title>
+  <head>
+    <meta charset="UTF-8" />
+    <script src="auth.js"></script>
+    <script>
+      // Proteger página - solo Admin puede gestionar usuarios
+      if (typeof protegerPagina === "function") {
+        protegerPagina(["Admin"]);
+      }
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Usuarios</title>
 
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Header dinámico -->
-  <script defer src="header-inline.js"></script>
+    <!-- Animaciones personalizadas -->
+    <style>
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
 
-  <!-- Menú lateral dinámico -->
-  <script defer src="menu-inline.js"></script>
+      @keyframes fade-out {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
 
-  <!-- Lógica de usuarios -->
-  <script defer src="usuarios.js"></script>
+      @keyframes scale-in {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
 
-  <!-- Toast (comentado si no existe) -->
-  <!-- <script defer src="toast.js"></script> -->
-  <!-- <link rel="stylesheet" href="toast.css" /> -->
-</head>
+      .animate-fade-in {
+        animation: fade-in 0.2s ease-out;
+      }
 
-<body class="bg-gray-100">
+      .animate-fade-out {
+        animation: fade-out 0.2s ease-out;
+      }
 
-  <!-- HEADER DINÁMICO -->
-  <div id="header-placeholder"></div>
+      .animate-scale-in {
+        animation: scale-in 0.2s ease-out;
+      }
+    </style>
 
-  <!-- MENÚ DINÁMICO -->
-  <div id="menu-placeholder"></div>
+    <!-- Header dinámico -->
+    <script defer src="header-inline.js"></script>
 
-  <!-- CONTENIDO PRINCIPAL -->
-  <main class="max-w-6xl mx-auto p-6">
+    <!-- Menú lateral dinámico -->
+    <script defer src="menu-inline.js?v=5"></script>
 
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Gestión de Usuarios</h1>
+    <!-- Lógica de usuarios -->
+    <script defer src="usuarios.js?v=6"></script>
 
-    <div class="bg-white shadow-md rounded-xl p-6">
+    <!-- Toast (comentado si no existe) -->
+    <!-- <script defer src="toast.js"></script> -->
+    <!-- <link rel="stylesheet" href="toast.css" /> -->
 
-      <!-- Botón agregar usuario -->
-      <div class="flex justify-end mb-4">
-        <button id="btnNuevoUsuario"
-          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
-          + Nuevo Usuario
-        </button>
-      </div>
+    <!-- Force cache bust -->
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+  </head>
 
-      <!-- Tabla -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm text-left text-gray-700">
-          <thead class="bg-gray-200 text-gray-700 uppercase text-xs">
-            <tr>
-              <th class="px-4 py-3">ID</th>
-              <th class="px-4 py-3">Nombre</th>
-              <th class="px-4 py-3">Email</th>
-              <th class="px-4 py-3">RUT</th>
-              <th class="px-4 py-3">Rol</th>
-              <th class="px-4 py-3">Activo</th>
-              <th class="px-4 py-3">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tablaUsuarios" class="bg-white divide-y divide-gray-200">
-            <!-- Usuarios se cargan aquí -->
-          </tbody>
-        </table>
-      </div>
+  <body class="bg-gray-100">
+    <!-- HEADER DINÁMICO -->
+    <div id="header-placeholder"></div>
 
-    </div>
-  </main>
+    <!-- MENÚ DINÁMICO -->
+    <div id="menu-placeholder"></div>
 
-  <!-- MODAL: NUEVO USUARIO -->
-  <div id="modalUsuario"
-       class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden z-50">
-
-    <div class="bg-white shadow-xl rounded-xl p-6 w-full max-w-lg">
-      <h2 class="text-xl font-bold mb-4">Crear Nuevo Usuario</h2>
-
-      <form id="formUsuario">
-
-        <label class="block mb-2 font-semibold">Nombre Completo *</label>
-        <input type="text" id="nombreNuevo" required
-               class="w-full p-2 border rounded mb-4">
-
-        <label class="block mb-2 font-semibold">RUT *</label>
-        <input type="text" id="rutNuevo" required
-               placeholder="12345678-9"
-               class="w-full p-2 border rounded mb-4">
-
-        <label class="block mb-2 font-semibold">Email *</label>
-        <input type="email" id="emailNuevo" required
-               class="w-full p-2 border rounded mb-4">
-
-        <label class="block mb-2 font-semibold">Contraseña *</label>
-        <input type="password" id="passwordNuevo" required
-               class="w-full p-2 border rounded mb-4">
-
-        <label class="block font-semibold mb-2">Rol</label>
-        <select id="rolNuevo" class="w-full p-2 border rounded mb-4">
-          <option value="Admin">Administrador</option>
-          <option value="Trabajador">Trabajador</option>
-        </select>
-
-        <label class="block font-semibold mb-2">Permisos</label>
-
-        <div class="grid grid-cols-2 gap-2 mb-4 text-sm">
-          <label><input type="checkbox" class="permiso" value="pedidos"> Gestión de Pedidos</label>
-          <label><input type="checkbox" class="permiso" value="historial"> Ver Historial</label>
-          <label><input type="checkbox" class="permiso" value="productos"> Gestionar Productos</label>
-          <label><input type="checkbox" class="permiso" value="usuarios"> Administrar Usuarios</label>
-          <label><input type="checkbox" class="permiso" value="reportes"> Ver Reportes</label>
-        </div>
-
-        <div class="flex justify-end gap-3">
-          <button type="button" id="btnCancelar"
-                  class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400">
-            Cancelar
-          </button>
-
-          <button type="submit"
-                  class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700">
-            Guardar
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="max-w-6xl mx-auto p-6">
+      <div class="bg-white shadow-md rounded-xl p-6">
+        <!-- Botón agregar usuario -->
+        <div class="flex justify-end mb-4">
+          <button
+            id="btnNuevoUsuario"
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow"
+          >
+            + Nuevo Usuario
           </button>
         </div>
 
-      </form>
+        <!-- Tabla -->
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm text-left text-gray-700">
+            <thead class="bg-gray-200 text-gray-700 uppercase text-xs">
+              <tr>
+                <th class="px-4 py-3">ID</th>
+                <th class="px-4 py-3">Nombre</th>
+                <th class="px-4 py-3">Email</th>
+                <th class="px-4 py-3">RUT</th>
+                <th class="px-4 py-3">Rol</th>
+                <th class="px-4 py-3">Activo</th>
+                <th class="px-4 py-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaUsuarios" class="bg-white divide-y divide-gray-200">
+              <!-- Usuarios se cargan aquí -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL: NUEVO USUARIO -->
+    <div
+      id="modalUsuario"
+      class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden z-50 p-4"
+    >
+      <div
+        class="bg-white shadow-xl rounded-xl w-full max-w-lg max-h-[90vh] flex flex-col"
+      >
+        <!-- Header fijo del modal -->
+        <div class="p-4 sm:p-6 border-b">
+          <h2 class="text-xl font-bold">Crear Nuevo Usuario</h2>
+        </div>
+
+        <!-- Contenido scrolleable -->
+        <div class="overflow-y-auto flex-1 p-4 sm:p-6">
+          <form id="formUsuario">
+            <label class="block mb-2 font-semibold text-sm"
+              >Nombre Completo *</label
+            >
+            <input
+              type="text"
+              id="nombreNuevo"
+              required
+              class="w-full p-2 border rounded mb-4 text-sm"
+              placeholder="Ej: Juan Pérez González"
+            />
+
+            <label class="block mb-2 font-semibold text-sm">RUT *</label>
+            <input
+              type="text"
+              id="rutNuevo"
+              required
+              placeholder="12345678-9"
+              class="w-full p-2 border rounded mb-4 text-sm"
+            />
+
+            <label class="block mb-2 font-semibold text-sm">Email *</label>
+            <input
+              type="email"
+              id="emailNuevo"
+              required
+              class="w-full p-2 border rounded mb-4 text-sm"
+              placeholder="usuario@ejemplo.com"
+            />
+
+            <label class="block font-semibold mb-2 text-sm">Rol *</label>
+            <select
+              id="rolNuevo"
+              class="w-full p-2 border rounded mb-4 text-sm"
+            >
+              <option value="Admin">Administrador</option>
+              <option value="Trabajador">Trabajador</option>
+            </select>
+          </form>
+        </div>
+
+        <!-- Footer fijo del modal -->
+        <div class="p-4 sm:p-6 border-t bg-gray-50">
+          <div
+            class="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3"
+          >
+            <button
+              type="button"
+              id="btnCancelar"
+              class="w-full sm:w-auto px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm font-medium"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              form="formUsuario"
+              class="w-full sm:w-auto px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 text-sm font-medium"
+            >
+              Guardar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
-  </div>
+    <!-- MODAL: EDITAR USUARIO -->
+    <div
+      id="modalEditarUsuario"
+      class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center hidden z-50 p-4"
+    >
+      <div
+        class="bg-white shadow-xl rounded-xl w-full max-w-lg max-h-[90vh] flex flex-col"
+      >
+        <!-- Header fijo del modal -->
+        <div class="p-4 sm:p-6 border-b">
+          <h2 class="text-xl font-bold">Editar Usuario</h2>
+        </div>
 
-  <!-- TOAST -->
-  <div id="toast-container"></div>
+        <!-- Contenido scrolleable -->
+        <div class="overflow-y-auto flex-1 p-4 sm:p-6">
+          <form id="formEditarUsuario">
+            <input type="hidden" id="editarIdUsuario" />
 
-</body>
+            <label class="block mb-2 font-semibold text-sm"
+              >Nombre Completo *</label
+            >
+            <input
+              type="text"
+              id="editarNombre"
+              required
+              class="w-full p-2 border rounded mb-4 text-sm"
+              placeholder="Ej: Juan Pérez González"
+            />
+
+            <label class="block mb-2 font-semibold text-sm">RUT *</label>
+            <input
+              type="text"
+              id="editarRut"
+              required
+              placeholder="12345678-9"
+              class="w-full p-2 border rounded mb-4 text-sm"
+            />
+
+            <label class="block mb-2 font-semibold text-sm">Email *</label>
+            <input
+              type="email"
+              id="editarEmail"
+              required
+              class="w-full p-2 border rounded mb-4 text-sm"
+              placeholder="usuario@ejemplo.com"
+            />
+
+            <label class="block font-semibold mb-2 text-sm">Rol *</label>
+            <select
+              id="editarRol"
+              class="w-full p-2 border rounded mb-4 text-sm"
+            >
+              <option value="Admin">Administrador</option>
+              <option value="Trabajador">Trabajador</option>
+            </select>
+
+            <label class="block font-semibold mb-2 text-sm">Estado *</label>
+            <select
+              id="editarActivo"
+              class="w-full p-2 border rounded mb-4 text-sm"
+            >
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+
+            <div
+              class="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800"
+            >
+              <strong>Nota:</strong> Si cambias el estado a "Inactivo", el
+              usuario no podrá acceder al sistema.
+            </div>
+          </form>
+        </div>
+
+        <!-- Footer fijo del modal -->
+        <div class="p-4 sm:p-6 border-t bg-gray-50">
+          <div
+            class="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3"
+          >
+            <button
+              type="button"
+              id="btnCancelarEditar"
+              class="w-full sm:w-auto px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-sm font-medium"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              form="formEditarUsuario"
+              class="w-full sm:w-auto px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 text-sm font-medium"
+            >
+              Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast-container"></div>
+  </body>
 </html>

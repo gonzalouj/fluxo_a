@@ -5,12 +5,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Configuración por página
   const pageConfigs = {
     "index.html": {
-      title: "Gestión de Pedidos",
+      title: "Crear Pedido",
       actions: [], // Sin acciones extra
       extra: null, // Sin contenido extra
     },
     "pedidos.html": {
-      title: "Vista General",
+      title: "Pedidos Activos",
       actions: ["filter"], // Botón de filtro
       extra: "search", // Barra de búsqueda
     },
@@ -18,6 +18,16 @@ document.addEventListener("DOMContentLoaded", () => {
       title: "Historial de Pedidos",
       actions: ["filter"], // Botón de filtro
       extra: "search", // Barra de búsqueda
+    },
+    "catalogo.html": {
+      title: "Catálogo de Productos",
+      actions: [], // Sin acciones extra
+      extra: null, // Sin contenido extra
+    },
+    "usuarios.html": {
+      title: "Gestión de Usuarios",
+      actions: [], // Sin acciones extra
+      extra: null, // Sin contenido extra
     },
     "configuracion.html": {
       title: "Configuración",
