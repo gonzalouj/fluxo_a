@@ -11,9 +11,9 @@ WORKDIR /app
 COPY go.mod go.sum ./
 
 # Descargar dependencias
-ENV GOPROXY=https://proxy.golang.org,direct
+ENV GOPROXY=direct
 ENV GOSUMDB=off
-RUN go env -w GOPROXY=https://proxy.golang.org,direct && \
+RUN go env -w GOPROXY=direct && \
     go env -w GOSUMDB=off && \
     go mod download
 
