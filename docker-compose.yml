@@ -58,8 +58,9 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_EMAIL: ${VAPID_EMAIL:-mailto:admin@fluxo.cl}
-    expose:
-      - "${BACKEND_PORT}"
+    # Publicar puerto en el host para despliegue en VPS
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     depends_on:
       - database
     networks:
@@ -91,8 +92,9 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    expose:
-      - "${FRONTEND_PORT}"
+    # Publicar puerto en el host para despliegue en VPS
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     depends_on:
       - backend
     networks:
@@ -120,4 +122,4 @@ volumes:
 
 networks:
   red_taller_software:
-    external: true
+    driver: bridge
