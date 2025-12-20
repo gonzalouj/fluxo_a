@@ -10,18 +10,30 @@ WORKDIR /app
 # Copiar go mod files
 COPY go.mod go.sum ./
 
-# Descargar dependencias
-ENV GOPROXY=direct
-ENV GOSUMDB=off
-RUN go env -w GOPROXY=direct && \
-    go env -w GOSUMDB=off && \
-    go mod download
+# Si el repo trae un directorio vendor/ lo copiamos (solución offline para entornos
+# que bloquean acceso a proxy.golang.org). Si no existe, intentamos descargar módulos.
+COPY vendor ./vendor
+
+# Descargar dependencias solo si no hay vendor/ disponible
+RUN if [ -d ./vendor ]; then \
+            echo "vendor directory found, skipping go mod download"; \
+        else \
+            echo "no vendor directory, attempting to download modules" && \
+            go env -w GOPROXY=direct && \
+            go env -w GOSUMDB=off && \
+            go mod download; \
+        fi
 
 # Copiar código fuente
 COPY . .
 
-# Compilar la aplicación
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o fluxo-backend .
+# Compilar la aplicación. Si existe vendor/ usamos -mod=vendor para forzar el uso
+# de dependencias vendorizadas.
+RUN if [ -d ./vendor ]; then \
+            CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -o fluxo-backend .; \
+        else \
+            CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o fluxo-backend .; \
+        fi
 
 # Imagen final
 FROM alpine:latest
