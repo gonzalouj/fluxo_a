@@ -4,7 +4,7 @@ services:
   # ==========================================
   database:
     image: ${DB_IMAGE}
-    container_name: ${GROUP}_${PROJECT}_db
+    container_name: fluxo_db
     restart: unless-stopped
     env_file:
       - .env
@@ -29,9 +29,7 @@ services:
         max-file: "3"
         tag: "{{.Name}}"
     labels:
-      - "org.uach.group=${GROUP}"
-      - "org.uach.project=${PROJECT}"
-      - "org.uach.service=database"
+      - "org.fluxo.service=database"
       - "logging=promtail"
 
   # ==========================================
@@ -41,7 +39,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ${GROUP}_${PROJECT}_backend
+    container_name: fluxo_backend
     restart: unless-stopped
     env_file:
       - .env
@@ -77,9 +75,7 @@ services:
         max-file: "3"
         tag: "{{.Name}}"
     labels:
-      - "org.uach.group=${GROUP}"
-      - "org.uach.project=${PROJECT}"
-      - "org.uach.service=backend"
+      - "org.fluxo.service=backend"
       - "logging=promtail"
 
   # ==========================================
@@ -88,7 +84,7 @@ services:
   frontend:
     build:
       context: ./Frontend
-    container_name: ${GROUP}_${PROJECT}_frontend
+    container_name: fluxo_frontend
     restart: unless-stopped
     env_file:
       - .env
@@ -111,14 +107,12 @@ services:
         max-file: "3"
         tag: "{{.Name}}"
     labels:
-      - "org.uach.group=${GROUP}"
-      - "org.uach.project=${PROJECT}"
-      - "org.uach.service=frontend"
+      - "org.fluxo.service=frontend"
       - "logging=promtail"
 
 volumes:
   db_data:
-    name: ${GROUP}_${PROJECT}_db_data
+    name: fluxo_db_data
 
 networks:
   red_taller_software:
