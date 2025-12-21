@@ -759,7 +759,7 @@ async function guardarCambiosPedido() {
     // PASO 3: Actualizar el pedido
     const res = await fetch(`${API_BASE}/pedidos/${currentPedidoId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(pedidoData),
     });
 
@@ -1043,13 +1043,21 @@ async function agregarNuevoComentario(e) {
   boton.textContent = "Enviando...";
 
   try {
-    // Asumimos id_usuario = 1 (Admin/sistema) como en otros lugares
+    // Obtener el usuario autenticado
+    const usuario = getUsuarioActual();
+    if (!usuario || !usuario.id_usuario) {
+      throw new Error("Usuario no autenticado");
+    }
+
     const res = await fetch(
       `${API_BASE}/pedidos/${pedidoActual.id_pedido}/comentarios`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_usuario: 1, comentario: comentario }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          id_usuario: usuario.id_usuario,
+          comentario: comentario,
+        }),
       }
     );
 
