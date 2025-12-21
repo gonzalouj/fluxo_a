@@ -77,11 +77,22 @@ func CrearPedido(c *gin.Context) {
 	}
     // Si hay un comentario inicial, lo agregamos
 	if req.Comentarios != "" {
-		// Asumimos un id_usuario = 1 por ahora, esto debería venir del contexto de autenticación
-		_, err := tx.Exec(`
+		// Obtener id_usuario del header X-User-ID
+		userIDStr := c.GetHeader("X-User-ID")
+		if userIDStr == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuario no autenticado"})
+			return
+		}
+		userID, err := strconv.Atoi(userIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "ID de usuario inválido"})
+			return
+		}
+		
+		_, err = tx.Exec(`
             INSERT INTO comentarios (id_pedido, id_usuario, comentario)
-            VALUES ($1, 1, $2)`,
-			pedidoID, req.Comentarios)
+            VALUES ($1, $2, $3)`,
+			pedidoID, userID, req.Comentarios)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al agregar comentario inicial: " + err.Error()})
