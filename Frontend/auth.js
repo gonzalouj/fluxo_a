@@ -39,6 +39,21 @@ function cerrarSesion() {
   window.location.href = "/login.html";
 }
 
+// Obtener headers con autenticación para peticiones API
+function getAuthHeaders() {
+  const usuario = getUsuarioActual();
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  if (usuario) {
+    headers["X-User-ID"] = usuario.id_usuario.toString();
+    headers["X-User-Role"] = usuario.rol;
+  }
+
+  return headers;
+}
+
 /* ============================================
    CARGAR USUARIO DESDE BACKEND
 ============================================ */
