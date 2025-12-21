@@ -1163,13 +1163,9 @@
             };
 
             // PASO 3: Crear el pedido
-            const authHeaders = getAuthHeaders();
-            console.log("🔐 Headers de autenticación:", authHeaders);
-            console.log("👤 Usuario actual:", getUsuarioActual());
-
             const response = await fetch(`${API_BASE}/pedidos`, {
               method: "POST",
-              headers: authHeaders,
+              headers: getAuthHeaders(),
               body: JSON.stringify(pedidoData),
             });
 
