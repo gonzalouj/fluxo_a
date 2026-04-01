@@ -47,7 +47,7 @@ WORKDIR /root/
 COPY --from=builder /app/fluxo-backend .
 
 # Copiar archivo de configuración si existe
-COPY --from=builder /app/.env* ./
+# COPY --from=builder /app/.env* ./
 
 # Crear script de espera para PostgreSQL
 RUN echo '#!/bin/sh' > /wait-for-postgres.sh && \

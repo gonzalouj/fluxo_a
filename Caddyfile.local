@@ -1,0 +1,4 @@
+:80 {
+    reverse_proxy /api/* fluxo-backend:4006
+    reverse_proxy * fluxo-frontend:3006
+}
