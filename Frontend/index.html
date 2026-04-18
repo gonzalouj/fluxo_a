@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -101,12 +101,14 @@
 
       /* Sombras empresariales */
       .shadow-enterprise {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        box-shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0.1),
           0 2px 4px -1px rgba(0, 0, 0, 0.06);
       }
 
       .shadow-subtle {
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+        box-shadow:
+          0 1px 3px 0 rgba(0, 0, 0, 0.1),
           0 1px 2px 0 rgba(0, 0, 0, 0.06);
       }
 
@@ -779,7 +781,7 @@
                   d="M5 13l4 4L19 7"
                 ></path>
               </svg>
-              <span id="submitText">Crear Pedido</span>
+              <span id="submitText">Nuevo Pedido</span>
               <div
                 id="submitSpinner"
                 class="hidden animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"
@@ -828,10 +830,10 @@
                     <input type="number" id="cantidad-${
                       p.id_producto
                     }" value="${
-              p.cantidad
-            }" min="1" onchange="updateQuantity('${
-              p.id_producto
-            }', this.value)" class="w-20 text-center bg-white border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                      p.cantidad
+                    }" min="1" onchange="updateQuantity('${
+                      p.id_producto
+                    }', this.value)" class="w-20 text-center bg-white border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
           </div>
                 <button type="button" onclick="removeProduct('${
                   p.id_producto
@@ -839,7 +841,7 @@
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
           </button>
         </div>
-        `
+        `,
           )
           .join("");
       }
@@ -861,7 +863,7 @@
                 <p class="font-medium text-gray-800">${p.nombre}</p>
                 <p class="text-sm text-gray-500">${p.codigo || "Sin código"}</p>
             </div>
-        `
+        `,
           )
           .join("");
       }
@@ -885,7 +887,7 @@
         // Convertir a string para comparación consistente (IDs numéricos y temporales)
         const idStr = String(productId);
         selectedProducts = selectedProducts.filter(
-          (p) => String(p.id_producto) !== idStr
+          (p) => String(p.id_producto) !== idStr,
         );
         renderSelectedProducts();
       }
@@ -896,13 +898,13 @@
           const input = document.getElementById(`cantidad-${productId}`);
           if (input) input.value = 1;
           const product = selectedProducts.find(
-            (p) => p.id_producto === productId
+            (p) => p.id_producto === productId,
           );
           if (product) product.cantidad = 1;
           return;
         }
         const product = selectedProducts.find(
-          (p) => p.id_producto === productId
+          (p) => p.id_producto === productId,
         );
         if (product) {
           product.cantidad = quantity;
@@ -915,7 +917,7 @@
           const response = await fetch(`${API_BASE}/productos`);
           if (!response.ok)
             throw new Error(
-              "No se pudieron cargar los productos. Por favor, verifica tu conexión."
+              "No se pudieron cargar los productos. Por favor, verifica tu conexión.",
             );
           const data = await response.json();
           allProducts = data.productos || [];
@@ -930,7 +932,7 @@
           const response = await fetch(`${API_BASE}/categorias`);
           if (!response.ok)
             throw new Error(
-              "No se pudieron cargar las categorías desde el servidor"
+              "No se pudieron cargar las categorías desde el servidor",
             );
           const data = await response.json();
           allCategories = data.categorias || [];
@@ -979,7 +981,7 @@
           showToast(
             "📝 El nombre de la categoría es obligatorio",
             "error",
-            3000
+            3000,
           );
           input.focus();
           return;
@@ -1016,7 +1018,7 @@
           showToast(
             `Categoría "${nombreCategoria}" creada exitosamente`,
             "success",
-            3000
+            3000,
           );
 
           // Recargar categorías
@@ -1051,7 +1053,7 @@
           if (selectedProducts.length === 0) {
             showToast(
               "📦 Debes añadir al menos un producto al pedido.",
-              "error"
+              "error",
             );
             return;
           }
@@ -1060,7 +1062,7 @@
           if (!cliente || !fecha) {
             showToast(
               "📝 El nombre del cliente y la fecha de entrega son obligatorios.",
-              "error"
+              "error",
             );
             return;
           }
@@ -1113,7 +1115,7 @@
                     const errorData = await response.json();
                     throw new Error(
                       errorData.error ||
-                        `Error al crear producto temporal "${productoTemp.nombre}"`
+                        `Error al crear producto temporal "${productoTemp.nombre}"`,
                     );
                   }
 
@@ -1125,7 +1127,7 @@
                   });
                 } catch (error) {
                   throw new Error(
-                    `Error al crear producto temporal: ${error.message}`
+                    `Error al crear producto temporal: ${error.message}`,
                   );
                 }
               }
@@ -1138,7 +1140,7 @@
               // Si es temporal, usar el ID real creado
               if (p.es_temporal_pendiente) {
                 const tempCreado = productosTemporalesCreados.find(
-                  (t) => t.tempId === p.id_producto
+                  (t) => t.tempId === p.id_producto,
                 );
                 return {
                   id_producto: tempCreado.realId,
@@ -1206,7 +1208,7 @@
                 } catch (error) {
                   console.warn(
                     `No se pudo actualizar producto temporal ${tempProd.realId}:`,
-                    error
+                    error,
                   );
                   // No bloqueamos el flujo si falla esta actualización
                 }
@@ -1255,7 +1257,7 @@
           const filtered = allProducts.filter(
             (p) =>
               p.nombre.toLowerCase().includes(query) ||
-              (p.codigo && p.codigo.toLowerCase().includes(query))
+              (p.codigo && p.codigo.toLowerCase().includes(query)),
           );
           renderSearchResults(filtered);
         });
@@ -1382,7 +1384,7 @@
 
         // Obtener el tipo de producto (permanente o temporal)
         const tipoProducto = document.querySelector(
-          'input[name="tipo-agregado"]:checked'
+          'input[name="tipo-agregado"]:checked',
         ).value;
         const esTemporal = tipoProducto === "temporal";
 
@@ -1418,7 +1420,7 @@
           moneda: document.getElementById("prod-moneda").value,
           incluye_iva: document.getElementById("prod-incluye-iva").checked,
           requiere_presupuesto: document.getElementById(
-            "prod-requiere-presupuesto"
+            "prod-requiere-presupuesto",
           ).checked,
           unidad_venta:
             document.getElementById("prod-unidad").value.trim() || "unidad",
@@ -1464,7 +1466,7 @@
             showToast(
               "Producto temporal agregado. Se guardará al crear el pedido.",
               "success",
-              4000
+              4000,
             );
 
             saveBtn.disabled = false;
@@ -1522,7 +1524,7 @@
             showToast(
               "Producto agregado exitosamente al catálogo y al pedido",
               "success",
-              5000
+              5000,
             );
           }
 
@@ -1536,14 +1538,14 @@
           if (result.producto_id) {
             // Buscar el producto recién creado en la lista actualizada
             const nuevoProducto = allProducts.find(
-              (p) => p.id_producto === result.producto_id
+              (p) => p.id_producto === result.producto_id,
             );
 
             if (nuevoProducto) {
               // Verificar que no esté ya en la lista (por si acaso)
               if (
                 !selectedProducts.some(
-                  (p) => p.id_producto === nuevoProducto.id_producto
+                  (p) => p.id_producto === nuevoProducto.id_producto,
                 )
               ) {
                 selectedProducts.push({ ...nuevoProducto, cantidad: 1 });

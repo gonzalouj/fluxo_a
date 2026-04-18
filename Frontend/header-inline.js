@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Configuración por página
   const pageConfigs = {
     "index.html": {
-      title: "Crear Pedido",
+      title: "Nuevo Pedido",
       actions: [], // Sin acciones extra
       extra: null, // Sin contenido extra
     },

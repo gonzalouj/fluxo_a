@@ -161,9 +161,8 @@ function abrirModal(pedidoId) {
   } • Creado el ${formatShortDate(fechaCreacionStr)}`;
 
   // ✅ Usar color del estado para el indicador
-  document.getElementById(
-    "modal-status-indicator"
-  ).className = `w-5 h-5 rounded-full flex-shrink-0 ${config.bg}`;
+  document.getElementById("modal-status-indicator").className =
+    `w-5 h-5 rounded-full flex-shrink-0 ${config.bg}`;
 
   // ✅ Usar colores del badge para el estado
   const badgeEl = document.getElementById("modal-estado-badge");
@@ -191,7 +190,7 @@ function abrirModal(pedidoId) {
     telefonoContainer.style.display = "none";
   }
   document.getElementById("modal-fecha-entrega").textContent = formatDate(
-    pedido.fecha_entrega
+    pedido.fecha_entrega,
   );
 
   const productosEl = document.getElementById("modal-productos");
@@ -209,8 +208,8 @@ function abrirModal(pedidoId) {
             <div class="text-xs text-gray-500 mt-1">${
               prod.cantidad || 0
             } unidad${prod.cantidad !== 1 ? "es" : ""} • $${formatNumber(
-          prod.precio_unitario_congelado || 0
-        )}</div>
+              prod.precio_unitario_congelado || 0,
+            )}</div>
           </div>
           <div class="text-blue-600">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +225,7 @@ function abrirModal(pedidoId) {
 
   // Renderizar Etiquetas
   const etiquetasContainer = document.getElementById(
-    "modal-etiquetas-container"
+    "modal-etiquetas-container",
   );
   const etiquetasEl = document.getElementById("modal-etiquetas");
   const etiquetasStr = pedido.detalles_pedido || ""; // Ahora 'detalles_pedido' solo contiene etiquetas
@@ -240,7 +239,7 @@ function abrirModal(pedidoId) {
     etiquetasEl.innerHTML = etiquetas
       .map(
         (tag) =>
-          `<span class="inline-block bg-purple-200 text-purple-800 text-xs font-semibold px-2.5 py-1 rounded-full">${tag}</span>`
+          `<span class="inline-block bg-purple-200 text-purple-800 text-xs font-semibold px-2.5 py-1 rounded-full">${tag}</span>`,
       )
       .join("");
   } else {
@@ -362,7 +361,7 @@ function poblarYAbrirModalEdicion() {
   edicionSelectedProducts = (pedidoActual.productos || []).map((p) => {
     // Hacemos una búsqueda en la lista completa de productos para obtener todos los detalles
     const fullProduct = allProducts.find(
-      (ap) => ap.id_producto === p.id_producto
+      (ap) => ap.id_producto === p.id_producto,
     );
     return {
       id_producto: p.id_producto,
@@ -395,7 +394,7 @@ function poblarYAbrirModalEdicion() {
     console.log("✅ Botón de agregar producto configurado correctamente");
   } else {
     console.error(
-      "❌ No se encontró el botón edicion-add-product-btn en el DOM"
+      "❌ No se encontró el botón edicion-add-product-btn en el DOM",
     );
   }
 }
@@ -423,7 +422,7 @@ async function cargarProductosParaEdicion() {
     console.error("Error:", e);
     mostrarNotificacion(
       "No se pudieron cargar los productos para la edición",
-      "error"
+      "error",
     );
   }
 }
@@ -451,7 +450,7 @@ function renderEdicionSelectedProducts() {
                 }
               </p>
               <p class="text-xs text-gray-500">${formatCLP(
-                p.precio_unitario || 0
+                p.precio_unitario || 0,
               )}</p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
@@ -459,8 +458,8 @@ function renderEdicionSelectedProducts() {
               <input type="number" value="${
                 p.cantidad
               }" min="1" onchange="updateEdicionQuantity('${
-          p.id_producto
-        }', this.value)" class="w-16 p-1 border border-gray-300 rounded text-center">
+                p.id_producto
+              }', this.value)" class="w-16 p-1 border border-gray-300 rounded text-center">
             </div>
             <button type="button" onclick="removeEdicionProduct('${
               p.id_producto
@@ -469,7 +468,7 @@ function renderEdicionSelectedProducts() {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
             </button>
-        </div>`
+        </div>`,
       )
       .join("");
   }
@@ -488,8 +487,8 @@ function renderEdicionSearchResults(results) {
               })"><p class="font-semibold text-sm">${
                 p.nombre
               }</p><p class="text-xs text-gray-500">${p.codigo} - ${formatCLP(
-                p.precio_unitario
-              )}</p></div>`
+                p.precio_unitario,
+              )}</p></div>`,
           )
           .join("");
   container.classList.remove("hidden");
@@ -514,10 +513,10 @@ function removeEdicionProduct(productId) {
     "🗑️ Eliminando producto con ID:",
     productId,
     "Tipo:",
-    typeof productId
+    typeof productId,
   );
   edicionSelectedProducts = edicionSelectedProducts.filter(
-    (p) => String(p.id_producto) !== String(productId)
+    (p) => String(p.id_producto) !== String(productId),
   );
   renderEdicionSelectedProducts();
 }
@@ -533,10 +532,10 @@ function updateEdicionQuantity(productId, newQuantity) {
     "📝 Actualizando cantidad para producto:",
     productId,
     "Nueva cantidad:",
-    quantity
+    quantity,
   );
   const product = edicionSelectedProducts.find(
-    (p) => String(p.id_producto) === String(productId)
+    (p) => String(p.id_producto) === String(productId),
   );
   if (product) {
     product.cantidad = quantity;
@@ -556,7 +555,7 @@ function inicializarListenersEdicion() {
   const toggleBtn = document.getElementById("edicion-toggle-product-list-btn");
   const fechaInput = document.querySelector("#form-edicion [name='fecha']");
   const telefonoInput = document.querySelector(
-    "#form-edicion [name='telefono']"
+    "#form-edicion [name='telefono']",
   );
 
   searchInput.addEventListener("input", (e) => {
@@ -568,7 +567,7 @@ function inicializarListenersEdicion() {
     const results = allProducts.filter(
       (p) =>
         (p.nombre && p.nombre.toLowerCase().includes(searchTerm)) ||
-        (p.codigo && p.codigo.toLowerCase().includes(searchTerm))
+        (p.codigo && p.codigo.toLowerCase().includes(searchTerm)),
     );
     renderEdicionSearchResults(results);
   });
@@ -627,7 +626,7 @@ async function guardarCambiosPedido() {
   if (!cliente || !fecha) {
     mostrarNotificacion(
       "El nombre del cliente y la fecha son obligatorios.",
-      "error"
+      "error",
     );
     return;
   }
@@ -643,7 +642,7 @@ async function guardarCambiosPedido() {
   try {
     // PASO 1: Crear productos temporales pendientes en el backend
     const productosTemporalesPendientes = edicionSelectedProducts.filter(
-      (p) => p.es_temporal
+      (p) => p.es_temporal,
     );
     const productosTemporalesCreados = [];
 
@@ -694,7 +693,7 @@ async function guardarCambiosPedido() {
             const errorData = await response.json();
             throw new Error(
               errorData.error ||
-                `Error al crear producto temporal "${productoTemp.nombre}"`
+                `Error al crear producto temporal "${productoTemp.nombre}"`,
             );
           }
 
@@ -717,15 +716,15 @@ async function guardarCambiosPedido() {
       // Si es temporal, usar el ID real creado
       if (p.es_temporal) {
         const tempCreado = productosTemporalesCreados.find(
-          (t) => t.tempId === p.id_producto
+          (t) => t.tempId === p.id_producto,
         );
 
         if (!tempCreado) {
           console.error(
-            `No se encontró mapeo para producto temporal: ${p.id_producto}`
+            `No se encontró mapeo para producto temporal: ${p.id_producto}`,
           );
           throw new Error(
-            `Error interno: No se pudo mapear el producto temporal "${p.nombre}"`
+            `Error interno: No se pudo mapear el producto temporal "${p.nombre}"`,
           );
         }
 
@@ -753,7 +752,7 @@ async function guardarCambiosPedido() {
     console.log("📦 Datos del pedido a enviar:", pedidoData);
     console.log(
       "📦 Productos para pedido:",
-      JSON.stringify(productosParaPedido, null, 2)
+      JSON.stringify(productosParaPedido, null, 2),
     );
 
     // PASO 3: Actualizar el pedido
@@ -785,7 +784,7 @@ async function guardarCambiosPedido() {
         } catch (error) {
           console.warn(
             `No se pudo actualizar producto temporal ${tempProd.realId}:`,
-            error
+            error,
           );
         }
       }
@@ -794,7 +793,7 @@ async function guardarCambiosPedido() {
     await cargarPedidos();
 
     const updatedPedido = pedidosData.find(
-      (p) => p.id_pedido === currentPedidoId
+      (p) => p.id_pedido === currentPedidoId,
     );
 
     cerrarModalEdicion();
@@ -865,7 +864,7 @@ function renderizarComentarios(container, comentarios) {
             <p class="text-sm text-gray-700 whitespace-pre-wrap break-words">${
               c.comentario || "Sin comentario."
             }</p>
-          </div>`
+          </div>`,
       )
       .join("");
   } else {
@@ -896,9 +895,8 @@ function poblarYAbrirModal(pedidoId) {
   } • Creado el ${formatShortDate(fechaCreacionStr)}`;
 
   // ✅ Usar color del estado para el indicador
-  document.getElementById(
-    "modal-status-indicator"
-  ).className = `w-5 h-5 rounded-full flex-shrink-0 ${config.bg}`;
+  document.getElementById("modal-status-indicator").className =
+    `w-5 h-5 rounded-full flex-shrink-0 ${config.bg}`;
 
   // ✅ Usar colores del badge para el estado
   const badgeEl = document.getElementById("modal-estado-badge");
@@ -926,7 +924,7 @@ function poblarYAbrirModal(pedidoId) {
     telefonoContainer.style.display = "none";
   }
   document.getElementById("modal-fecha-entrega").textContent = formatDate(
-    pedido.fecha_entrega
+    pedido.fecha_entrega,
   );
 
   const productosEl = document.getElementById("modal-productos");
@@ -946,7 +944,7 @@ function poblarYAbrirModal(pedidoId) {
 
   // Renderizar Etiquetas
   const etiquetasContainer = document.getElementById(
-    "modal-etiquetas-container"
+    "modal-etiquetas-container",
   );
   const etiquetasEl = document.getElementById("modal-etiquetas");
   const etiquetasStr = pedido.detalles_pedido || ""; // Ahora 'detalles_pedido' solo contiene etiquetas
@@ -960,7 +958,7 @@ function poblarYAbrirModal(pedidoId) {
     etiquetasEl.innerHTML = etiquetas
       .map(
         (tag) =>
-          `<span class="inline-block bg-purple-200 text-purple-800 text-xs font-semibold px-2.5 py-1 rounded-full">${tag}</span>`
+          `<span class="inline-block bg-purple-200 text-purple-800 text-xs font-semibold px-2.5 py-1 rounded-full">${tag}</span>`,
       )
       .join("");
   } else {
@@ -1050,7 +1048,7 @@ async function agregarNuevoComentario(e) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_usuario: 1, comentario: comentario }),
-      }
+      },
     );
 
     if (!res.ok) {
@@ -1073,7 +1071,7 @@ async function agregarNuevoComentario(e) {
 
     // Volver a renderizar solo la sección de comentarios
     const comentariosContainer = document.getElementById(
-      "modal-comentarios-list"
+      "modal-comentarios-list",
     );
     renderizarComentarios(comentariosContainer, pedidoActual.comentarios);
 
@@ -1103,9 +1101,9 @@ function startEditComment(commentId) {
             <textarea class="w-full p-2 border rounded-md text-sm">${originalText}</textarea>
             <div class="flex justify-end gap-2 mt-2">
                 <button onclick="cancelEditComment(${commentId}, '${originalText.replace(
-    /'/g,
-    "\\'"
-  )}')" class="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
+                  /'/g,
+                  "\\'",
+                )}')" class="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300">Cancelar</button>
                 <button onclick="saveComment(${commentId})" class="text-xs px-2 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">Guardar</button>
             </div>
         </div>
@@ -1155,7 +1153,7 @@ async function saveComment(commentId) {
 
     // Sincronizar el dato en el objeto `pedidoActual`
     const commentIndex = pedidoActual.comentarios.findIndex(
-      (c) => c.id_comentario === commentId
+      (c) => c.id_comentario === commentId,
     );
     if (commentIndex > -1) {
       pedidoActual.comentarios[commentIndex].comentario = nuevoComentario;
@@ -1172,7 +1170,7 @@ function confirmDeleteComment(commentId) {
     "¿Eliminar Comentario?",
     "Esta acción no se puede deshacer. ¿Estás seguro de que quieres eliminar este comentario?",
     "bg-red-500 hover:bg-red-600",
-    () => deleteComment(commentId)
+    () => deleteComment(commentId),
   );
 }
 
@@ -1191,7 +1189,7 @@ async function deleteComment(commentId) {
 
     // Sincronizar el dato ANTES de modificar la UI
     pedidoActual.comentarios = pedidoActual.comentarios.filter(
-      (c) => c.id_comentario !== commentId
+      (c) => c.id_comentario !== commentId,
     );
     // Ya no se necesita sincronizar.
 
@@ -1245,7 +1243,7 @@ async function ejecutarCambioEstado(nuevoEstado) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado: nuevoEstado }),
-      }
+      },
     );
     if (!res.ok) {
       const errorData = await res.json();
@@ -1264,13 +1262,13 @@ async function ejecutarCambioEstado(nuevoEstado) {
 
     mostrarNotificacion(
       mensajes[nuevoEstado] || "Estado actualizado exitosamente",
-      "success"
+      "success",
     );
   } catch (e) {
     console.error("Error:", e);
     mostrarNotificacion(
       e.message || "Error al actualizar el estado del pedido",
-      "error"
+      "error",
     );
   }
 }
@@ -1281,21 +1279,21 @@ function cambiarEstado(nuevoEstado) {
       "¿Marcar como Listo?",
       "¿Estás seguro de que quieres marcar este pedido como listo para entrega?",
       "bg-blue-500 hover:bg-blue-600",
-      () => ejecutarCambioEstado("Listo")
+      () => ejecutarCambioEstado("Listo"),
     );
   } else if (nuevoEstado === "Entregado") {
     abrirConfirmacion(
       "¿Marcar como Entregado?",
       "¿Confirmas que este pedido ha sido entregado al cliente?",
       "bg-green-500 hover:bg-green-600",
-      () => ejecutarCambioEstado("Entregado")
+      () => ejecutarCambioEstado("Entregado"),
     );
   } else if (nuevoEstado === "Cancelado") {
     abrirConfirmacion(
       "¿Cancelar Pedido?",
       "Esta acción no se puede deshacer. ¿Estás seguro de que quieres cancelar este pedido?",
       "bg-red-500 hover:bg-red-600",
-      () => ejecutarCambioEstado("Cancelado")
+      () => ejecutarCambioEstado("Cancelado"),
     );
   }
 }
@@ -1333,7 +1331,7 @@ function renderPedidoCard(pedido) {
                 prod.producto || "Producto sin nombre"
               }</span><span class="text-sm text-gray-600 ml-2">x${
                 prod.cantidad || 0
-              }</span></div>`
+              }</span></div>`,
           )
           .join("")}</div></div>`
       : `<div class="text-center py-2"><svg class="w-6 h-6 text-gray-300 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg><p class="text-gray-400 text-sm italic">Sin productos asociados</p></div>`;
@@ -1352,7 +1350,7 @@ function renderPedidoCard(pedido) {
       const etiquetasDisplay = etiquetas
         .map(
           (tag) =>
-            `<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">${tag}</span>`
+            `<span class="inline-block bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">${tag}</span>`,
         )
         .join(" ");
 
@@ -1412,7 +1410,7 @@ function renderPedidoCard(pedido) {
   return `<div class="pedido-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" onclick='abrirModal(${
     pedido.id_pedido
   })'><div class="flex items-center p-4 pb-3"><div class="w-4 h-4 rounded-full ${statusClass} mr-3 flex-shrink-0"></div><div class="flex-1 min-w-0"><h2 class="text-lg md:text-xl font-semibold text-gray-900 truncate">${nombreCliente}</h2></div><span class="text-xs px-2 py-1 rounded-full ${statusBadgeClasses} ml-2 flex-shrink-0">${capitalize(
-    estado
+    estado,
   )}</span></div><div class="px-4 pb-4"><div class="flex items-center justify-between text-sm text-gray-600 mb-3"><div class="flex items-center"><svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span>Entrega: ${fechaFormateada}</span></div><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></div>${productosHtml}${etiquetasHtml}${comentarioHtml}</div></div>`;
 }
 
@@ -1420,7 +1418,7 @@ function renderizarPedidos() {
   // Filtrar solo pedidos activos (Pendiente y Listo)
   // Los pedidos Entregados y Cancelados se muestran en la sección de Historial
   let pedidosActivos = pedidosData.filter(
-    (p) => p.estado === "Pendiente" || p.estado === "Listo"
+    (p) => p.estado === "Pendiente" || p.estado === "Listo",
   );
 
   // Aplicar filtro de búsqueda si hay texto
@@ -1440,12 +1438,11 @@ function renderizarPedidos() {
     if (textoBusqueda.trim() !== "") {
       emptyStateEl.querySelector("p.text-lg").textContent =
         "No se encontraron pedidos";
-      emptyStateEl.querySelector(
-        "p.text-sm"
-      ).textContent = `No hay resultados para "${textoBusqueda}"`;
+      emptyStateEl.querySelector("p.text-sm").textContent =
+        `No hay resultados para "${textoBusqueda}"`;
     } else {
       emptyStateEl.querySelector("p.text-lg").textContent =
-        "No hay pedidos activos";
+        "No hay pedidos activoss";
       emptyStateEl.querySelector("p.text-sm").textContent =
         "Los pedidos completados y cancelados se encuentran en el Historial";
     }
@@ -1483,7 +1480,7 @@ function filtrarPedidosPorTexto(pedidos, texto) {
 
     // 4. Buscar en productos (nombres)
     const matchProductos = pedido.productos?.some((producto) =>
-      producto.producto?.toLowerCase().includes(textoLower)
+      producto.producto?.toLowerCase().includes(textoLower),
     );
 
     // 5. Buscar por ID del pedido
@@ -1666,7 +1663,7 @@ function renderizarCalendario() {
     },
     eventContent: function (arg) {
       const pedido = pedidosData.find(
-        (p) => p.id_pedido === parseInt(arg.event.id)
+        (p) => p.id_pedido === parseInt(arg.event.id),
       );
       if (!pedido) return { html: arg.event.title };
 
@@ -1694,7 +1691,7 @@ function convertirPedidosAEventos() {
   // Filtrar solo pedidos activos (Pendiente y Listo) para el calendario
   // Los pedidos Entregados y Cancelados se muestran en la sección de Historial
   let pedidosActivos = pedidosData.filter(
-    (p) => p.estado === "Pendiente" || p.estado === "Listo"
+    (p) => p.estado === "Pendiente" || p.estado === "Listo",
   );
 
   // Aplicar filtro de búsqueda si hay texto
@@ -1739,7 +1736,7 @@ function mostrarPedidosDelDia(fecha, segmentos) {
   // Formatear la fecha - Ajustar para zona horaria local
   // FullCalendar devuelve la fecha en UTC, necesitamos ajustarla
   const fechaLocal = new Date(
-    fecha.getTime() + fecha.getTimezoneOffset() * 60000
+    fecha.getTime() + fecha.getTimezoneOffset() * 60000,
   );
   const fechaFormateada = fechaLocal.toLocaleDateString("es-ES", {
     weekday: "long",
@@ -1942,7 +1939,7 @@ function inicializarModalProducto() {
   const cancelProductBtn = document.getElementById("cancel-product");
   const productForm = document.getElementById("product-form");
   const toggleNuevaCategoriaBtn = document.getElementById(
-    "toggle-nueva-categoria"
+    "toggle-nueva-categoria",
   );
   const guardarCategoriaBtn = document.getElementById("guardar-categoria");
   const cancelarCategoriaBtn = document.getElementById("cancelar-categoria");
@@ -2027,7 +2024,7 @@ function limpiarFormularioProducto() {
   document.getElementById("nueva-categoria-input").value = "";
   // Restablecer el radio button a "permanente"
   document.querySelector(
-    'input[name="tipo-agregado"][value="permanente"]'
+    'input[name="tipo-agregado"][value="permanente"]',
   ).checked = true;
 }
 
@@ -2107,7 +2104,7 @@ async function guardarProducto(e) {
   }
 
   const tipoAgregado = document.querySelector(
-    'input[name="tipo-agregado"]:checked'
+    'input[name="tipo-agregado"]:checked',
   ).value;
 
   // Obtener y convertir id_categoria correctamente
@@ -2203,7 +2200,7 @@ async function guardarProducto(e) {
       cerrarProductModal();
       mostrarNotificacion(
         `✅ Producto temporal "${producto.nombre}" agregado al pedido`,
-        "success"
+        "success",
       );
     } else {
       // Guardar producto permanente en el catálogo
@@ -2296,7 +2293,7 @@ async function guardarProducto(e) {
       cerrarProductModal();
       mostrarNotificacion(
         `✅ Producto "${producto.nombre}" agregado al catálogo y al pedido exitosamente`,
-        "success"
+        "success",
       );
     }
   } catch (error) {
@@ -2327,7 +2324,7 @@ function inicializarPanelFiltros() {
   const estadoCheckboxes = document.querySelectorAll(".filtro-estado-checkbox");
   const fechaRadios = document.querySelectorAll(".filtro-fecha-radio");
   const fechaPersonalizadaInputs = document.getElementById(
-    "fecha-personalizada-inputs"
+    "fecha-personalizada-inputs",
   );
   const fechaDesde = document.getElementById("fecha-desde");
   const fechaHasta = document.getElementById("fecha-hasta");
@@ -2382,7 +2379,7 @@ function inicializarPanelFiltros() {
 
       // Obtener preset de fecha seleccionado
       const fechaSeleccionada = document.querySelector(
-        'input[name="fecha-preset"]:checked'
+        'input[name="fecha-preset"]:checked',
       );
       if (fechaSeleccionada) {
         filtrosActivos.fechaEntrega.tipo = fechaSeleccionada.value;
@@ -2424,7 +2421,7 @@ function inicializarPanelFiltros() {
 
       // Marcar "Todas las fechas" como seleccionado
       const todosFechaRadio = document.querySelector(
-        'input[name="fecha-preset"][value="todos"]'
+        'input[name="fecha-preset"][value="todos"]',
       );
       if (todosFechaRadio) {
         todosFechaRadio.checked = true;
@@ -2550,7 +2547,7 @@ function generarHTMLDetalleProducto(producto) {
 
     if (producto.precio_unitario) {
       html += `<div><span class="text-xs text-gray-500">Precio Unitario:</span><div class="font-semibold text-gray-900 text-lg">${formatNumber(
-        producto.precio_unitario
+        producto.precio_unitario,
       )} ${producto.moneda || "CLP"}</div></div>`;
       html += `<div><span class="text-xs text-gray-500">IVA:</span><div class="font-semibold text-gray-900">${
         producto.incluye_iva ? "Incluido" : "No incluido"

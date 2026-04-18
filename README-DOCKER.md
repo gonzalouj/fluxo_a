@@ -1,15 +1,17 @@
 # Fluxo - Sistema de Pedidos Dockerizado
 
 ## Requisitos
+
 - Docker
 - Docker Compose
 
 ## Instalación y Ejecución
 
 ### Opción 1: Docker Compose (Recomendado)
+
 ```bash
 # Clonar el repositorio
-git clone https://github.com/Neverknowsbesst/fluxo.git
+git clone https://github.com/gonzalouj/fluxo_a
 cd fluxo
 
 # Ejecutar con Docker Compose
@@ -20,6 +22,7 @@ docker-compose logs -f
 ```
 
 ### Opción 2: Construir manualmente
+
 ```bash
 # Construir backend
 docker build -t fluxo-backend ./backend
@@ -53,16 +56,19 @@ docker run -d --name fluxo-frontend \
 ```
 
 ## Acceso
+
 - **Aplicación**: http://localhost:3000
 - **API Backend**: http://localhost:8080
 - **Base de datos**: localhost:5432
 
 ## Estructura de Docker
+
 - **PostgreSQL**: Base de datos con inicialización automática usando `schema_unificado.sql`
 - **Backend**: API Go con Gin framework
 - **Frontend**: Archivos estáticos servidos por Caddy con proxy reverso
 
 ## Comandos útiles
+
 ```bash
 # Detener servicios
 docker-compose down
@@ -83,16 +89,19 @@ docker-compose down -v
 ```
 
 ## Variables de Entorno
+
 Las siguientes variables se configuran automáticamente en docker-compose.yml:
 
 ### Backend
+
 - `DB_HOST`: Host de la base de datos
-- `DB_PORT`: Puerto de la base de datos  
+- `DB_PORT`: Puerto de la base de datos
 - `DB_NAME`: Nombre de la base de datos
 - `DB_USER`: Usuario de PostgreSQL
 - `DB_PASSWORD`: Contraseña de PostgreSQL
 
 ### PostgreSQL
+
 - `POSTGRES_DB`: Nombre de la base de datos inicial
 - `POSTGRES_USER`: Usuario administrador
 - `POSTGRES_PASSWORD`: Contraseña del administrador

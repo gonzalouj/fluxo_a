@@ -1,0 +1,517 @@
+1. Módulo: Autenticación y Gestión de Usuarios
+HU1: Iniciar Sesión
+ID: HU01-001 | Título: Login exitoso con Google
+
+Tipo de Prueba: Funcional (Seguridad) | Prioridad: Alta
+
+Precondiciones: Usuario con email de Google registrado y activo en BD.
+
+Pasos a Ejecutar: 1. Entrar a la página ya sea local o en producción. 2. Clic "Iniciar con Google". 3. Seleccionar cuenta Google.
+
+Datos de Prueba: Cuenta: [Tu Email Google]
+
+Resultado Esperado: Redirección exitosa a index.html. No se solicita contraseña local.
+
+Resultado Obtenido: Resultado coincide con el esperado.
+
+Estado: Pasa (19/12/2025) | Responsable: Gonzalo
+
+Post-condiciones: Cerrar Sesión (Logout).
+
+ID: HU01-002 | Título: Bloqueo usuario inactivo
+
+Tipo de Prueba: Funcional (Seguridad) | Prioridad: Alta
+
+Precondiciones: Usuario existe en BD pero tiene campo activo = false.
+
+Pasos a Ejecutar: 1. Intentar Login con Google usando la cuenta desactivada.
+
+Datos de Prueba: Cuenta: [Email Desactivado]
+
+Resultado Esperado: El sistema impide el acceso.
+
+HU12: Agregar Usuario
+ID: HU12-001 | Título: Creación exitosa de usuario
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Precondiciones: Admin logueado. No existe el email "nuevo@fluxo.cl".
+
+Pasos a Ejecutar: 1. Clic "Nuevo Usuario". 2. Completar RUT, Nombre, Email, Rol. 3. Guardar.
+
+Datos de Prueba: Nombre: Usuario Test, Email: nuevo@fluxo.cl, Rol: Trabajador, RUT: 11.111.111-1
+
+Resultado Esperado: Usuario creado. Aparece en la tabla con estado "Activo" y Rol "Trabajador".
+
+Resultado Obtenido: Resultado coincide con el esperado.
+
+Estado: Pasa (19/12/2025) | Responsable: Gonzalo
+
+Post-condiciones: Eliminar usuario "nuevo@fluxo.cl".
+
+ID: HU12-002 | Título: Validación de unicidad (Email/RUT)
+
+Tipo de Prueba: Funcional (Negativo) | Prioridad: Media
+
+Precondiciones: Ya existe usuario con email "admin@empresa.com"
+
+Pasos a Ejecutar: 1. Clic "Nuevo Usuario". 2. Usar datos existentes.
+
+HU14: Editar Usuario
+ID: HU14-001 | Título: Modificar Rol de usuario
+
+Tipo de Prueba: Funcional (Integración) | Prioridad: Media
+
+Precondiciones: Usuario "Usuario Test" tiene rol "Trabajador".
+
+Pasos a Ejecutar: 1. Clic "Editar" en usuario Test. 2. Cambiar Rol a "Administrador". 3. Guardar.
+
+Resultado Esperado: En la grilla de usuarios, la columna Rol se actualiza a "Admin".
+
+Resultado Obtenido: Resultado coincide con el esperado.
+
+Estado: Pasa (19/12/2025) | Responsable: Gonzalo
+
+Post-condiciones: Revertir rol a "Trabajador".
+
+HU15: Desactivar Usuario
+ID: HU15-001 | Título: Revocar acceso (Desactivar)
+
+Tipo de Prueba: Funcional (Seguridad) | Prioridad: Alta
+
+Precondiciones: Usuario "Usuario Test" está Activo.
+
+Pasos a Ejecutar: 1. Clic "Editar". 2. Cambiar selector "Activo" a "Inactivo". 3. Guardar.
+
+Resultado Esperado: En la grilla, el estado cambia a "Inactivo" (Badge Rojo).
+
+Resultado Obtenido: Resultado coincide con el esperado.
+
+Estado: Pasa (19/12/2025) | Responsable: Gonzalo
+
+Post-condiciones: Volver a activar usuario.
+
+HU18: Eliminar Usuario
+ID: HU18-001 | Título: Eliminación permanente de cuenta
+
+Tipo de Prueba: Funcional (Destructiva) | Prioridad: Alta
+
+Precondiciones: Existe un usuario de prueba "trabajador@empresa.com".
+
+Pasos a Ejecutar: 1. Ir a Gestión de Usuarios. 2. Clic en "Eliminar" del usuario prueba. 3. Confirmar alerta "Eliminar permanentemente".
+
+Resultado Esperado: El usuario desaparece inmediatamente de la lista. Mensaje: "Usuario eliminado correctamente".
+
+Resultado Obtenido: Resultado coincide con el esperado.
+
+Estado: Pasa (19/12/2025) | Responsable: Gonzalo
+
+ID: HU18-002 | Título: Cancelar acción de eliminación
+
+Tipo de Prueba: Funcional (UX) | Prioridad: Baja
+
+Precondiciones: Existe un usuario de prueba.
+
+Pasos a Ejecutar: 1. Clic en "Eliminar". 2. En la ventana de confirmación, clic en "Cancelar".
+
+Resultado Esperado: La ventana se cierra y el usuario sigue visible en la lista sin cambios.
+
+Resultado Obtenido: Resultado coincide con el esperado.
+
+Estado: Pasa (19/12/2025) | Responsable: Gonzalo
+
+2. Módulo: Gestión y Flujo de Pedidos
+HU2: Crear Pedido
+ID: HU2-001 | Título: Creación exitosa de pedido con datos obligatorios
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Precondiciones: La aplicación está ejecutándose y accesible desde el navegador.
+
+Pasos a Ejecutar: 1. Ir a la sección "Ingresar Pedido". 2. Rellenar campos obligatorios. 3. Guardar.
+
+Datos de Prueba: Nombre Producto: "Polín", Cantidad: 5, Cliente: "Cliente Ejemplo", Fecha: "30/09/2025"
+
+Resultado Esperado: 1. Mensaje de éxito. 2. Aparece visible en la "Vista General de Pedidos".
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+Post-condiciones: Eliminar pedido de la base de datos.
+
+ID: HU2-003 | Título: Verificación de campo opcional 'correo electrónico'
+
+Tipo de Prueba: Funcional (Regresión) | Prioridad: Media
+
+Precondiciones: Aplicación accesible.
+
+Pasos a Ejecutar: 1. Rellenar campos obligatorios. 2. Dejar "Correo electrónico" vacío. 3. Guardar.
+
+Resultado Esperado: El pedido se guarda exitosamente sin requerir el correo, confirmando que es opcional.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+ID: HU2-004 | Título: Agregar etiquetas personalizadas a un nuevo pedido
+
+Tipo de Prueba: Funcional (UAT) | Prioridad: Media
+
+Precondiciones: Aplicación accesible.
+
+Pasos a Ejecutar: 1. Navegar a "Ingresar Pedido". 2. Rellenar campos. 3. Agregar etiqueta. 4. Guardar. 5. Ver detalles.
+
+Datos de Prueba: Etiqueta: "Urgente"
+
+Resultado Esperado: La etiqueta "Urgente" se muestra correctamente en los detalles del pedido.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+HU4: Vista General
+ID: HU4-001 | Título: Verificar visualización de pedidos existentes
+
+Tipo de Prueba: Funcional (Humo) | Prioridad: Alta
+
+Precondiciones: Existen al menos 3 pedidos en la BD con diferentes estados (Pendiente, Listo, Cancelado).
+
+Pasos a Ejecutar: 1. Navegar a "Vista General de Pedidos".
+
+Resultado Esperado: Se muestra listado con los 3 pedidos. Cada uno muestra nombre de cliente y fecha.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+Post-condiciones: Eliminar pedidos de prueba.
+
+ID: HU4-002 | Título: Verificar que los pedidos pendientes aparecen primero
+
+Tipo de Prueba: Funcional (Regresión) | Prioridad: Alta
+
+Precondiciones: Múltiples pedidos en BD, al menos uno "Pendiente".
+
+Resultado Esperado: Pedidos "Pendientes" al inicio de la lista, sin importar fecha de creación.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+ID: HU4-003 | Título: Verificar código de colores para los estados
+
+Tipo de Prueba: Funcional (UAT) | Prioridad: Alta
+
+Precondiciones: 2 pedidos en BD: uno "Listo" y uno "Pendiente".
+
+Resultado Esperado: "Listo" tiene indicador azul, "Pendiente" amarillo.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+HU5: Detalle de Pedido
+ID: HU5-001 | Título: Visualización correcta de todos los datos del pedido
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Precondiciones: Existe pedido completo (cliente, producto, cantidad, fecha, comentarios, etiquetas).
+
+Pasos a Ejecutar: 1. Ir a "Vista General". 2. Clic en el pedido.
+
+Resultado Esperado: Muestra todos los datos y el estado claramente.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+ID: HU5-002 | Título: Visualización de un pedido sin datos opcionales
+
+Tipo de Prueba: Funcional (Regresión) | Prioridad: Media
+
+Precondiciones: Existe pedido solo con campos obligatorios.
+
+Resultado Esperado: Muestra datos básicos; ausencia de extras no genera errores visuales.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+HU6: Comentarios
+ID: HU6-001 | Título: Agregar comentario a un pedido
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Precondiciones: Pedido visible. Usuario es administrador.
+
+Pasos a Ejecutar: 1. Abrir detalle. 2. Ingresar texto. 3. Presionar 'Guardar comentario'.
+
+Datos de Prueba: "Revisar materiales antes de entregar."
+
+Resultado Esperado: El sistema guarda el comentario asociado mostrando usuario, fecha y hora.
+
+Estado: Pasa (14/11/2025) | Responsable: Diego Bilbao
+
+ID: HU6-002 | Título: Visualizar comentarios del pedido
+
+Tipo de Prueba: Funcional (Regresión) | Prioridad: Media
+
+Precondiciones: El pedido tiene al menos un comentario.
+
+Resultado Esperado: Se muestran en orden cronológico, con autor y fecha.
+
+Estado: Pasa (14/11/2025) | Responsable: Diego Bilbao
+
+ID: HU6-003 | Título: Validar comentario vacío
+
+Tipo de Prueba: Funcional (UAT) | Prioridad: Media
+
+Pasos a Ejecutar: 1. Dejar campo vacío. 2. Presionar guardar.
+
+Resultado Esperado: Mensaje de "Completa este campo".
+
+HU7: Cambiar Estado
+ID: HU7-001 | Título: Cambiar estado de "Pendiente" a "Listo"
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Pasos a Ejecutar: 1. Navegar al detalle. 2. Clic en "Marcar Listo".
+
+Resultado Esperado: El estado cambia a "Listo" en el detalle.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+ID: HU7-002 | Título: Verificar reflejo inmediato del cambio
+
+Tipo de Prueba: No Funcional (Rendimiento) | Prioridad: Alta
+
+Precondiciones: Dos ventanas abiertas: detalle y vista general.
+
+Pasos a Ejecutar: Cambiar estado en detalle y observar vista general.
+
+Resultado Esperado: Cambio inmediato (menos de 2 segundos) sin recargar página.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+HU8: Cancelar Pedido
+ID: HU8-001 | Título: Confirmar cancelación de pedido
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Pasos a Ejecutar: 1. Clic "Cancelar" del pedido. 2. Seleccionar "Confirmar".
+
+Resultado Esperado: Desaparece de Vista General y aparece en Historial como "Cancelado".
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+ID: HU8-002 | Título: Abortar cancelación de pedido
+
+Tipo de Prueba: Funcional (Regresión) | Prioridad: Media
+
+Pasos a Ejecutar: 1. Clic "Cancelar". 2. Seleccionar "Cancelar" en el modal.
+
+Resultado Esperado: El pedido permanece en Vista General.
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+HU13: Editar Pedido
+ID: HU13-001 | Título: Edición exitosa de la cantidad de un producto
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Precondiciones: Pedido con cantidad "5".
+
+Pasos a Ejecutar: 1. Detalle del pedido. 2. Clic "Editar". 3. Cambiar cantidad a "10". 4. Guardar.
+
+Resultado Esperado: Mensaje de éxito. Cantidad actualizada a 10.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+ID: HU13-002 | Título: Los campos se vuelven editables al presionar "Editar"
+
+Tipo de Prueba: Funcional (UAT) | Prioridad: Alta
+
+Resultado Esperado: Campos se convierten en textos o selectores editables.
+
+Estado: Pasa | Responsable: Gonzalo Urra
+
+HU17: Reactivar Pedido
+ID: HU17-001 | Título: Mostrar opción de reactivar en pedidos cancelados
+
+Tipo de Prueba: Funcional (UAT) | Prioridad: Alta
+
+Resultado Esperado: Solo pedidos cancelados muestran botón "Reactivar".
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+ID: HU17-002 | Título: Reactivar pedido cancelado
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Pasos a Ejecutar: 1. Clic en "Reactivar". 2. Confirmar.
+
+Resultado Esperado: Desaparece de historial, vuelve a Vista General como "Pendiente".
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+ID: HU17-003 | Título: Ocultar reactivación en pedidos no cancelados
+
+Tipo de Prueba: Funcional (Regresión) | Prioridad: Media
+
+Resultado Esperado: Pedidos listos/entregados no muestran el botón.
+
+HU20: Calendario
+ID: HU20-001 | Título: Visualizar pedidos en calendario
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Pasos a Ejecutar: 1. Vista General. 2. Clic "Calendario".
+
+Resultado Esperado: Se despliega calendario mensual con pedidos pendientes.
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+ID: HU20-002 | Título: Abrir detalle desde calendario
+
+Tipo de Prueba: Funcional (Integración) | Prioridad: Alta
+
+Pasos a Ejecutar: Seleccionar pedido en el calendario.
+
+Resultado Esperado: Muestra el detalle completo del pedido seleccionado.
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+3. Módulo: Historial, Búsqueda y Reportes
+HU9: Historial
+ID: HU9-001 | Título: Visualizar historial de pedidos
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Resultado Esperado: Se muestran entradas de pedidos pendiente, cancelado, listo y entregado.
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+ID: HU9-002 | Título: Registrar pedido eliminado en historial
+
+Tipo de Prueba: Funcional (Regresión) | Prioridad: Media
+
+Pasos a Ejecutar: Eliminar pedido y navegar a historial.
+
+Resultado Esperado: El pedido aparece con estado "Eliminado".
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+HU10: Exportar Pedidos
+ID: HU10-001 | Título: Descarga de reporte Excel
+
+Tipo de Prueba: Funcional (Reportes) | Prioridad: Media
+
+Pasos a Ejecutar: 1. Historial. 2. Clic "Exportar Excel".
+
+Resultado Esperado: Se inicia descarga de archivo .xlsx.
+
+Estado: Pasa | Responsable: Gonzalo
+
+ID: HU10-002 | Título: Verificar contenido del reporte
+
+Tipo de Prueba: Funcional (Datos) | Prioridad: Media
+
+Pasos a Ejecutar: Abrir archivo y comparar con vista en pantalla.
+
+Resultado Esperado: Columnas coinciden (Nombre, Cantidad, Producto, Fecha, Estado).
+
+Estado: Pasa | Responsable: Gonzalo
+
+HU11: Filtros
+ID: HU11-001 | Título: Buscar pedidos por producto
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Datos de Prueba: Ingresar "Silla, mesa, banca"
+
+Resultado Esperado: Solo se muestran entradas del artículo buscado.
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+ID: HU11-002 | Título: Filtrar pedidos por rango de fechas
+
+Tipo de Prueba: Funcional (UAT) | Prioridad: Alta
+
+Datos de Prueba: Rango 09-11-2025 al 15-11-2025.
+
+Resultado Esperado: Muestra solo pedidos dentro del rango.
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+ID: HU11-003 | Título: Filtrar pedidos por cliente y estado
+
+Tipo de Prueba: Funcional (Regresión) | Prioridad: Media
+
+Datos de Prueba: Cliente "Juan Perez", estado "Cancelado".
+
+Resultado Esperado: Se excluye el resto de resultados que no coincidan.
+
+Estado: Pasa | Responsable: Diego Bilbao
+
+ID: HU11-004 | Título: Mostrar sin resultados al aplicar filtros vacíos
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Baja
+
+Pasos a Ejecutar: Aplicar filtros sin llenar campos.
+
+4. Módulo: Catálogo de Productos y Sistema
+HU21: Catálogo
+ID: HU21-001 | Título: Crear y visualizar producto nuevo
+
+Tipo de Prueba: Funcional (Sanidad) | Prioridad: Alta
+
+Precondiciones: Admin logueado.
+
+Pasos a Ejecutar: 1. Ir a "Catálogo". 2. Agregar Producto. 3. Llenar formulario. 4. Guardar.
+
+Datos de Prueba: Nombre: "Silla Test", Precio: 15000, Stock: 10
+
+Resultado Esperado: Modal cierra, mensaje "Producto creado exitosamente" y listado en grilla.
+
+Estado: Pasa (19/12/2025) | Responsable: Gonzalo
+
+Post-condiciones: Eliminar producto creado.
+
+ID: HU21-002 | Título: Validar duplicidad de nombre
+
+Tipo de Prueba: Funcional (Regresión) | Prioridad: Media
+
+Precondiciones: Existe producto activo "Silla Test".
+
+Pasos a Ejecutar: Ingresar nombre duplicado e intentar guardar.
+
+Resultado Esperado: Sistema impide guardar. Alerta: "Ya existe un producto permanente con el nombre 'Silla Test'".
+
+Estado: Pasa | Responsable: Gonzalo
+
+ID: HU21-003 | Título: Bloqueo de eliminación por integridad
+
+Tipo de Prueba: Funcional (Integración)
+
+HU16: Notificaciones
+ID: HU16-001 | Título: Notificación Push al crear pedido
+
+Tipo de Prueba: Funcional (E2E) | Prioridad: Media
+
+Pasos a Ejecutar: Admin crea pedido, observar pantalla del trabajador.
+
+Resultado Esperado: Notificación emergente: "Nuevo Pedido...".
+
+Estado: Pasa | Responsable: Gonzalo
+
+ID: HU16-002 | Título: Suscripción a notificaciones
+
+Tipo de Prueba: Funcional (Config) | Prioridad: Baja
+
+Pasos a Ejecutar: Iniciar sesión y aceptar prompt del navegador.
+
+Resultado Esperado: Navegador confirma permisos para Fluxo.
+
+Estado: Pasa | Responsable: Gonzalo
+
+Pruebas No Funcionales (Rendimiento)
+ID: PR-001 | Título: Listar todos los pedidos con 100,000 registros
+
+Tipo de Prueba: No Funcional (Rendimiento / Carga) | Prioridad: Alta
+
+Precondiciones: BD poblada con 100,000 pedidos. Script configurado.
+
+Pasos a Ejecutar: Ejecutar python pruebas_rendimiento.py y observar tiempos.
+
+Resultado Esperado: Listar pedidos: < 500ms, Filtros: < 100ms. Sistema estable.
+
+Resultado Obtenido: Listar todos: 206.73ms, Filtro pendientes: 50.17ms. Sin errores.
+
+Estado: Pasa | Responsable: Matias Rivera
+
+Post-condiciones: Ejecutar script para despoblar base de datos.

@@ -1,0 +1,34 @@
+﻿Nombre del proyecto: FLUXO
+Integrantes: Daniel Matamala, Diego Bilbao, Gonzalo.
+
+
+1. Requerimientos y especificaciones (basado en HU)
+1. Requerimiento: El sistema debe visualizar pedidos en un cronograma mensual.
+* Especificación: La vista de calendario debe agrupar pedidos excedentes bajo un botón "+X" si superan los 3 registros por día (HU20).
+2. Requerimiento: El sistema debe permitir la gestión de comentarios en los pedidos.
+* Especificación: Cada comentario debe persistir el ID del usuario y la marca de tiempo (timestamp) de creación (HU6).
+3. Requerimiento: El sistema debe permitir la edición de pedidos existentes.
+* Especificación: Al guardar una edición, el sistema debe disparar un evento de notificación a los demás usuarios conectados (HU13).
+4. Requerimiento: El sistema debe ofrecer un historial de registros.
+* Especificación: El historial debe permitir la combinación de filtros de rango de fechas y estado de pedido simultáneamente (HU11).
+5. Requerimiento: El sistema debe gestionar el catálogo de productos de madera y muebles.
+* Especificación: La base de datos debe permitir almacenar dimensiones (largo, ancho, espesor) como atributos opcionales para piezas de madera orgánica.
+6. Requerimiento: El sistema debe validar la disponibilidad de stock antes de confirmar un pedido.
+* Especificación: El backend en Go debe verificar que la cantidad solicitada sea menor o igual al stock disponible en la tabla productos antes de insertarla en pedidos.
+2. Requisitos funcionales y no funcionales
+Requisitos Funcionales (RF)
+* RF1: El sistema debe permitir cambiar el estado de un pedido a "Listo", "Cancelado" o "Pendiente".
+* RF2: El sistema debe permitir la reactivación de pedidos cancelados desde el historial hacia la lista activa.
+* RF3: El sistema debe generar un código único de seguimiento para cada pedido ingresado.
+* RF4: El sistema debe permitir la exportación del historial de pedidos a formato CSV o PDF para reportes de la empresa de madera.
+* RF5: Al cambiar un pedido a estado "Listo" (HU7), el sistema debe enviar automáticamente una alerta visual en la interfaz del Administrador.
+* RF6: El sistema debe registrar qué usuario realizó la última modificación en un pedido dentro de la vista de detalles.
+Requisitos No Funcionales (RNF)
+* RNF1 (Seguridad): El sistema debe restringir las funciones de "Eliminar" y "Reactivar" únicamente a usuarios con rol de Administrador.
+* RNF2 (Usabilidad): La interfaz debe utilizar códigos de colores (Verde/Rojo/Amarillo) para facilitar la lectura rápida del estado de producción.
+* RNF3 (Disponibilidad): El backend en Go debe ser capaz de manejar al menos 50 solicitudes concurrentes sin degradación del tiempo de respuesta.
+* RNF4 (Portabilidad): El sistema debe ser desplegable mediante contenedores Docker para asegurar su funcionamiento en entornos de desarrollo y producción.
+
+
+3. ¿Existe algún modelo arquitectónico?
+Si hay, esto a partir de los diagramas, se puede observar que sigue una arquitectura cliente-servidor en capas. El usuario interactúa con el frontend, este se comunica con el backend mediante una API, y el backend se encarga de procesar la información y acceder a la base de datos. Esta separación permite que cada parte del sistema tenga una función clara, lo que facilita su organización y mantenimiento.
