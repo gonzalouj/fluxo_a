@@ -1,212 +1,211 @@
-# Fluxo – Manual DevOps
+# Fluxo - Guia Unificada de Desarrollo Local
 
-Version: v0.8
+Este documento es la referencia oficial para trabajar en la rama `main`.
+El flujo local es Docker-only: no se ejecuta backend ni frontend en modo standalone.
 
-## Modelo de Ramas
+## 1. Que es Fluxo
 
-- `main`: rama de desarrollo local (pruebas, ajustes y trabajo diario).
-- `production`: rama de despliegue (solo cambios validados para entorno productivo).
+Fluxo es una aplicacion de gestion de pedidos con:
 
-Este documento describe cómo construir, desplegar y operar el sistema Fluxo en entornos de producción y desarrollo.
-
-## 1. Visión General
-
-Fluxo es una aplicación de gestión de pedidos compuesta por:
-
-- Frontend estático (HTML/CSS/JS) servido por un servidor HTTP simple (Python) dentro de un contenedor.
-- Backend en Go (framework Gin) que expone una API REST.
+- Frontend web estatico (HTML/CSS/JS).
+- Backend en Go con API REST (Gin).
 - Base de datos PostgreSQL.
-- Orquestación con Docker Compose.
+- Proxy local con Caddy para enrutar `"/api/*"` al backend.
 
-El entorno de la universidad expone solo el frontend a internet y enruta las peticiones `/api/*` al backend mediante el proxy inverso del servidor (Caddy externo al stack). La base de datos no se expone públicamente.
+## 2. Modelo de ramas
 
-## 2. Arquitectura y Puertos
+- `main`: desarrollo local, pruebas y ajustes diarios.
+- `production`: despliegue productivo (solo cambios validados).
 
-```
-Internet -> Proxy Universidad (Caddy) -> Host Docker
-																		 |
-																		 +-> Frontend (externo 3006 -> contenedor 3006)
-																		 +-> Backend  (externo 4006 -> contenedor 8080)
-																		 +-> PostgreSQL (externo 5006 -> contenedor 5432)
-```
+## 3. Arquitectura local actual
 
-Tabla de puertos:
-
-| Servicio   | Puerto externo | Puerto contenedor | Descripción                                  |
-| ---------- | -------------- | ----------------- | -------------------------------------------- |
-| Frontend   | 3006           | 3006              | Servidor HTTP simple (solo frontend)         |
-| Backend    | 4006           | 8080              | API REST Go/Gin (acceso interno / por proxy) |
-| PostgreSQL | 5006           | 5432              | Base de datos (acceso restringido)           |
-
-## 3. Requisitos Generales
-
-Software recomendado (versiones de referencia):
-
-- Docker y Docker Compose
-- Git
-- Go 1.20+ (para desarrollo del backend)
-- Python 3.x (opcional para servir el frontend en local)
-- PostgreSQL 15.x (local o en contenedor)
-
-Notas:
-
-- En producción se recomienda usar exclusivamente Docker Compose para estandarizar el entorno.
-- En desarrollo, puedes optar por servicios locales o también contenedores.
-
-## 4. Despliegue con Docker
-
-1. Obtener el código en el servidor (una de las opciones):
-
-```bash
-git clone -b production https://github.com/gonzalouj/fluxo_a.git
-cd fluxo_a
+```text
+Navegador -> Proxy Caddy (localhost:80) -> Frontend (3006)
+																	 |
+																	 +-> Backend API (4006)
+																					 |
+																					 +-> PostgreSQL (5006 externo / 5432 interno)
 ```
 
-2. Construir e iniciar servicios:
+Puertos de referencia en local:
 
-```bash
-docker-compose up -d --build
-```
+| Servicio      | Host | Contenedor | Notas                                 |
+| ------------- | ---- | ---------- | ------------------------------------- |
+| Proxy (Caddy) | 80   | 80         | Entrada principal para frontend y API |
+| Frontend      | 3006 | 3006       | Acceso directo opcional               |
+| Backend       | 4006 | 4006       | Acceso directo opcional               |
+| PostgreSQL    | 5006 | 5432       | Conexion local a BD                   |
 
-3. Verificar estado y logs:
+## 4. Estructura del repositorio (main)
 
-```bash
-docker-compose ps
-docker-compose logs -f --tail=100
-```
+- `Frontend/`: interfaz web.
+- `backend/`: API, logica y acceso a datos.
+- `docker-compose.local.yml`: stack local oficial.
+- `Dockerfile.frontend`: imagen del frontend local.
+- `Caddyfile.local`: reglas del proxy local.
+- `schema_fluxo_inicial.sql`: schema + seed inicial de BD.
+- `.env.example`: plantilla de variables para entorno local.
 
-4. Verificación funcional básica:
+## 5. Requisitos
 
-```bash
-curl http://localhost:3006
-curl http://localhost:4006/api/hello
-```
+- Docker + Docker Compose.
+- Git.
+- `curl` (opcional, para smoke tests).
 
-Actualizaciones de versión:
+## 6. Requisitos obligatorios para login
 
-```bash
-git pull origin production
-docker-compose up -d --build
-```
+Para que el software funcione correctamente con inicio de sesion, hay dos requisitos obligatorios antes de probar login:
 
-## 5. Variables de Entorno
+1. Usar tus propias credenciales OAuth de Google en `.env`.
+2. Cambiar el correo admin inicial en `schema_fluxo_inicial.sql`.
 
-El backend usa variables de entorno inyectadas por Docker Compose. Parámetros típicos:
+### 6.1 Claves Google OAuth propias (obligatorio)
+
+No uses credenciales de terceros o de ejemplo.
+
+En Google Cloud Console, crea tu cliente OAuth y registra como redirect URI:
+
+`http://localhost/api/auth/google/callback`
+
+Luego completa en `.env`:
 
 ```env
-# backend
-PORT=8080
+GOOGLE_CLIENT_ID=TU_CLIENT_ID_REAL
+GOOGLE_CLIENT_SECRET=TU_CLIENT_SECRET_REAL
+BASE_URL=http://localhost
+```
+
+Si cambias el puerto publico del proxy (por ejemplo, no usas `80`), `BASE_URL` debe incluir ese puerto y la redirect URI en Google debe coincidir exactamente.
+
+### 6.2 Correo admin en schema (obligatorio)
+
+Antes del primer `up`, edita `schema_fluxo_inicial.sql` y cambia el email del admin inicial:
+
+```sql
+'correo@ejemplo.com'
+```
+
+Debes reemplazarlo por el correo real con el que iniciaras sesion via Google.
+
+Importante:
+
+- El schema se aplica solo cuando el volumen PostgreSQL es nuevo.
+- Si ya levantaste la BD y luego cambiaste ese correo, debes reiniciar con `down -v` para que se reejecute el seed.
+
+## 7. Inicio rapido local
+
+1. Clonar y cambiar a `main`:
+
+```bash
+git clone https://github.com/gonzalouj/fluxo_a.git
+cd fluxo_a
+git switch main
+```
+
+2. Crear archivo de variables:
+
+```bash
+cp .env.example .env
+```
+
+3. Completar `.env` para local:
+
+```env
 DB_HOST=postgres
 DB_PORT=5432
-DB_NAME=fluxo
+DB_NAME=fluxo_db
 DB_USER=postgres
-DB_PASSWORD=postgres123
+DB_PASSWORD=postgres
+DB_SSLMODE=disable
+
+GIN_MODE=debug
+BASE_URL=http://localhost
+CORS_ALLOWED_ORIGIN=http://localhost
+
+GOOGLE_CLIENT_ID=TU_CLIENT_ID_REAL
+GOOGLE_CLIENT_SECRET=TU_CLIENT_SECRET_REAL
 ```
 
-Consideraciones:
+4. Verificar requisito del correo admin en schema (seccion 6.2).
 
-- No commitear secretos reales. Usar archivos `.env` privados o sistemas de secretos del orquestador.
-- Alinear los puertos del compose con el proxy frontal del entorno (Caddy u otro).
-
-## 6. Operación y Mantenimiento
-
-Comandos de operación comunes:
-
-```bash
-# Ver servicios
-docker-compose ps
-
-# Logs en tiempo real
-docker-compose logs -f --tail=100
-
-# Reinicios puntuales
-docker-compose restart frontend
-docker-compose restart backend
-
-# Parar / levantar
-docker-compose down
-docker-compose up -d --build
-
-# Limpieza (cuidado)
-docker system prune -f
-```
-
-Base de datos (vía contenedor):
-
-```bash
-# Ingresar a psql
-docker-compose exec database psql -U postgres -d fluxo
-
-# Backup
-docker-compose exec database pg_dump -U postgres fluxo > backup.sql
-
-# Restore
-docker-compose exec -T database psql -U postgres fluxo < backup.sql
-```
-
-## 7. Desarrollo Local
-
-Este repositorio usa flujo Docker-only para desarrollo local.
-
-Con Docker (entorno completo local):
+5. Levantar entorno:
 
 ```bash
 docker-compose -f docker-compose.local.yml up -d --build
 ```
 
-Para el paso a paso local detallado, revisa `README-DOCKER.md`.
-
-## 8. API (Resumen)
-
-Endpoints principales:
-
-| Método | Endpoint         | Descripción        |
-| ------ | ---------------- | ------------------ |
-| GET    | /api/hello       | Prueba de conexión |
-| POST   | /api/pedidos     | Crear pedido       |
-| GET    | /api/pedidos     | Listar pedidos     |
-| GET    | /api/pedidos/:id | Obtener por id     |
-
-Ejemplos:
+6. Verificar API y login:
 
 ```bash
-curl http://localhost:8080/api/hello
+docker-compose -f docker-compose.local.yml ps
+docker-compose -f docker-compose.local.yml logs --tail=80 backend
 
-curl -X POST http://localhost:8080/api/pedidos \
-	-H "Content-Type: application/json" \
-	-d '{"producto":"Mesa","cantidad":1,"cliente":"Juan","fecha":"2025-12-25"}'
+curl http://localhost/api/hello
+curl -i http://localhost/api/auth/google/login | sed -n '1,15p'
 ```
 
-## 9. Esquema de Datos
+Para OAuth, se espera redireccion (HTTP 302) en `/api/auth/google/login`.
 
-Tablas: usuarios, productos, pedidos, pedido_productos, comentarios.
+Si esas verificaciones salen bien, el software ya esta en linea en `http://localhost/`.
 
-Estados de pedido: Pendiente, Listo, Cancelado.
+## 8. Comandos utiles del dia a dia
 
-## 10. CI/CD (Guía Breve)
+```bash
+# Logs en tiempo real
+docker-compose -f docker-compose.local.yml logs -f --tail=100 backend proxy
 
-Flujo recomendado:
+# Reinicios puntuales
+docker-compose -f docker-compose.local.yml restart backend
+docker-compose -f docker-compose.local.yml restart proxy
 
-1. Commit y push a la rama de despliegue (p. ej., `production`).
-2. En el servidor: `git pull origin production`.
-3. Reconstruir e iniciar: `docker-compose up -d --build`.
-4. Verificar logs y endpoints.
+# Bajar entorno
+docker-compose -f docker-compose.local.yml down
 
-## 11. Seguridad y Buenas Prácticas
+# Levantar sin rebuild
+docker-compose -f docker-compose.local.yml up -d
 
-- Exponer solo el frontend a internet; backend y BD restringidos.
-- Delegar el proxy `/api/*` al frontal del entorno (Caddy/Nginx).
-- Mantener secretos fuera del repositorio (Variables de entorno/API keys).
-- Versionar cambios de infraestructura (compose, Dockerfiles).
-- Automatizar backups de BD.
+# Levantar con rebuild
+docker-compose -f docker-compose.local.yml up -d --build
+```
 
-## 12. Resolución de Problemas
+## 9. Base de datos local y seed
 
-Síntomas frecuentes y revisión sugerida:
+- La configuracion obligatoria del correo admin inicial esta en la seccion 6.2.
+- El archivo `schema_fluxo_inicial.sql` se ejecuta solo cuando el volumen de PostgreSQL es nuevo.
+- Si cambiaste el schema (o el correo admin) y quieres resembrar desde cero, debes eliminar volumen.
 
-- Frontend carga pero API falla: confirmar que el proxy de la institución enruta `/api/*` al puerto 4006 del host y que el compose mapea 4006->8080.
-- Error de conexión a BD: revisar `DB_HOST` (debe ser `postgres` dentro de la red de Docker) y credenciales.
-- Puertos ocupados: verificar colisiones con `netstat`/`ss`, ajustar mapeos en `docker-compose.yml`.
-- Cambios no aplican tras despliegue: ejecutar con `--build` y revisar cachés.
+Reinicio limpio de BD:
 
----
+```bash
+docker-compose -f docker-compose.local.yml down -v
+docker-compose -f docker-compose.local.yml up -d --build
+```
+
+## 10. Recomendaciones de trabajo
+
+- No commitear secretos reales en `.env`.
+- Mantener `main` enfocado en entorno local.
+- Hacer cambios pequenos y verificables (smoke test rapido tras cada ajuste relevante).
+- Si cambias variables de BD, recuerda que un volumen existente puede conservar credenciales antiguas.
+
+## 11. Problemas frecuentes
+
+- Error 502 al consumir API:
+  backend caido o proxy sin alcanzar backend. Revisar logs de `backend` y `proxy`.
+
+- Error de autenticacion PostgreSQL (`password authentication failed`):
+  desalineacion entre `.env` y volumen actual. Ajustar credenciales o reiniciar con `down -v`.
+
+- Login Google devuelve error/502:
+  revisar estado de backend y variables OAuth en `.env`.
+
+- Login Google redirige, pero no deja entrar al sistema:
+  verificar que el correo de la cuenta Google sea el mismo que pusiste en el admin seed de `schema_fluxo_inicial.sql`.
+
+- Puerto ocupado (80/3006/4006/5006):
+  cambiar mapeos en `docker-compose.local.yml` o liberar puertos del host.
+
+## 12. Alcance de este README
+
+Este documento cubre desarrollo local en `main`.
+La operacion de despliegue productivo se mantiene en la rama `production`.
