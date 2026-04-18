@@ -52,47 +52,7 @@ Puertos de referencia en local:
 - Git.
 - `curl` (opcional, para smoke tests).
 
-## 6. Requisitos obligatorios para login
-
-Para que el software funcione correctamente con inicio de sesion, hay dos requisitos obligatorios antes de probar login:
-
-1. Usar tus propias credenciales OAuth de Google en `.env`.
-2. Cambiar el correo admin inicial en `schema_fluxo_inicial.sql`.
-
-### 6.1 Claves Google OAuth propias (obligatorio)
-
-No uses credenciales de terceros o de ejemplo.
-
-En Google Cloud Console, crea tu cliente OAuth y registra como redirect URI:
-
-`http://localhost/api/auth/google/callback`
-
-Luego completa en `.env`:
-
-```env
-GOOGLE_CLIENT_ID=TU_CLIENT_ID_REAL
-GOOGLE_CLIENT_SECRET=TU_CLIENT_SECRET_REAL
-BASE_URL=http://localhost
-```
-
-Si cambias el puerto publico del proxy (por ejemplo, no usas `80`), `BASE_URL` debe incluir ese puerto y la redirect URI en Google debe coincidir exactamente.
-
-### 6.2 Correo admin en schema (obligatorio)
-
-Antes del primer `up`, edita `schema_fluxo_inicial.sql` y cambia el email del admin inicial:
-
-```sql
-'correo@ejemplo.com'
-```
-
-Debes reemplazarlo por el correo real con el que iniciaras sesion via Google.
-
-Importante:
-
-- El schema se aplica solo cuando el volumen PostgreSQL es nuevo.
-- Si ya levantaste la BD y luego cambiaste ese correo, debes reiniciar con `down -v` para que se reejecute el seed.
-
-## 7. Inicio rapido local
+## 6. Inicio rapido local
 
 1. Clonar y cambiar a `main`:
 
@@ -126,7 +86,26 @@ GOOGLE_CLIENT_ID=TU_CLIENT_ID_REAL
 GOOGLE_CLIENT_SECRET=TU_CLIENT_SECRET_REAL
 ```
 
-4. Verificar requisito del correo admin en schema (seccion 6.2).
+4. Requisitos obligatorios para login:
+
+4.1 Claves Google OAuth propias:
+
+- No uses credenciales de terceros o de ejemplo.
+- En Google Cloud Console, crea tu cliente OAuth y registra esta redirect URI:
+
+`http://localhost/api/auth/google/callback`
+
+Si cambias el puerto publico del proxy, `BASE_URL` y la redirect URI deben coincidir exactamente.
+
+4.2 Correo admin en schema:
+
+- Antes del primer `up`, edita `schema_fluxo_inicial.sql` y cambia:
+
+```sql
+'correo@ejemplo.com'
+```
+
+- Debes reemplazarlo por el correo real con el que iniciaras sesion via Google.
 
 5. Levantar entorno:
 
@@ -148,7 +127,7 @@ Para OAuth, se espera redireccion (HTTP 302) en `/api/auth/google/login`.
 
 Si esas verificaciones salen bien, el software ya esta en linea en `http://localhost/`.
 
-## 8. Comandos utiles del dia a dia
+## 7. Comandos utiles del dia a dia
 
 ```bash
 # Logs en tiempo real
@@ -168,11 +147,15 @@ docker-compose -f docker-compose.local.yml up -d
 docker-compose -f docker-compose.local.yml up -d --build
 ```
 
-## 9. Base de datos local y seed
+## 8. Base de datos local y seed
 
-- La configuracion obligatoria del correo admin inicial esta en la seccion 6.2.
+- La configuracion obligatoria del correo admin inicial esta en el paso 4.2.
 - El archivo `schema_fluxo_inicial.sql` se ejecuta solo cuando el volumen de PostgreSQL es nuevo.
 - Si cambiaste el schema (o el correo admin) y quieres resembrar desde cero, debes eliminar volumen.
+
+Importante:
+
+- Si ya levantaste la BD y luego cambiaste el correo admin del schema, debes reiniciar con `down -v` para que se reejecute el seed.
 
 Reinicio limpio de BD:
 
@@ -181,14 +164,14 @@ docker-compose -f docker-compose.local.yml down -v
 docker-compose -f docker-compose.local.yml up -d --build
 ```
 
-## 10. Recomendaciones de trabajo
+## 9. Recomendaciones de trabajo
 
 - No commitear secretos reales en `.env`.
 - Mantener `main` enfocado en entorno local.
 - Hacer cambios pequenos y verificables (smoke test rapido tras cada ajuste relevante).
 - Si cambias variables de BD, recuerda que un volumen existente puede conservar credenciales antiguas.
 
-## 11. Problemas frecuentes
+## 10. Problemas frecuentes
 
 - Error 502 al consumir API:
   backend caido o proxy sin alcanzar backend. Revisar logs de `backend` y `proxy`.
@@ -205,7 +188,7 @@ docker-compose -f docker-compose.local.yml up -d --build
 - Puerto ocupado (80/3006/4006/5006):
   cambiar mapeos en `docker-compose.local.yml` o liberar puertos del host.
 
-## 12. Alcance de este README
+## 11. Alcance de este README
 
 Este documento cubre desarrollo local en `main`.
 La operacion de despliegue productivo se mantiene en la rama `production`.
