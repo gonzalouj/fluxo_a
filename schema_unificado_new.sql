@@ -180,7 +180,7 @@ INSERT INTO usuarios (
 ) VALUES (
     '12345678-9',
     'Administrador Sistema',
-    'admin@empresa.com',
+    'correo@empresa.com',
     '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password: "password"
     'Admin',
     true
@@ -633,6 +633,24 @@ CREATE TRIGGER trigger_actualizar_fecha_productos
 BEFORE UPDATE ON productos
 FOR EACH ROW
 EXECUTE FUNCTION actualizar_fecha_modificacion();
+
+-- ========= TABLA DE SUSCRIPCIONES PUSH =========
+-- Almacena las suscripciones de Web Push para notificaciones
+CREATE TABLE push_subscriptions (
+    id_subscription SERIAL PRIMARY KEY,
+    id_usuario INTEGER REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    fecha_creacion TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE push_subscriptions IS 'Suscripciones de Web Push para notificaciones en tiempo real.';
+COMMENT ON COLUMN push_subscriptions.endpoint IS 'URL del endpoint del servicio push del navegador';
+COMMENT ON COLUMN push_subscriptions.p256dh IS 'Clave pública del cliente para cifrado';
+COMMENT ON COLUMN push_subscriptions.auth IS 'Secreto de autenticación del cliente';
+
+-- Índice para buscar suscripciones por usuario
+CREATE INDEX idx_push_subscriptions_usuario ON push_subscriptions(id_usuario);
 
 -- ========= CONSULTAS DE VERIFICACIÓN =========
 

@@ -10,20 +10,36 @@ WORKDIR /app
 # Copiar go mod files
 COPY go.mod go.sum ./
 
-# Descargar dependencias
-RUN go mod download
+# Si el repo trae un directorio vendor/ lo copiamos (solución offline para entornos
+# que bloquean acceso a proxy.golang.org). Si no existe, intentamos descargar módulos.
+COPY vendor ./vendor
+
+# Descargar dependencias solo si no hay vendor/ disponible
+RUN if [ -d ./vendor ]; then \
+            echo "vendor directory found, skipping go mod download"; \
+        else \
+            echo "no vendor directory, attempting to download modules" && \
+            go env -w GOPROXY=direct && \
+            go env -w GOSUMDB=off && \
+            go mod download; \
+        fi
 
 # Copiar código fuente
 COPY . .
 
-# Compilar la aplicación
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o fluxo-backend .
+# Compilar la aplicación. Si existe vendor/ usamos -mod=vendor para forzar el uso
+# de dependencias vendorizadas.
+RUN if [ -d ./vendor ]; then \
+            CGO_ENABLED=0 GOOS=linux go build -mod=vendor -a -installsuffix cgo -o fluxo-backend .; \
+        else \
+            CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o fluxo-backend .; \
+        fi
 
 # Imagen final
 FROM alpine:latest
 
-# Instalar ca-certificates para HTTPS
-RUN apk --no-cache add ca-certificates
+# Instalar ca-certificates para HTTPS y postgresql-client para wait script
+RUN apk --no-cache add ca-certificates postgresql-client
 
 WORKDIR /root/
 
@@ -31,10 +47,23 @@ WORKDIR /root/
 COPY --from=builder /app/fluxo-backend .
 
 # Copiar archivo de configuración si existe
-COPY --from=builder /app/.env* ./
+# COPY --from=builder /app/.env* ./
+
+# Crear script de espera para PostgreSQL
+RUN echo '#!/bin/sh' > /wait-for-postgres.sh && \
+    echo 'set -e' >> /wait-for-postgres.sh && \
+    echo 'host="$1"' >> /wait-for-postgres.sh && \
+    echo 'shift' >> /wait-for-postgres.sh && \
+    echo 'until PGPASSWORD=$DB_PASSWORD psql -h "$host" -U "$DB_USER" -d "$DB_NAME" -c "\\q"; do' >> /wait-for-postgres.sh && \
+    echo '  >&2 echo "Postgres no disponible - esperando..."' >> /wait-for-postgres.sh && \
+    echo '  sleep 1' >> /wait-for-postgres.sh && \
+    echo 'done' >> /wait-for-postgres.sh && \
+    echo '>&2 echo "Postgres disponible - ejecutando comando"' >> /wait-for-postgres.sh && \
+    echo 'exec "$@"' >> /wait-for-postgres.sh && \
+    chmod +x /wait-for-postgres.sh
 
 # Exponer puerto
-EXPOSE 8080
+EXPOSE 4006
 
-# Comando para ejecutar
-CMD ["./fluxo-backend"]
+# Comando para ejecutar: esperar postgres y luego iniciar backend
+ENTRYPOINT ["/bin/sh", "-c", "/wait-for-postgres.sh $DB_HOST ./fluxo-backend"]

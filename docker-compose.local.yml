@@ -1,0 +1,78 @@
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: fluxo-postgres
+    environment:
+      POSTGRES_DB: fluxo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+    ports:
+      - "5006:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema_unificado_new.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    restart: unless-stopped
+    networks:
+      - red_taller_software
+
+  # Backend Go
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fluxo-backend
+    environment:
+      PORT: 4006
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: fluxo
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+      BASE_URL: http://localhost
+      CORS_ALLOWED_ORIGIN: "http://localhost"
+      GOOGLE_CLIENT_ID: "609911692645-hjd4ast0pp72cfm2a0r5u1dl0kje5ijt.apps.googleusercontent.com"
+      GOOGLE_CLIENT_SECRET: "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"
+    depends_on:
+      - postgres
+    ports:
+      - "4006:4006"
+    restart: unless-stopped
+    networks:
+      - red_taller_software
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: fluxo-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3006:3006"
+    restart: unless-stopped
+    networks:
+      - red_taller_software
+
+  # Proxy Caddy
+  proxy:
+    image: caddy:2-alpine
+    container_name: fluxo-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile.local:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - red_taller_software
+
+volumes:
+  postgres_data:
+
+networks:
+  red_taller_software:
+    driver: bridge

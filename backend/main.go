@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fluxo/backend/auth"
 	"fluxo/backend/config"
 	"fluxo/backend/handlers"
 	"fluxo/backend/routes"
@@ -18,8 +19,9 @@ func main() {
 		log.Fatalf("Error fatal: no se pudo conectar a la base de datos: %v", err)
 	}
 
-	// ✅ PASO 2: 'main' le entrega la conexión al paquete de handlers.
+	// ✅ PASO 2: 'main' le entrega la conexión a los paquetes que la necesitan.
 	handlers.SetDB(database)
+	auth.DB = database
 
 	// Configurar el modo de Gin desde la variable de entorno.
 	gin.SetMode(config.GetEnv("GIN_MODE", "debug"))

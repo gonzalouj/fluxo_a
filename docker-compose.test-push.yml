@@ -1,0 +1,64 @@
+# docker-compose.test-push.yml
+# Compose para testear notificaciones push localmente
+# Uso: docker-compose -f docker-compose.test-push.yml up --build
+
+services:
+  # Base de datos PostgreSQL para testing
+  database:
+    image: postgres:15-alpine
+    container_name: fluxo_test_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: fluxo
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./schema_unificado_new.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    networks:
+      - fluxo_test_network
+
+  # Backend Go
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fluxo_test_backend
+    restart: unless-stopped
+    environment:
+      PORT: 4006
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: fluxo
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+      GIN_MODE: debug
+      BASE_URL: http://localhost:3006
+      # Notificaciones Push - Generar con: npx web-push generate-vapid-keys
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_EMAIL: mailto:test@fluxo.cl
+    ports:
+      - "4006:4006"
+    depends_on:
+      - database
+    networks:
+      - fluxo_test_network
+
+  # Frontend con servidor de desarrollo
+  frontend:
+    build:
+      context: ./Frontend
+    container_name: fluxo_test_frontend
+    restart: unless-stopped
+    ports:
+      - "3006:3006"
+    depends_on:
+      - backend
+    networks:
+      - fluxo_test_network
+
+networks:
+  fluxo_test_network:
+    driver: bridge

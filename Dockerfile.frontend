@@ -8,7 +8,7 @@ COPY Frontend/ /app
 WORKDIR /app
 
 # Exponer puerto
-EXPOSE 80
+EXPOSE 3006
 
 # Ejecutar servidor HTTP simple
-CMD ["python", "-m", "http.server", "80"]
+CMD ["python", "-m", "http.server", "3006", "--bind", "0.0.0.0"]

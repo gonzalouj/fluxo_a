@@ -1,0 +1,11 @@
+# Binarios compilados
+fluxo-backend
+
+# Archivos de desarrollo
+.vscode/
+.idea/
+
+# Archivos temporales
+*.tmp
+*.log
+.DS_Store

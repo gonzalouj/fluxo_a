@@ -11,9 +11,9 @@ type NewUserRequest struct {
 	NombreCompleto string   `json:"nombre_completo" binding:"required"`
 	Rut            string   `json:"rut" binding:"required"`
 	Email          string   `json:"email" binding:"required,email"`
-	Password       string   `json:"password" binding:"required,min=6"` // Mínimo de 6 caracteres, por ejemplo
-	Rol            string   `json:"rol" binding:"required,oneof=administrador trabajador"`
-	Permisos       []string `json:"permisos"` // Lista de permisos (ej: ["pedidos", "usuarios"])
+	Password       string   `json:"password" binding:"required,min=6"`
+	Rol            string   `json:"rol" binding:"required,oneof=Admin Trabajador"`
+	Permisos       []string `json:"permisos"`
 }
 
 // UsuarioDB representa la estructura del usuario tal como está en la DB
@@ -68,11 +68,30 @@ type ProductoEnPedido struct {
 
 // Producto representa un producto del catálogo
 type Producto struct {
-	ID             int     `json:"id_producto"`
-	Codigo         *string `json:"codigo,omitempty"`
-	Nombre         string  `json:"nombre"`
-	PrecioUnitario float64 `json:"precio_unitario"`
-	Stock          int     `json:"stock"`
-	FotoURL        *string `json:"foto_url,omitempty"`
-	IDCategoria    *int    `json:"id_categoria,omitempty"`
+	ID                  int      `json:"id_producto"`
+	Codigo              *string  `json:"codigo,omitempty"`
+	Nombre              string   `json:"nombre"`
+	Descripcion         *string  `json:"descripcion,omitempty"`
+	IDCategoria         *int     `json:"id_categoria,omitempty"`
+	CategoriaNombre     *string  `json:"categoria_nombre,omitempty"`
+	PrecioUnitario      float64  `json:"precio_unitario"`
+	LargoCm             *float64 `json:"largo_cm,omitempty"`
+	AnchoCm             *float64 `json:"ancho_cm,omitempty"`
+	AltoCm              *float64 `json:"alto_cm,omitempty"`
+	DiametroCm          *float64 `json:"diametro_cm,omitempty"`
+	FondoCm             *float64 `json:"fondo_cm,omitempty"`
+	AlturaAsientoCm     *float64 `json:"altura_asiento_cm,omitempty"`
+	AlturaCubiertaCm    *float64 `json:"altura_cubierta_cm,omitempty"`
+	PesoKg              *float64 `json:"peso_kg,omitempty"`
+	Material            *string  `json:"material,omitempty"`
+	Moneda              string   `json:"moneda"`
+	IncluyeIVA          bool     `json:"incluye_iva"`
+	RequierePresupuesto bool     `json:"requiere_presupuesto"`
+	UnidadVenta         string   `json:"unidad_venta"`
+	Stock               int      `json:"stock"`
+	FotoPrincipalURL    *string  `json:"foto_principal_url,omitempty"`
+	NotasEspeciales     *string  `json:"notas_especiales,omitempty"`
+	EsTemporal          *bool    `json:"es_temporal,omitempty"`
+	IDPedidoOrigen      *int     `json:"id_pedido_origen,omitempty"`
+	FotoURL             *string  `json:"foto_url,omitempty"` // Mantener por compatibilidad
 }

@@ -1,59 +1,119 @@
-version: '3.8'
-
 services:
-  # Base de datos PostgreSQL
-  postgres:
-    image: postgres:15-alpine
-    container_name: fluxo-postgres
+  # ==========================================
+  # BASE DE DATOS PostgreSQL
+  # ==========================================
+  database:
+    image: ${DB_IMAGE}
+    container_name: fluxo_db
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: fluxo
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./schema_unificado.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - db_data:/var/lib/postgresql/data
+      - ./schema_unificado_new.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     networks:
-      - fluxo-network
+      - red_taller_software
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
+    labels:
+      - "org.fluxo.service=database"
+      - "logging=promtail"
 
-  # Backend Go
+  # ==========================================
+  # BACKEND Go
+  # ==========================================
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: fluxo-backend
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: fluxo
-      DB_USER: postgres
-      DB_PASSWORD: postgres123
-    depends_on:
-      - postgres
-    ports:
-      - "4006:8080"
-    networks:
-      - fluxo-network
+    container_name: fluxo_backend
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: ${BACKEND_PORT}
+      DB_HOST: database
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      GIN_MODE: release
+      BASE_URL: ${BASE_URL}
+      # Notificaciones Push (Web Push API)
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_EMAIL: ${VAPID_EMAIL:-mailto:admin@fluxo.cl}
+    # Publicar puerto en el host para despliegue en VPS
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    depends_on:
+      - database
+    networks:
+      - red_taller_software
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 700M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
+    labels:
+      - "org.fluxo.service=backend"
+      - "logging=promtail"
 
-  # Frontend
+  # ==========================================
+  # FRONTEND
+  # ==========================================
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: fluxo-frontend
+      context: ./Frontend
+    container_name: fluxo_frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    # Publicar puerto en el host para despliegue en VPS
     ports:
-      - "3006:80"
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     depends_on:
       - backend
     networks:
-      - fluxo-network
-    restart: unless-stopped
+      - red_taller_software
+    deploy:
+      resources:
+        limits:
+          cpus: "0.30"
+          memory: 400M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "{{.Name}}"
+    labels:
+      - "org.fluxo.service=frontend"
+      - "logging=promtail"
 
 volumes:
-  postgres_data:
+  db_data:
+    name: fluxo_db_data
 
 networks:
-  fluxo-network:
+  red_taller_software:
     driver: bridge

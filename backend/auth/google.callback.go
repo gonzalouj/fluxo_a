@@ -1,13 +1,18 @@
 package auth
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
+
+// DB referencia a la base de datos (se inicializa desde main)
+var DB *sql.DB
 
 // Estructura para leer datos básicos del usuario de Google
 type GoogleUserInfo struct {
@@ -24,7 +29,10 @@ func GoogleCallback(c *gin.Context) {
 	state := c.Query("state")
 
 	if code == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "code missing"})
+		// Limpiar cualquier cookie OAuth residual
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=no_code"
+		c.Redirect(http.StatusFound, redirectURL)
 		return
 	}
 
@@ -35,7 +43,10 @@ func GoogleCallback(c *gin.Context) {
 	token, err := GoogleOAuthConfig.Exchange(c.Request.Context(), code)
 	if err != nil {
 		log.Println("Error intercambiando code por token:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "token exchange failed"})
+		// Limpiar cookies OAuth antes de redirigir
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=exchange_failed"
+		c.Redirect(http.StatusFound, redirectURL)
 		return
 	}
 
@@ -43,19 +54,64 @@ func GoogleCallback(c *gin.Context) {
 	userInfo, err := fetchGoogleUserInfo(token.AccessToken)
 	if err != nil {
 		log.Println("Error obteniendo userinfo de Google:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get userinfo"})
+		// Limpiar cookies OAuth antes de redirigir
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=user_info_failed"
+		c.Redirect(http.StatusFound, redirectURL)
 		return
 	}
 
-	log.Printf("Usuario Google logeado: email=%s, name=%s\n", userInfo.Email, userInfo.Name)
+	log.Printf("Usuario Google intentando login: email=%s, name=%s\n", userInfo.Email, userInfo.Name)
 
-	// 🧠 Aquí es donde en el futuro:
-	// - Buscarías/crearías el usuario en la base de datos
-	// - Crearías una sesión (cookie / JWT) con su ID o email
+	// Verificar si el email existe en la base de datos
+	var userID int
+	var nombreCompleto string
+	var rol string
+	var activo bool
 
-	// Por ahora, para no meternos en sesiones reales,
-	// lo redirigimos al frontend (index) y le pasamos el email por querystring.
-	redirectURL := "http://localhost:3006/index.html?google_email=" + url.QueryEscape(userInfo.Email)
+	err = DB.QueryRow(
+		"SELECT id_usuario, nombre_completo, rol, activo FROM usuarios WHERE email = $1",
+		userInfo.Email,
+	).Scan(&userID, &nombreCompleto, &rol, &activo)
+
+	if err == sql.ErrNoRows {
+		// Email no autorizado - limpiar cookies OAuth
+		log.Printf("Acceso denegado: email %s no está registrado\n", userInfo.Email)
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=no_autorizado&email=" + url.QueryEscape(userInfo.Email)
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
+	if err != nil {
+		log.Println("Error consultando usuario en BD:", err)
+		// Limpiar cookies OAuth antes de redirigir
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=database_error"
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
+	if !activo {
+		// Usuario inactivo - limpiar cookies OAuth
+		log.Printf("Acceso denegado: usuario %s está desactivado\n", userInfo.Email)
+		c.SetCookie("_oauth_state", "", -1, "/", "", false, true)
+		redirectURL := BaseURL + "/login.html?error=usuario_inactivo"
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
+	log.Printf("Login exitoso: %s (ID: %d, Rol: %s)\n", userInfo.Email, userID, rol)
+
+	// Redirigir con los datos del usuario
+	redirectURL := fmt.Sprintf(
+		"%s/index.html?google_email=%s&user_id=%d&user_name=%s&user_rol=%s",
+		BaseURL,
+		url.QueryEscape(userInfo.Email),
+		userID,
+		url.QueryEscape(nombreCompleto),
+		url.QueryEscape(rol),
+	)
 	c.Redirect(http.StatusFound, redirectURL)
 }
 
