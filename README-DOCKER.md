@@ -1,98 +1,86 @@
-# Fluxo - Sistema de Pedidos Dockerizado
+# Fluxo - Guia de Ejecucion Local con Docker
 
-## Requisitos
-- Docker
-- Docker Compose
+Este documento es la referencia para levantar Fluxo en entorno local (rama `main`).
 
-## Instalación y Ejecución
+## 1. Clonar el repositorio
 
-### Opción 1: Docker Compose (Recomendado)
 ```bash
-# Clonar el repositorio
-git clone https://github.com/Neverknowsbesst/fluxo.git
-cd fluxo
-
-# Ejecutar con Docker Compose
-docker-compose up -d
-
-# Ver logs
-docker-compose logs -f
+git clone https://github.com/gonzalouj/fluxo_a.git
+cd fluxo_a
+git switch main
 ```
 
-### Opción 2: Construir manualmente
+## 2. Preparar variables de entorno
+
+Copia el archivo de ejemplo y edita solo lo necesario:
+
 ```bash
-# Construir backend
-docker build -t fluxo-backend ./backend
-
-# Construir frontend
-docker build -t fluxo-frontend -f Dockerfile.frontend .
-
-# Ejecutar PostgreSQL
-docker run -d --name fluxo-postgres \
-  -e POSTGRES_DB=fluxo \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres123 \
-  -p 5432:5432 \
-  postgres:15-alpine
-
-# Ejecutar backend
-docker run -d --name fluxo-backend \
-  -e DB_HOST=fluxo-postgres \
-  -e DB_NAME=fluxo \
-  -e DB_USER=postgres \
-  -e DB_PASSWORD=postgres123 \
-  --link fluxo-postgres \
-  -p 8080:8080 \
-  fluxo-backend
-
-# Ejecutar frontend
-docker run -d --name fluxo-frontend \
-  --link fluxo-backend:backend \
-  -p 3000:3000 \
-  fluxo-frontend
+cp .env.example .env
 ```
 
-## Acceso
-- **Aplicación**: http://localhost:3000
-- **API Backend**: http://localhost:8080
-- **Base de datos**: localhost:5432
+Valores minimos recomendados para local:
 
-## Estructura de Docker
-- **PostgreSQL**: Base de datos con inicialización automática usando `schema_unificado.sql`
-- **Backend**: API Go con Gin framework
-- **Frontend**: Archivos estáticos servidos por Caddy con proxy reverso
+```env
+DB_HOST=postgres
+DB_PORT=5432
+DB_NAME=fluxo_db
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_SSLMODE=disable
 
-## Comandos útiles
-```bash
-# Detener servicios
-docker-compose down
+GIN_MODE=debug
+BASE_URL=http://localhost
 
-# Ver logs de un servicio específico
-docker-compose logs backend
-docker-compose logs frontend
-docker-compose logs postgres
-
-# Reconstruir imágenes
-docker-compose build
-
-# Ejecutar en modo desarrollo (con logs)
-docker-compose up
-
-# Limpiar volúmenes (¡cuidado! borra la base de datos)
-docker-compose down -v
+# Si no usaras Google OAuth localmente, puedes dejarlas vacias
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 ```
 
-## Variables de Entorno
-Las siguientes variables se configuran automáticamente en docker-compose.yml:
+## 3. (Opcional) Ajustar usuario admin inicial
 
-### Backend
-- `DB_HOST`: Host de la base de datos
-- `DB_PORT`: Puerto de la base de datos  
-- `DB_NAME`: Nombre de la base de datos
-- `DB_USER`: Usuario de PostgreSQL
-- `DB_PASSWORD`: Contraseña de PostgreSQL
+El seed SQL crea un usuario administrador por defecto en `schema_unificado_new.sql`.
 
-### PostgreSQL
-- `POSTGRES_DB`: Nombre de la base de datos inicial
-- `POSTGRES_USER`: Usuario administrador
-- `POSTGRES_PASSWORD`: Contraseña del administrador
+Si quieres usar otro correo para pruebas locales, cambia solo el campo `email` antes de levantar el stack por primera vez.
+
+## 4. Levantar el entorno local
+
+```bash
+docker-compose -f docker-compose.local.yml up -d --build
+```
+
+## 5. Verificar que todo quedo arriba
+
+```bash
+docker-compose -f docker-compose.local.yml ps
+```
+
+Pruebas rapidas:
+
+```bash
+curl http://localhost/api/hello
+curl http://localhost:4006/api/hello
+```
+
+## 6. Acceso a la aplicacion
+
+- Frontend via proxy: http://localhost/
+- Backend directo: http://localhost:4006
+- PostgreSQL expuesto localmente: localhost:5006
+
+## 7. Apagar o reconstruir
+
+```bash
+# Apagar servicios
+docker-compose -f docker-compose.local.yml down
+
+# Reconstruir y volver a levantar
+docker-compose -f docker-compose.local.yml up -d --build
+```
+
+## 8. Limpieza de base de datos local
+
+```bash
+# Cuidado: elimina volumenes y datos
+
+docker-compose -f docker-compose.local.yml down -v
+```

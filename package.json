@@ -8,22 +8,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Neverknowsbesst/fluxo.git"
+    "url": "git+https://github.com/gonzalouj/fluxo_a.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Neverknowsbesst/fluxo/issues"
+    "url": "https://github.com/gonzalouj/fluxo_a/issues"
   },
-  "homepage": "https://github.com/Neverknowsbesst/fluxo#readme",
+  "homepage": "https://github.com/gonzalouj/fluxo_a#readme",
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13"
   }
-  
-  
-
 }
-

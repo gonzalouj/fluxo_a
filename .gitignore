@@ -60,6 +60,17 @@ coverage.txt
 *.swp
 *.swo
 
-# Archivos de Docker
-docker-compose.override.ymlgrupo6/
+# Archivos de Docker / configuraciones locales
+docker-compose.override.yml
 Frontend/config-local.js
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Archivos generados en Windows al descomprimir adjuntos
+*:Zone.Identifier
+
+# Resultados locales de pruebas de rendimiento
+test-performance/resultados_local_*.txt
