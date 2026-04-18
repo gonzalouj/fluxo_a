@@ -15,7 +15,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./schema_unificado_new.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./schema_fluxo_inicial.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     networks:
       - fluxo_test_network
 

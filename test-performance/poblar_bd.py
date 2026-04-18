@@ -268,7 +268,7 @@ def main():
         # Obtener datos necesarios
         productos_ids = obtener_ids_productos(cursor)
         if not productos_ids:
-            print("❌ Error: No hay productos en el catálogo. Ejecuta el schema_unificado.sql primero.")
+            print("❌ Error: No hay productos en el catálogo. Ejecuta el schema_fluxo_inicial.sql primero.")
             return
         
         print(f"📦 Productos disponibles en catálogo: {len(productos_ids)}")

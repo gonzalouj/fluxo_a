@@ -3,15 +3,17 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: fluxo-postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: fluxo
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: ${DB_NAME:-fluxo_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
       - "5006:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./schema_unificado_new.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./schema_fluxo_inicial.sql:/docker-entrypoint-initdb.d/01-schema.sql
     restart: unless-stopped
     networks:
       - red_taller_software
@@ -22,17 +24,24 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: fluxo-backend
+    env_file:
+      - .env
     environment:
       PORT: 4006
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: fluxo
-      DB_USER: postgres
-      DB_PASSWORD: postgres123
-      BASE_URL: http://localhost
-      CORS_ALLOWED_ORIGIN: "http://localhost"
-      GOOGLE_CLIENT_ID: "609911692645-hjd4ast0pp72cfm2a0r5u1dl0kje5ijt.apps.googleusercontent.com"
-      GOOGLE_CLIENT_SECRET: "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"
+      DB_NAME: ${DB_NAME:-fluxo_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_SSLMODE: ${DB_SSLMODE:-disable}
+      GIN_MODE: ${GIN_MODE:-debug}
+      BASE_URL: ${BASE_URL:-http://localhost}
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-http://localhost}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_EMAIL: ${VAPID_EMAIL:-mailto:admin@fluxo.cl}
     depends_on:
       - postgres
     ports:
@@ -61,7 +70,7 @@ services:
     container_name: fluxo-proxy
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT:-80}:80"
     volumes:
       - ./Caddyfile.local:/etc/caddy/Caddyfile:ro
     depends_on:

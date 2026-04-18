@@ -5,7 +5,6 @@ go 1.20
 require (
 	github.com/SherClockHolmes/webpush-go v1.3.0
 	github.com/gin-gonic/gin v1.9.1
-	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	golang.org/x/crypto v0.9.0
 	golang.org/x/oauth2 v0.22.0
