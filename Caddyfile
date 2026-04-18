@@ -1,13 +1,9 @@
 :3000 {
-	# Servir archivos estáticos desde el directorio Frontend
-	root * /home/fari/fluxo/fluxo/Frontend
+	# Uso local fuera de Docker: ejecutar Caddy desde la raiz del repo
+	# para que ./Frontend sea una ruta valida.
+	root * ./Frontend
 	file_server
 	
 	# Proxy reverso: redirigir todas las peticiones /api/* al backend Go
-	reverse_proxy /api/* localhost:8080
-	
-	# Logs para debugging (opcional)
-	log {
-		output file /tmp/caddy.log
-	}
+	reverse_proxy /api/* localhost:4006
 }

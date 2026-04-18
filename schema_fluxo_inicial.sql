@@ -180,7 +180,7 @@ INSERT INTO usuarios (
 ) VALUES (
     '12345678-9',
     'Administrador Sistema',
-    'correo@empresa.com',
+    'correo@ejemplo.com', --aqui colocar correo de gmail para poder ingresar a la aplicación con este usuario
     '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password: "password"
     'Admin',
     true
